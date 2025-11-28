@@ -1,0 +1,152 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 16,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "debug",
+      "displayName": "Debug Build",
+      "description": "Debug build with full symbols and no optimization",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "USE_PRECOMPILED_HEADERS": "ON",
+        "USE_UNITY_BUILD": "OFF",
+        "WITH_TREE_SITTER": "ON",
+        "WITH_DEBUG_FEATURES": "ON"
+      }
+    },
+    {
+      "name": "debug-fast",
+      "displayName": "Fast Debug Build",
+      "description": "Debug build with unity builds for faster compilation",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "USE_PRECOMPILED_HEADERS": "ON",
+        "USE_UNITY_BUILD": "ON",
+        "WITH_TREE_SITTER": "ON",
+        "WITH_DEBUG_FEATURES": "ON"
+      }
+    },
+    {
+      "name": "release",
+      "displayName": "Release Build",
+      "description": "Optimized release build",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "USE_PRECOMPILED_HEADERS": "ON",
+        "USE_UNITY_BUILD": "OFF",
+        "WITH_TREE_SITTER": "ON",
+        "WITH_DEBUG_FEATURES": "OFF"
+      }
+    },
+    {
+      "name": "release-fast",
+      "displayName": "Fast Release Build",
+      "description": "Release build with unity builds for faster compilation",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "USE_PRECOMPILED_HEADERS": "ON",
+        "USE_UNITY_BUILD": "ON",
+        "WITH_TREE_SITTER": "ON",
+        "WITH_DEBUG_FEATURES": "OFF"
+      }
+    },
+    {
+      "name": "minimal",
+      "displayName": "Minimal Build",
+      "description": "Minimal build without Tree-sitter for faster iteration",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "USE_PRECOMPILED_HEADERS": "ON",
+        "USE_UNITY_BUILD": "OFF",
+        "WITH_TREE_SITTER": "OFF",
+        "WITH_DEBUG_FEATURES": "OFF"
+      }
+    },
+    {
+      "name": "wasm",
+      "displayName": "WASM Build",
+      "description": "WebAssembly build using Emscripten",
+      "inherits": "base",
+      "generator": "Unix Makefiles",
+      "toolchainFile": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "USE_PRECOMPILED_HEADERS": "OFF",
+        "USE_UNITY_BUILD": "OFF",
+        "WITH_TREE_SITTER": "ON",
+        "WITH_DEBUG_FEATURES": "OFF"
+      },
+      "condition": {
+        "type": "notEquals",
+        "lhs": "$env{EMSDK}",
+        "rhs": ""
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "debug",
+      "configurePreset": "debug",
+      "jobs": 0
+    },
+    {
+      "name": "debug-fast",
+      "configurePreset": "debug-fast",
+      "jobs": 0
+    },
+    {
+      "name": "release",
+      "configurePreset": "release",
+      "jobs": 0
+    },
+    {
+      "name": "release-fast",
+      "configurePreset": "release-fast",
+      "jobs": 0
+    },
+    {
+      "name": "minimal",
+      "configurePreset": "minimal",
+      "jobs": 0
+    },
+    {
+      "name": "wasm",
+      "configurePreset": "wasm",
+      "jobs": 0
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "debug",
+      "configurePreset": "debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "release",
+      "configurePreset": "release",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}

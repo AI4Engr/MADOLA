@@ -1,0 +1,30 @@
+// WASM Import Example
+
+// Import calcPi function from the calcPi module
+from calcPi import calcPi;
+
+// Define a pure Madola version for comparison
+fn calcPi_madola(n) {
+    sum := 0.0;
+    for i in 0...n {
+        sum := sum + ((-1)^i) / ((2*i)+1);
+    }
+    return sum * 4;
+}
+
+// Calculate Pi using WASM (high performance)
+s1 := time();
+wasm_result := calcPi(1000000);
+t1 := time() - s1;
+
+// Calculate Pi using Madola (interpreted)
+s2 := time();
+madola_result := calcPi_madola(1000);
+t2 := time() - s2;
+
+// Results:
+print(wasm_result);
+print(madola_result);
+print(t1);
+print(t2);
+

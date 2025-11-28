@@ -1,0 +1,15 @@
+// Graph Fit Test
+
+// Create test data
+for i in 0...8 {
+    x[i] := i;
+    y[i] := i^2 + 2*i + 1;
+}
+
+graph(x, y, "Quadratic Function");
+
+print("Graph should fit perfectly in the output panel!");
+
+
+
+

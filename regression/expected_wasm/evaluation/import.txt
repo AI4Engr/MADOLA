@@ -1,0 +1,11 @@
+Imported WASM function: square from math_lib
+Imported WASM function: cube from math_lib
+Imported WASM function: factorial from math_lib
+Imported WASM function: pythagoras from math_lib
+Execution completed successfully
+Output:
+  25
+  27
+  120
+  25
+  12

@@ -1,0 +1,16 @@
+{
+  "name": "madola-tauri",
+  "version": "1.0.0",
+  "description": "MADOLA Math Domain Language Editor - Tauri Desktop Application",
+  "scripts": {
+    "tauri": "tauri",
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "build-debug": "tauri build --debug"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^1.5.0"
+  },
+  "author": "MADOLA Team",
+  "license": "MIT"
+}

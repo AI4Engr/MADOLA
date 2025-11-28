@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MADOLA Output</title>
+    <script>
+        window.MathJax = {
+            tex: {
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                processEscapes: true,
+                processEnvironments: true,
+                packages: {'[+]': ['ams', 'newcommand', 'configmacros']}
+            },
+            chtml: {
+                scale: 1.0,
+                displayAlign: 'left'
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <style>
+/* MADOLA Output Styles - Shared between HTML export and web app */
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 20px;
+    background-color: #f8f9fa;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+h1, h2, h3 {
+    color: #2c3e50;
+    padding-bottom: 10px;
+}
+
+.madola-code {
+    background: #f1f2f6;
+    border-left: 4px solid #3498db;
+    padding: 15px;
+    margin: 20px 0;
+    font-family: 'Courier New', monospace;
+    border-radius: 4px;
+}
+
+.execution-result {
+    background: #e8f5e8;
+    border-left: 4px solid #27ae60;
+    padding: 15px;
+    margin: 20px 0;
+    border-radius: 4px;
+}
+
+.math-expression {
+    margin: 0 0;
+    text-align: center;
+    font-size: 1.1em;
+}
+
+.math-expression.align-expression {
+    margin-left: 0.25in;
+}
+
+/* Indent two-column tables to line up with aligned equations */
+.madola-pair-table {
+    /* Align with .math-expression.align-expression (0.25in) minus 10px cell padding */
+    margin-left: calc(0.25in - 10px);
+}
+
+.graph-container {
+    margin: 30px 0;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fafafa;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+/* Ensure legacy graph renderers (graph0, graph1, etc.) shrink with the panel */
+.graph-container > div[id^="graph"] {
+    width: 100%;
+}
+
+.graph-container > div[id^="graph"] svg {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+}
+
+.graph-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    color: #2c3e50;
+    text-align: center;
+}
+
+.web-graph {
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.web-graph svg {
+    width: 100%;
+    height: auto;
+    display: block;
+    max-width: 100%;
+}
+
+.axis { stroke: #333; }
+.grid line { stroke: #ddd; stroke-dasharray: 2,2; }
+.line { fill: none; stroke: #3498db; stroke-width: 2px; }
+.dot { fill: #3498db; }
+
+.variable-assignment {
+    background: #fff3cd;
+    border-left: 4px solid #ffc107;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 4px;
+}
+
+.function-definition {
+    background: #d4edda;
+    border-left: 4px solid #28a745;
+    padding: 15px;
+    margin: 20px 0;
+    border-radius: 4px;
+}
+
+.output-line {
+    background: #f8f9fa;
+    border-left: 4px solid #6c757d;
+    padding: 10px;
+    margin: 10px 0;
+    font-family: 'Courier New', monospace;
+    border-radius: 4px;
+}
+
+/* MathJax Styling */
+mjx-math {
+    font-weight: normal !important;
+    font-size: 95% !important;
+}
+
+mjx-container {
+    font-weight: normal !important;
+    font-size: 95% !important;
+}
+
+mjx-container[display="true"] {
+    text-align: left !important;
+}
+
+.MathJax_Display {
+    text-align: left !important;
+}
+
+/*
+   Tighten spacing for display math placed inside table cells.
+   MathJax's display containers add vertical margins by default (~0.75em).
+   This creates large row heights when we render two-column layouts using
+   tables. Limit the override strictly to tables to keep block equations
+   elsewhere unaffected.
+*/
+table mjx-container[display="true"] {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+/* Ensure the display container doesn't expand the row vertically */
+table td mjx-container[display="true"] {
+    display: inline-block !important; /* behave like inline equation inside cells */
+    vertical-align: middle;
+}
+
+/* Reduce any extra padding that MathJax might inject within the math box */
+table td mjx-container[display="true"] mjx-math {
+    line-height: 1.1; /* slightly compact but readable */
+}
+
+/* Ensure any HTML text we render in the right column (
+   headings or paragraphs injected by @h1-@h4/@p) lines up
+   with the math baseline by removing default margins/padding
+   and aligning them vertically to middle. */
+table td > h1,
+table td > h2,
+table td > h3,
+table td > h4,
+table td > p {
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1.1; /* match math line-height above */
+    vertical-align: middle;
+    display: inline-block; /* allow vertical-align to take effect */
+}
+
+/* Keep right-column paragraph styling (white-space: pre-wrap) intact */
+table td > p[style] {
+    white-space: pre-wrap !important;
+}
+
+/* Data table styles for table() function output */
+.table-container {
+    margin: 20px 0;
+    overflow-x: auto;
+}
+
+.data-table {
+    border-collapse: collapse;
+    width: auto;
+    min-width: 300px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+    margin-left: 0.25in;
+}
+
+.data-table thead {
+    background: #3498db;
+    color: white;
+}
+
+.data-table th {
+    padding: 8px 12px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid #2980b9;
+}
+
+.data-table tbody tr {
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.data-table tbody tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+.data-table tbody tr:hover {
+    background-color: #e8f4fc;
+}
+
+.data-table td {
+    padding: 6px 12px;
+    text-align: right;
+}
+
+/* Print styles for PDF output */
+@media print {
+    body {
+        padding: 0;
+        margin: 0;
+        background-color: white;
+    }
+    
+    .container {
+        max-width: 100%;
+        padding: 15px;
+        margin: 0;
+        box-shadow: none;
+        border-radius: 0;
+    }
+    
+    /* Hide source code blocks */
+    .madola-code {
+        display: none !important;
+    }
+    
+    /* Hide graph container borders and backgrounds for cleaner print */
+    .graph-container {
+        border: none;
+        background: white;
+        box-shadow: none;
+        page-break-inside: avoid;
+    }
+    
+    /* Ensure graphs print well */
+    .graph-container svg {
+        max-width: 100%;
+        height: auto;
+    }
+    
+    @page {
+        margin: 0.5in;
+        size: A4;
+    }
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+<div class="math-expression align-expression">
+$$
+\begin{array}{ccc}
+\alpha = 1 & \quad \quad \beta = -5 & \quad \quad \gamma = 6 \\
+\end{array}
+$$
+</div>
+<div class="math-expression align-expression">
+$$\begin{align}
+x1 &= \frac{-\beta + \sqrt{\beta^{2} - 4 \cdot \alpha \cdot \gamma}}{\left(2 \cdot \alpha\right)} \\
+&= \frac{(-(-5)) + \sqrt{{(-5)}^{2} - 4 \cdot 1 \cdot 6}}{2 \cdot 1} \\
+&= 3
+\end{align}$$
+</div>
+<div class="math-expression align-expression">
+$$\begin{align}
+x2 &= \frac{-\beta - \sqrt{\beta^{2} - 4 \cdot \alpha \cdot \gamma}}{\left(2 \cdot \alpha\right)} \\
+&= \frac{(-(-5)) - \sqrt{{(-5)}^{2} - 4 \cdot 1 \cdot 6}}{2 \cdot 1} \\
+&= 2
+\end{align}$$
+</div>
+<div class="execution-result">
+3
+2
+</div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,6 @@
+Execution completed successfully
+Output:
+  Hello, MADOLA!
+  Version 1.0 - Math Domain Language!
+  Alice
+  Johnson

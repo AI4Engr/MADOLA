@@ -1,0 +1,29 @@
+// Math library with utility functions
+
+// Square a number
+@gen_addon
+fn square(x) {
+    return x^2;
+}
+
+// Cube a number
+@gen_addon
+fn cube(x) {
+    return x^3;
+}
+
+// Factorial function
+@gen_addon
+fn factorial(n) {
+    if (n <= 1) {
+        return 1;
+    } else {
+        return n * factorial(n - 1);
+    }
+}
+
+// Pythagorean theorem
+@gen_addon
+fn pythagoras(a, b) {
+    return math.sin(0) + a^2 + b^2;
+}

@@ -1,0 +1,12 @@
+{
+  "name": "tree-sitter-madola",
+  "version": "1.0.0",
+  "description": "Tree-sitter grammar for MADOLA language",
+  "main": "bindings/node",
+  "tree-sitter": [
+    {
+      "scope": "source.madola",
+      "file-types": ["mda"]
+    }
+  ]
+}

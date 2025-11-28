@@ -1,0 +1,31 @@
+@h2[center] {Numeric integration method (Simpson's rule)}
+
+@version 0.01
+
+@p {Input data:}
+
+fn f(x) {
+    return x^2;
+}
+
+a := 1;
+b := 5;
+n := 1;
+
+@p {Calculation:}
+
+h := (b - a) / n;
+
+int := (1/3) * ((h/2) * (f(a) + f(b)) 
+        + h * math.summation(f(a + k * h), k, 1, n - 1)) 
+        + (2/3) * h * math.summation(f(a - h/2 + k * h), k, 1, n);
+
+@p {Result:}
+@eval
+int;
+
+@p {Control:}
+// Analytical integral of x^2 from a to b = b^3/3 - a^3/3
+control := b^3/3 - a^3/3;
+@eval
+control;

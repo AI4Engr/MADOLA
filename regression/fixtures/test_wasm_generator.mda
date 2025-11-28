@@ -1,0 +1,18 @@
+// Generate Test WASM Module for Regression Tests
+// This file generates a simple WASM module for testing imports
+
+@gen_addon
+fn testSquare(n) {
+    return n * n;
+}
+
+@gen_addon
+fn testDouble(n) {
+    return n * 2;
+}
+
+@gen_addon  
+fn testAdd(a, b) {
+    return a + b;
+}
+

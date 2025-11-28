@@ -1,0 +1,54 @@
+// Trigonometric Functions Example
+// Demonstrates sine, cosine, and tangent functions
+
+@h1[center]{
+Trigonometric Functions}
+
+@p{
+This example demonstrates MADOLA's built-in trigonometric functions
+and verifies the fundamental identity: sin²(x) + cos²(x) = 1}
+
+// Define pi
+\pi := 3.14159265358979323846;
+
+@h2{
+Basic Values}
+
+// Test at key angles
+print("sin(0) = " + math.sin(0) + "\n");
+print("cos(0) = " + math.cos(0) + "\n");
+print("tan(0) = " + math.tan(0) + "\n");
+
+print("sin(π/2) = " + math.sin(\pi/2) + "\n");
+print("cos(π/2) = " + math.cos(\pi/2) + "\n");
+
+print("sin(π) = " + math.sin(\pi) + "\n");
+print("cos(π) = " + math.cos(\pi) + "\n");
+
+@h2{
+Trigonometric Identity}
+
+// Verify sin²(x) + cos²(x) = 1 at various angles
+x := \pi/4;
+sin_x := math.sin(x);
+cos_x := math.cos(x);
+identity := sin_x^2 + cos_x^2;
+
+print("At x = π/4:\n");
+print("sin(x) = " + sin_x + "\n");
+print("cos(x) = " + cos_x + "\n");
+print("sin²(x) + cos²(x) = " + identity + "\n");
+
+@h2{
+Sine and Cosine Waves}
+
+// Generate data for plotting
+for i in 0...100 {
+    t[i] := i * 0.1;
+    sine[i] := math.sin(t[i]);
+    cosine[i] := math.cos(t[i]);
+}
+
+graph(t, sine, "Sine Wave");
+graph(t, cosine, "Cosine Wave");
+

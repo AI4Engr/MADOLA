@@ -1,0 +1,19 @@
+@version 0.01
+
+@h1{String Support Test}
+
+@p{Testing string literals, assignment, and printing}
+
+// Basic string assignment and printing
+message := "Hello, MADOLA!";
+print(message);
+
+// String with numbers and special characters
+info := "Version 1.0 - Math Domain Language!";
+print(info);
+
+// Multiple string variables
+firstName := "Alice";
+lastName := "Johnson";
+print(firstName);
+print(lastName);

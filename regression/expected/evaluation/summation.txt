@@ -1,0 +1,9 @@
+Execution completed successfully
+Output:
+  55
+  55
+  20
+  18
+  2.083
+  21
+  32

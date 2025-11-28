@@ -1,0 +1,48 @@
+// Quadratic Equation Solver
+// Solves ax² + bx + c = 0 using the quadratic formula
+
+@h1[center]{
+Quadratic Equation Solver}
+
+@p{
+This example solves the quadratic equation ax² + bx + c = 0
+using the quadratic formula: x = (-b ± √Δ) / (2a)
+where Δ = b² - 4ac is the discriminant.}
+
+// Define coefficients
+\alpha := 1;
+\beta := 1;
+\gamma := -6;
+
+@h3{
+Given Equation}
+
+@p{
+α = 1, β = 1, γ = -6
+Equation: x² + x - 6 = 0}
+
+// Calculate discriminant
+\Delta := \beta^2 - 4*\alpha*\gamma;
+
+print("Discriminant: " + \Delta + "\n");
+
+// Calculate solutions
+x_1 := (-\beta + math.sqrt(\Delta))/(2*\alpha);
+x_2 := (-\beta - math.sqrt(\Delta))/(2*\alpha);
+
+@h3{
+Solutions}
+
+print("x₁ = " + x_1 + "\n");
+print("x₂ = " + x_2 + "\n");
+
+// Verify solutions
+verify_1 := \alpha * x_1^2 + \beta * x_1 + \gamma;
+verify_2 := \alpha * x_2^2 + \beta * x_2 + \gamma;
+
+@h3{
+Verification}
+
+print("Substituting x₁: " + verify_1 + " (should be ≈ 0)\n");
+print("Substituting x₂: " + verify_2 + " (should be ≈ 0)\n");
+

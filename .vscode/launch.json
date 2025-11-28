@@ -1,0 +1,39 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Madola Interactive (C++)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/native/madola-debug.exe",
+            "args": ["debug_example.mda"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "console": "externalTerminal",
+            "preLaunchTask": "build-debug"
+        },
+        {
+            "name": "Debug Madola Standard (C++)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/native/madola.exe",
+            "args": ["debug_example.mda"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "console": "externalTerminal"
+        },
+        {
+            "name": "Debug with example.mda",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/native/madola.exe",
+            "args": ["example.mda"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "console": "externalTerminal"
+        }
+    ]
+}

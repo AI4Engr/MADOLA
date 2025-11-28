@@ -1,0 +1,36 @@
+// String Concatenation Example
+// Demonstrates string operations and formatting
+
+@h2{
+String Concatenation and Formatting}
+
+@p{
+MADOLA supports string concatenation using the + operator.
+You can combine strings with numbers and use escape sequences like \n for newlines.}
+
+// Basic string concatenation
+greeting := "Hello, " + "MADOLA!";
+print(greeting + "\n");
+
+// Number to string concatenation
+x := 42;
+message := "The answer is: " + x;
+print(message + "\n");
+
+// Multiple concatenations
+name := "Alice";
+age := 25;
+score := 95.5;
+print("Name: " + name + ", Age: " + age + ", Score: " + score + "\n");
+
+// Using escape sequences
+print("Line 1\n");
+print("Line 2\n");
+print("Line 3\n");
+
+// Formatted output with calculations
+a := 10;
+b := 20;
+sum := a + b;
+print("Sum of " + a + " and " + b + " is: " + sum + "\n");
+

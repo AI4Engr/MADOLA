@@ -1,0 +1,21 @@
+// WASM Import Test
+// Test importing functions from WASM modules in the same directory
+
+from testWasm import testSquare, testDouble;
+
+// Test WASM square function
+result1 := testSquare(5);
+print(result1);
+
+// Test WASM double function
+result2 := testDouble(7);
+print(result2);
+
+// Use WASM functions in expressions
+result3 := testSquare(3) + testDouble(4);
+print(result3);
+
+// Test with larger numbers
+result4 := testSquare(100);
+print(result4);
+

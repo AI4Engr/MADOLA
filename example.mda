@@ -1,0 +1,51 @@
+﻿@layout1x5
+P_x := 0.6;
+P_y := -0.8;
+a_x := -0.632;
+a_y := -0.474;
+M_p = -19.79;
+@layout1x2
+d_x := [-3; -3; -3; 3; 3; 3];
+d_y := [-3; 0; 3; -3; 0; 3];
+@layout1x2
+@eval
+d_x := d_x - a_x;
+@eval
+d_y := d_y - a_y;
+
+@layout1x2
+@eval
+d := math.sqrt(d_x^2 + d_y^2);
+@eval
+d_{sqr} := d^2;
+
+@eval
+d_{max} := math.max(d);
+@eval
+\Delta := 0.34 * d / d_{max};
+@eval
+\frac{R_i}{R_{ult}} := (1 - math.exp(-10 * \Delta))^0.55;
+@eval
+M := d * \frac{R_i}{R_{ult}};
+@eval
+M_{sum} := math.sum(M);
+@eval
+R_{ult} := -M_p / M_{sum};
+
+@layout1x2
+@eval
+R_x := -d_y / d * \frac{R_i}{R_{ult}} * R_{ult};
+@eval
+R_y := d_x / d * \frac{R_i}{R_{ult}} * R_{ult};
+@eval
+C_u := math.abs(M_{sum} / M_p);
+@layout1x2
+@eval
+F_{xx} := P_x + math.sum(R_x);
+@eval
+F_{yy} := P_y + math.sum(R_y);
+@eval
+F := math.sqrt(F_{xx}^2 + F_{yy}^2);
+
+table(["$d_x$", "$d_y$", "$d$", "$\Delta$", "$\frac{R_i}{R_{ult}}$", "$M$", "$R_x$", "$R_y$"], 
+        d_x, d_y, d, \Delta, \frac{R_i}{R_{ult}}, M, R_x, R_y);

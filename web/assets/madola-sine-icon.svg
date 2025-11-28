@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#0F2658"/>
+            <stop offset="100%" stop-color="#041330"/>
+        </linearGradient>
+        <linearGradient id="stroke" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#7FDBFF"/>
+            <stop offset="100%" stop-color="#2D7CE6"/>
+        </linearGradient>
+    </defs>
+    <rect x="24" y="24" width="464" height="464" rx="112" fill="url(#bg)"/>
+    <path d="M140 320 V120 L256 280 L372 120 V320"
+          fill="none"
+          stroke="url(#stroke)"
+          stroke-width="44"
+          stroke-linecap="round"
+          stroke-linejoin="round"/>
+    <text x="256" y="440"
+          font-family="Inter, 'Segoe UI', 'Helvetica Neue', sans-serif"
+          font-size="72"
+          font-weight="700"
+          text-anchor="middle"
+          letter-spacing="10"
+          fill="#E6F2FF">
+        MADOLA
+    </text>
+</svg>
+

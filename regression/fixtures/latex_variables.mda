@@ -1,0 +1,13 @@
+﻿// Example for latex equations
+
+@layout1x3
+\alpha := 1;
+\beta := -5;
+\gamma := 6;
+@resolveAlign
+x1 := (-\beta + math.sqrt(\beta^2 - 4*\alpha*\gamma))/(2*\alpha);
+@resolveAlign
+x2 := (-\beta - math.sqrt(\beta^2 - 4*\alpha*\gamma))/(2*\alpha);
+
+print(x1);
+print(x2);  

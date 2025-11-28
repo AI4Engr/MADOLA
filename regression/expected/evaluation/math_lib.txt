@@ -1,0 +1,13 @@
+Execution completed successfully
+Generated C++ file: C:\Users\370\.madola\gen_cpp/square.cpp
+Generated C++ file: C:\Users\370\.madola\gen_cpp/cube.cpp
+Generated C++ file: C:\Users\370\.madola\gen_cpp/factorial.cpp
+Generated C++ file: C:\Users\370\.madola\gen_cpp/pythagoras.cpp
+Generated WASM addon: C:\Users\370\.madola\trove\math_lib/square.wasm
+Generated JS wrapper: C:\Users\370\.madola\trove\math_lib/square.js
+Generated WASM addon: C:\Users\370\.madola\trove\math_lib/cube.wasm
+Generated JS wrapper: C:\Users\370\.madola\trove\math_lib/cube.js
+Generated WASM addon: C:\Users\370\.madola\trove\math_lib/factorial.wasm
+Generated JS wrapper: C:\Users\370\.madola\trove\math_lib/factorial.js
+Generated WASM addon: C:\Users\370\.madola\trove\math_lib/pythagoras.wasm
+Generated JS wrapper: C:\Users\370\.madola\trove\math_lib/pythagoras.js

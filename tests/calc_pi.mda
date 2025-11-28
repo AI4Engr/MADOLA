@@ -1,0 +1,22 @@
+
+from example import calcPi;
+
+fn calcPi1(n) {
+    sum := 0.0;
+    for i in 0...n
+    {
+        sum := sum + ((-1)^i) / ((2*i)+1);
+    }
+    return sum * 4;
+}
+
+s1 := time();
+x1 := calcPi1(1000);
+t1 := time() - s1;
+
+s2 := time();
+x2 := calcPi(1000000);
+t2 := time() - s2;
+
+print(t1);
+print(t2);

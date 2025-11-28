@@ -1,0 +1,79 @@
+﻿fn boltEcc(n, P_x, P_y, l_x, l_y, s_x, s_y) {
+    M_o := -(P_x * l_y - P_y * l_x);
+
+    @layout1x2
+    m := n / 2;
+    l := (m-1) * s_y;
+
+    for i in 0...(n-1){
+        if( i < n/2) {
+            d_x[i] := -s_x / 2.0;
+        }
+        else {
+            d_x[i] := s_x / 2.0;
+        }
+    }
+
+    for i in 0...(m-1){
+        d_y[i] := i * s_y - l / 2.0;
+        d_y[i+m] := i * s_y - l / 2.0;
+    }
+    
+    @layout1x2
+    M_o := -(P_x * l_y - P_y * l_x);
+    J := math.sum(d_x^2 + d_y^2);
+    @layout1x2
+    a_x := - P_y * J / n / M_o;
+    a_y := P_x * J / n / M_o;
+    @layout1x2
+    x_{ic} := a_x;
+    y_{ic} := a_y;
+    @layout1x2
+    x_{p,new} := l_x - a_x;
+    y_{p,new} := l_y - a_y;
+
+    C_u := n;
+
+    for i in 0...10{
+        M_p = -(P_x * y_{p,new} - P_y * x_{p,new});
+        @layout1x3
+        d_x := d_x - a_x;
+        d_y := d_y - a_y;
+        d := math.sqrt(d_x^2 + d_y^2);
+        @layout1x2
+        d_{sqr} := d^2;
+        d_{max} := math.max(d);
+        @layout1x2
+        \Delta := 0.34 * d / d_{max};
+        \frac{R_i}{R_{ult}} := (1 - math.exp(-10 * \Delta))^0.55;
+        @layout1x2
+        M := d * \frac{R_i}{R_{ult}};
+        M_{sum} := math.sum(M);
+        R_{ult} := -M_p / M_{sum};
+        @layout1x2
+        R_x := -d_y / d * \frac{R_i}{R_{ult}} * R_{ult};
+        R_y := d_x / d * \frac{R_i}{R_{ult}} * R_{ult};
+        C_u := math.abs(M_{sum} / M_p);
+        @layout1x3
+        F_{xx} := P_x + math.sum(R_x);
+        F_{yy} := P_y + math.sum(R_y);
+        F := math.sqrt(F_{xx}^2 + F_{yy}^2);
+        @layout1x2
+        a_x := - F_{yy} * J / n / M_o;
+        a_y := F_{xx} * J / n / M_o;
+        @layout1x2
+        x_{ic} := x_{ic} + a_x;
+        y_{ic} := y_{ic} + a_y;
+        @layout1x2
+        x_{p,new} := x_{p,new} - a_x;
+        y_{p,new} := y_{p,new} - a_y;
+
+        if(math.abs(F) < 0.001)
+            break;
+    }
+
+    return C_u;
+}
+
+@eval
+C_u := boltEcc(6, 0.6, -0.8, 20, 5, 6, 3);

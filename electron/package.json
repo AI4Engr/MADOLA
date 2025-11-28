@@ -1,0 +1,63 @@
+{
+  "name": "madola-electron",
+  "version": "1.0.0",
+  "description": "MADOLA Math Domain Language Editor - Desktop Application",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "build-win": "electron-builder --win",
+    "build-mac": "electron-builder --mac",
+    "build-linux": "electron-builder --linux",
+    "dist": "npm run build",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "build": {
+    "appId": "com.madola.editor",
+    "productName": "MADOLA Editor",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "../web/**/*",
+      "!../web/node_modules/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "../web/",
+        "to": "web/",
+        "filter": ["**/*"]
+      }
+    ],
+    "asar": false,
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon.icns"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "assets/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  },
+  "devDependencies": {
+    "electron": "^27.0.0",
+    "electron-builder": "^24.6.4"
+  },
+  "author": "MADOLA Team",
+  "license": "MIT",
+  "homepage": "https://github.com/madola/madola",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/madola/madola.git"
+  }
+}

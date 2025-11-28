@@ -1,0 +1,22 @@
+// Matrix-Vector Operations Example
+
+// Define a 3x3 matrix
+A := [2, 1, 0;
+      1, 3, 1;
+      0, 1, 2];
+
+// Define vectors
+u := [1, 0, 2];      // Row vector
+v := [1; 2; 1];      // Column vector
+
+// Matrix x Vector
+Av := A * v;
+print(Av);
+
+// Vector x Matrix
+uA := u * A;
+print(uA);
+
+// Vector x Matrix x Vector (quadratic form)
+quad := u * A * v;
+print(quad);

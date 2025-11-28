@@ -1,0 +1,62 @@
+// Physical Units Example
+// Demonstrates unit support in MADOLA
+
+@h1[center]{
+Physical Units and Calculations}
+
+@p{
+MADOLA supports physical units for engineering and scientific calculations.
+This example demonstrates various unit types and compound units.}
+
+@h2{
+Length Units}
+
+length1 := 5 mm;
+length2 := 10 cm;
+length3 := 2 m;
+length4 := 0.5 km;
+
+print("Length 1: " + length1 + "\n");
+print("Length 2: " + length2 + "\n");
+print("Length 3: " + length3 + "\n");
+print("Length 4: " + length4 + "\n");
+
+@h2{
+Mass and Force}
+
+mass := 50 kg;
+force := 500 N;
+pressure := 100 kPa;
+
+print("Mass: " + mass + "\n");
+print("Force: " + force + "\n");
+print("Pressure: " + pressure + "\n");
+
+@h2{
+Compound Units}
+
+// Velocity
+velocity := 25 * m/s;
+print("Velocity: " + velocity + "\n");
+
+// Acceleration
+acceleration := 9.8 * m/s^2;
+print("Acceleration: " + acceleration + "\n");
+
+// Density
+density := 1000 * kg/m^3;
+print("Density: " + density + "\n");
+
+@h2{
+Engineering Calculations}
+
+// Calculate force from mass and acceleration
+// F = m × a
+m := 10 kg;
+a := 5 * m/s^2;
+F := m * a;
+
+print("Mass: " + m + "\n");
+print("Acceleration: " + a + "\n");
+print("Force: " + F + "\n");
+

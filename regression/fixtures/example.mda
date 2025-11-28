@@ -1,0 +1,11 @@
+// Basic Function Example
+
+fn test(a, b)
+{
+    c := 1;
+    return a + b + c;
+}
+
+x := test(5, 3);
+//Results:
+print(x);

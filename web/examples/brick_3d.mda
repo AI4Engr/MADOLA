@@ -1,0 +1,46 @@
+// 3D Visualization: Brick with Hole
+// Engineering volume calculation example
+
+@h1[center]{
+Brick with Rectangular Hole}
+
+@p{
+This example creates a 3D visualization of a brick with a rectangular hole.
+Useful for engineering calculations and volume computations.}
+
+// Define brick dimensions
+brick_w := 10;
+brick_h := 6;
+brick_d := 8;
+
+// Define hole dimensions
+hole_w := 4;
+hole_h := 3;
+hole_d := 8;
+
+@h2{
+Dimensions}
+
+print("Brick: " + brick_w + " × " + brick_h + " × " + brick_d + "\n");
+print("Hole: " + hole_w + " × " + hole_h + " × " + hole_d + "\n");
+
+@h2{
+Volume Calculations}
+
+// Calculate volumes
+brick_v := brick_w * brick_h * brick_d;
+hole_v := hole_w * hole_h * hole_d;
+net_v := brick_v - hole_v;
+
+print("Brick Volume: " + brick_v + "\n");
+print("Hole Volume: " + hole_v + "\n");
+print("Net Volume: " + net_v + "\n");
+
+@h2{
+3D Visualization}
+
+// Create 3D visualization
+graph_3d("Engineering Brick with Hole", 
+         brick_w, brick_h, brick_d,
+         hole_w, hole_h, hole_d);
+

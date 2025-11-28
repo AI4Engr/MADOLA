@@ -1,0 +1,81 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build-debug",
+            "type": "shell",
+            "command": "dev.bat",
+            "args": ["build"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": "$gcc",
+            "detail": "Build MADOLA debug executable with CMake"
+        },
+        {
+            "label": "configure-debug",
+            "type": "shell",
+            "command": "dev.bat",
+            "args": ["configure"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "detail": "Configure CMake for debug build"
+        },
+        {
+            "label": "generate-grammar",
+            "type": "shell",
+            "command": "dev.bat",
+            "args": ["generate-grammar"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "detail": "Generate Tree-sitter grammar"
+        },
+        {
+            "label": "clean-build",
+            "type": "shell",
+            "command": "dev.bat",
+            "args": ["clean"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "detail": "Clean build artifacts"
+        },
+        {
+            "label": "run-tests",
+            "type": "shell",
+            "command": "dev.bat",
+            "args": ["test"],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "detail": "Run MADOLA test suite"
+        }
+    ]
+}

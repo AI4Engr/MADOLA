@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blockpad - Engineering Calculation Software</title>
+    <script src="https://unpkg.com/pagedjs/dist/paged.polyfill.js"></script>
+    <style>
+        @page {
+            size: Letter;
+            margin: 0.75in 0.5in;
+        }
+        
+        .pagedjs_page_content {
+            border: 2px solid black;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11pt;
+            line-height: 1.4;
+        }
+        
+        .page {
+            padding: 0;
+            background: white;
+            page-break-after: always;
+            height: 100%;
+        }
+        
+        .page:last-child {
+            page-break-after: auto;
+        }
+        
+        /* Header Section */
+        .header {
+            border-bottom: 2px solid black;
+        }
+        
+        .header-row {
+            display: flex;
+            border-bottom: 1px solid black;
+        }
+        
+        .header-row:last-child {
+            border-bottom: none;
+        }
+        
+        .logo-cell {
+            width: 120px;
+            border-right: 2px solid black;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .logo-container {
+            text-align: center;
+        }
+        
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            margin-bottom: 5px;
+        }
+        
+        .logo-text {
+            font-size: 18pt;
+            font-weight: normal;
+            color: #333;
+        }
+        
+        .header-fields {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 2fr 80px 2fr 80px 100px;
+        }
+        
+        .header-cell {
+            padding: 4px 8px;
+            border-right: 1px solid black;
+            font-size: 9pt;
+        }
+        
+        .header-cell:last-child {
+            border-right: none;
+        }
+        
+        .header-cell.label {
+            font-weight: bold;
+        }
+        
+        .header-cell.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        /* Content Section */
+        .content {
+            padding: 20px;
+        }
+        
+        .given-section {
+            margin-bottom: 20px;
+        }
+        
+        .given-label {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .given-text {
+            text-align: justify;
+            margin-bottom: 15px;
+        }
+        
+        .given-text .highlight {
+            color: #0066cc;
+            font-weight: bold;
+        }
+        
+        .verify-text {
+            margin-top: 15px;
+            margin-bottom: 20px;
+        }
+        
+        /* Diagram Section */
+        .diagram-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .diagram {
+            display: inline-block;
+            position: relative;
+        }
+        
+        .diagram svg {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+        }
+        
+        /* Variables Section */
+        .variables {
+            margin: 20px 0;
+            line-height: 1.8;
+        }
+        
+        .variable-row {
+            display: inline-block;
+            margin-right: 30px;
+            margin-bottom: 8px;
+        }
+        
+        .var-subscript {
+            font-size: 0.8em;
+            vertical-align: sub;
+        }
+        
+        .highlight-blue {
+            color: #0066cc;
+            font-weight: bold;
+        }
+        
+        /* Solution Section */
+        .solution-section {
+            margin-top: 20px;
+        }
+        
+        .solution-label {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .solution-text {
+            margin-bottom: 15px;
+        }
+        
+        .solution-text .highlight {
+            font-weight: bold;
+        }
+        
+        /* Table Section */
+        .calculation-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        .calculation-table td {
+            border: 1px solid black;
+            padding: 10px;
+            vertical-align: top;
+        }
+        
+        .calculation-table .header-cell-table {
+            text-align: center;
+            font-weight: bold;
+            background-color: #f0f0f0;
+        }
+        
+        .formula {
+            margin: 5px 0;
+        }
+        
+        .formula-line {
+            margin-left: 20px;
+            margin-top: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-row">
+                <div class="logo-cell" style="grid-row: 1 / 4;">
+                    <div class="logo-container">
+                    </div>
+                </div>
+                <div class="header-fields">
+                    <div class="header-cell label">Project</div>
+                    <div class="header-cell"></div>
+                    <div class="header-cell label">By</div>
+                    <div class="header-cell"></div>
+                    <div class="header-cell label">Sheet No.</div>
+                </div>
+            </div>
+            <div class="header-row">
+                <div style="width: 120px;"></div>
+                <div class="header-fields">
+                    <div class="header-cell label">Location</div>
+                    <div class="header-cell"></div>
+                    <div class="header-cell label">Date</div>
+                    <div class="header-cell"></div>
+                    <div class="header-cell">1 / 4</div>
+                </div>
+            </div>
+            <div class="header-row">
+                <div style="width: 120px;"></div>
+                <div class="header-fields">
+                    <div class="header-cell full-width"></div>
+                    <div class="header-cell" style="grid-column: 5; border-left: 1px solid black;">
+                        <span class="label">Job No.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

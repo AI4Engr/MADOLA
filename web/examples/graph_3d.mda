@@ -1,0 +1,13 @@
+// 3D Brick with Hole Examples
+
+// Default brick
+a := 1;
+graph_3d(a);
+
+// Medium brick
+b := 2;
+graph_3d(b, 6, 4, 3, 2, 2, 1);
+
+// Large brick with small hole
+c := 3;
+graph_3d(c, 8, 5, 4, 1, 1, 0.5);

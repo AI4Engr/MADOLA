@@ -1,0 +1,24 @@
+// Import Functions from Another File
+
+// Import specific functions from math_lib.mda
+from math_lib import square, cube, factorial, pythagoras;
+
+// Test imported square function
+result1 := square(5);
+print(result1);
+
+// Test imported cube function
+result2 := cube(3);
+print(result2);
+
+// Test imported factorial function
+result3 := factorial(5);
+print(result3);
+
+// Test imported pythagoras function
+result4 := pythagoras(3, 4);
+print(result4);
+
+// Use imported functions in expressions
+result5 := square(2) + cube(2);
+print(result5);

@@ -1,0 +1,15 @@
+# Tauri-specific
+target/
+WixTools/
+*.exe
+*.msi
+*.deb
+*.AppImage
+*.dmg
+
+# Dependency directories
+node_modules/
+
+# Build output
+dist/
+bundle/

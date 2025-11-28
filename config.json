@@ -1,0 +1,473 @@
+{
+  "version": 2,
+  "codex": {
+    "providers": {},
+    "current": ""
+  },
+  "claude": {
+    "providers": {
+      "1f5245b0-7ea0-4b0f-9e4f-47a5d9c4650d": {
+        "id": "1f5245b0-7ea0-4b0f-9e4f-47a5d9c4650d",
+        "name": "B4U公益站",
+        "settingsConfig": {
+          "env": {
+            "ANTHROPIC_AUTH_TOKEN": "sk-tLcCImpMfsAwWpSVNZ3682A0iNC7rsxKopxqgWe4YC7SQPRe",
+            "ANTHROPIC_BASE_URL": "https://b4u.qzz.io",
+            "API_TIMEOUT_MS": "600000",
+            "BASH_DEFAULT_TIMEOUT_MS": "600000",
+            "BASH_MAX_TIMEOUT_MS": "600000",
+            "CLAUDE_API_TIMEOUT": "600000",
+            "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+            "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "32000",
+            "MCP_TIMEOUT": "30000",
+            "MCP_TOOL_TIMEOUT": "600000"
+          },
+          "permissions": {
+            "allow": [],
+            "deny": []
+          }
+        },
+        "websiteUrl": "",
+        "category": "custom",
+        "createdAt": 1762610602295,
+        "meta": {
+          "custom_endpoints": {
+            "https://b4u.qzz.io": {
+              "url": "https://b4u.qzz.io",
+              "addedAt": 1762610602295
+            }
+          }
+        }
+      },
+      "7f66bd2d-4e4c-4c38-87bb-ef98774f4302": {
+        "id": "7f66bd2d-4e4c-4c38-87bb-ef98774f4302",
+        "name": "Nyxar",
+        "settingsConfig": {
+          "env": {
+            "ANTHROPIC_AUTH_TOKEN": "sk-axzYFmBEdFH0qYKDY65cj3UEhokdDvvSTmeUd4VuoYv347jJ",
+            "ANTHROPIC_BASE_URL": "https://api.nyxar.org",
+            "API_TIMEOUT_MS": "600000",
+            "BASH_DEFAULT_TIMEOUT_MS": "600000",
+            "BASH_MAX_TIMEOUT_MS": "600000",
+            "CLAUDE_API_TIMEOUT": "600000",
+            "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+            "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "32000",
+            "MCP_TIMEOUT": "30000",
+            "MCP_TOOL_TIMEOUT": "600000"
+          },
+          "permissions": {
+            "allow": [],
+            "deny": []
+          }
+        },
+        "websiteUrl": "",
+        "category": "custom",
+        "createdAt": 1762698770285,
+        "meta": {
+          "custom_endpoints": {
+            "https://api.nyxar.org": {
+              "url": "https://api.nyxar.org",
+              "addedAt": 1762698770285
+            }
+          }
+        }
+      },
+      "default": {
+        "id": "default",
+        "name": "88Code",
+        "settingsConfig": {
+          "alwaysThinkingEnabled": true,
+          "env": {
+            "ANTHROPIC_AUTH_TOKEN": "88_8acd348e4a628e5d2403cae2a99cce59b489bd7e5a848c61f563b0ae69f9a5aa",
+            "ANTHROPIC_BASE_URL": "https://www.88code.org/api",
+            "API_TIMEOUT_MS": "600000",
+            "BASH_DEFAULT_TIMEOUT_MS": "600000",
+            "BASH_MAX_TIMEOUT_MS": "600000",
+            "CLAUDE_API_TIMEOUT": "600000",
+            "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+            "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "32000",
+            "MCP_TIMEOUT": "30000",
+            "MCP_TOOL_TIMEOUT": "600000"
+          },
+          "includeCoAuthoredBy": false,
+          "permissions": {
+            "allow": [],
+            "deny": []
+          }
+        },
+        "websiteUrl": ""
+      },
+      "5432adc5-9210-441c-a4ca-d09dac67a83a": {
+        "id": "5432adc5-9210-441c-a4ca-d09dac67a83a",
+        "name": "sdwfger",
+        "settingsConfig": {
+          "env": {
+            "ANTHROPIC_AUTH_TOKEN": "sk-GgkSREsTEzDYOmsNuPhhHT3Ua4peeOjE2hOjb5E9hNhTljvb",
+            "ANTHROPIC_BASE_URL": "https://sdwfger.edu.kg",
+            "API_TIMEOUT_MS": "600000",
+            "BASH_DEFAULT_TIMEOUT_MS": "600000",
+            "BASH_MAX_TIMEOUT_MS": "600000",
+            "CLAUDE_API_TIMEOUT": "600000",
+            "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+            "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "32000",
+            "MCP_TIMEOUT": "30000",
+            "MCP_TOOL_TIMEOUT": "600000"
+          },
+          "permissions": {
+            "allow": [],
+            "deny": []
+          }
+        },
+        "websiteUrl": "",
+        "category": "custom",
+        "createdAt": 1762612554108,
+        "meta": {
+          "custom_endpoints": {
+            "https://sdwfger.edu.kg": {
+              "url": "https://sdwfger.edu.kg",
+              "addedAt": 1762612554108
+            }
+          }
+        }
+      },
+      "8a142da7-61b0-42cf-b1db-f81afe4d7521": {
+        "id": "8a142da7-61b0-42cf-b1db-f81afe4d7521",
+        "name": "amazon q",
+        "settingsConfig": {
+          "env": {
+            "ANTHROPIC_AUTH_TOKEN": "sk-EHHj15Bkug5e7J9PjJdLKbH0gAyGfPRrcVbMeyNNw6AuXTT5",
+            "ANTHROPIC_BASE_URL": "https://veloera.henryyang.net",
+            "API_TIMEOUT_MS": "600000",
+            "BASH_DEFAULT_TIMEOUT_MS": "600000",
+            "BASH_MAX_TIMEOUT_MS": "600000",
+            "CLAUDE_API_TIMEOUT": "600000",
+            "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+            "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "32000",
+            "MCP_TIMEOUT": "30000",
+            "MCP_TOOL_TIMEOUT": "600000"
+          },
+          "permissions": {
+            "allow": [],
+            "deny": []
+          }
+        },
+        "websiteUrl": "",
+        "category": "custom",
+        "createdAt": 1760495551577
+      },
+      "e65075c7-a724-4e50-aa53-4d09a65c4242": {
+        "id": "e65075c7-a724-4e50-aa53-4d09a65c4242",
+        "name": "ThatAPI",
+        "settingsConfig": {
+          "env": {
+            "ANTHROPIC_AUTH_TOKEN": "sk-mgwJYNmWd9QXitzSDo786UmlqNesX3xt95Nw5AdISoU1HTbp",
+            "ANTHROPIC_BASE_URL": "https://gyapi.zxiaoruan.cn/",
+            "API_TIMEOUT_MS": "600000",
+            "BASH_DEFAULT_TIMEOUT_MS": "600000",
+            "BASH_MAX_TIMEOUT_MS": "600000",
+            "CLAUDE_API_TIMEOUT": "600000",
+            "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+            "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "32000",
+            "MCP_TIMEOUT": "30000",
+            "MCP_TOOL_TIMEOUT": "600000"
+          },
+          "permissions": {
+            "allow": [],
+            "deny": []
+          }
+        },
+        "websiteUrl": "",
+        "category": "custom",
+        "createdAt": 1762225259913,
+        "meta": {
+          "custom_endpoints": {
+            "https://gyapi.zxiaoruan.cn": {
+              "url": "https://gyapi.zxiaoruan.cn",
+              "addedAt": 1762225259913
+            }
+          }
+        }
+      },
+      "dacb60d1-8ea2-4d6b-89ee-c5d2c6e58abd": {
+        "id": "dacb60d1-8ea2-4d6b-89ee-c5d2c6e58abd",
+        "name": "WONG公益",
+        "settingsConfig": {
+          "env": {
+            "ANTHROPIC_AUTH_TOKEN": "sk-KMIBvn4G7nt1wcYnTNKTU34D01DTNDiWQnUShE42OlZSjtob",
+            "ANTHROPIC_BASE_URL": "https://newapi.netlib.re",
+            "API_TIMEOUT_MS": "600000",
+            "BASH_DEFAULT_TIMEOUT_MS": "600000",
+            "BASH_MAX_TIMEOUT_MS": "600000",
+            "CLAUDE_API_TIMEOUT": "600000",
+            "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+            "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "32000",
+            "MCP_TIMEOUT": "30000",
+            "MCP_TOOL_TIMEOUT": "600000"
+          },
+          "permissions": {
+            "allow": [],
+            "deny": []
+          }
+        },
+        "websiteUrl": "",
+        "category": "custom",
+        "createdAt": 1762610391083,
+        "meta": {
+          "custom_endpoints": {
+            "https://newapi.netlib.re": {
+              "url": "https://newapi.netlib.re",
+              "addedAt": 1762610391083
+            }
+          }
+        }
+      },
+      "e4b86b76-7406-44d8-a4ce-357e341e28b5": {
+        "id": "e4b86b76-7406-44d8-a4ce-357e341e28b5",
+        "name": "公益droid",
+        "settingsConfig": {
+          "env": {
+            "ANTHROPIC_AUTH_TOKEN": "sk-hfeQHf1nsesO7d5dyIYsySyjUVfC3aEh4maGPqNFV10cNJm5",
+            "ANTHROPIC_BASE_URL": "https://anyrouter.cloud",
+            "API_TIMEOUT_MS": "600000",
+            "BASH_DEFAULT_TIMEOUT_MS": "600000",
+            "BASH_MAX_TIMEOUT_MS": "600000",
+            "CLAUDE_API_TIMEOUT": "600000",
+            "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+            "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "32000",
+            "MCP_TIMEOUT": "30000",
+            "MCP_TOOL_TIMEOUT": "600000"
+          },
+          "permissions": {
+            "allow": [],
+            "deny": []
+          }
+        },
+        "websiteUrl": "",
+        "category": "custom",
+        "createdAt": 1760110502823
+      },
+      "00ea0766-e03d-4bba-87a0-800d97adf04c": {
+        "id": "00ea0766-e03d-4bba-87a0-800d97adf04c",
+        "name": "KYX",
+        "settingsConfig": {
+          "env": {
+            "ANTHROPIC_AUTH_TOKEN": "sk-8yR5dTt3fKEmgJPCjtmQ96i01b69QYS5UMW8MEqvMVXioRyk",
+            "ANTHROPIC_BASE_URL": "https://api.kkyyxx.xyz"
+          }
+        },
+        "websiteUrl": "",
+        "category": "custom",
+        "createdAt": 1761020699928
+      },
+      "20a29177-4c8f-4269-a5f1-590c4838d8ba": {
+        "id": "20a29177-4c8f-4269-a5f1-590c4838d8ba",
+        "name": "包子公益",
+        "settingsConfig": {
+          "env": {
+            "ANTHROPIC_AUTH_TOKEN": "sk-ZZMRQ8kwBmeQkmQOjMHc8GjWN9CfF2PFG48M17yyc2ApyPkj",
+            "ANTHROPIC_BASE_URL": "https://api.codeqaq.com",
+            "API_TIMEOUT_MS": "600000",
+            "BASH_DEFAULT_TIMEOUT_MS": "600000",
+            "BASH_MAX_TIMEOUT_MS": "600000",
+            "CLAUDE_API_TIMEOUT": "600000",
+            "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+            "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "32000",
+            "MCP_TIMEOUT": "30000",
+            "MCP_TOOL_TIMEOUT": "600000"
+          },
+          "permissions": {
+            "allow": [],
+            "deny": []
+          }
+        },
+        "websiteUrl": "",
+        "category": "custom",
+        "createdAt": 1762259636695,
+        "meta": {
+          "custom_endpoints": {
+            "https://api.codeqaq.com": {
+              "url": "https://api.codeqaq.com",
+              "addedAt": 1762259636695
+            }
+          }
+        }
+      },
+      "317d8898-ce3b-465f-8096-d97b1b9c3d0a": {
+        "id": "317d8898-ce3b-465f-8096-d97b1b9c3d0a",
+        "name": "Any Router",
+        "settingsConfig": {
+          "alwaysThinkingEnabled": true,
+          "env": {
+            "ANTHROPIC_AUTH_TOKEN": "sk-hfeQHf1nsesO7d5dyIYsySyjUVfC3aEh4maGPqNFV10cNJm5",
+            "ANTHROPIC_BASE_URL": "https://q.quuvv.cn",
+            "API_TIMEOUT_MS": "600000",
+            "BASH_DEFAULT_TIMEOUT_MS": "600000",
+            "BASH_MAX_TIMEOUT_MS": "600000",
+            "CLAUDE_API_TIMEOUT": "600000",
+            "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+            "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "32000",
+            "MCP_TIMEOUT": "30000",
+            "MCP_TOOL_TIMEOUT": "600000"
+          },
+          "permissions": {
+            "allow": [],
+            "deny": []
+          }
+        },
+        "websiteUrl": "",
+        "category": "custom",
+        "createdAt": 1759330118601
+      },
+      "7efd77c3-d2fe-415f-ad43-e00dab0c7074": {
+        "id": "7efd77c3-d2fe-415f-ad43-e00dab0c7074",
+        "name": "996公益",
+        "settingsConfig": {
+          "env": {
+            "ANTHROPIC_AUTH_TOKEN": "sk-dZjQzIhVOXiP0GAeK5LVpAdGWc6Sr0HgeqfPThvB3etXVRQs",
+            "ANTHROPIC_BASE_URL": "https://529961.com",
+            "API_TIMEOUT_MS": "600000",
+            "BASH_DEFAULT_TIMEOUT_MS": "600000",
+            "BASH_MAX_TIMEOUT_MS": "600000",
+            "CLAUDE_API_TIMEOUT": "600000",
+            "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+            "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "32000",
+            "MCP_TIMEOUT": "30000",
+            "MCP_TOOL_TIMEOUT": "600000"
+          },
+          "permissions": {
+            "allow": [],
+            "deny": []
+          }
+        },
+        "websiteUrl": "",
+        "category": "custom",
+        "createdAt": 1762617498404,
+        "meta": {
+          "custom_endpoints": {
+            "https://529961.com": {
+              "url": "https://529961.com",
+              "addedAt": 1762617498404
+            }
+          }
+        }
+      },
+      "66a3d287-8cc9-4f16-9c17-90063df1f20f": {
+        "id": "66a3d287-8cc9-4f16-9c17-90063df1f20f",
+        "name": "dev88",
+        "settingsConfig": {
+          "env": {
+            "ANTHROPIC_AUTH_TOKEN": "sk-S9f0UROdx2m84Wutnn8hLVS6NWn24Eqeh4m2k1xV3ByN2EaJ",
+            "ANTHROPIC_BASE_URL": "https://api.dev88.tech/",
+            "API_TIMEOUT_MS": "600000",
+            "BASH_DEFAULT_TIMEOUT_MS": "600000",
+            "BASH_MAX_TIMEOUT_MS": "600000",
+            "CLAUDE_API_TIMEOUT": "600000",
+            "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+            "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "32000",
+            "MCP_TIMEOUT": "30000",
+            "MCP_TOOL_TIMEOUT": "600000"
+          },
+          "permissions": {
+            "allow": [],
+            "deny": []
+          }
+        },
+        "websiteUrl": "",
+        "category": "custom",
+        "createdAt": 1761876489341,
+        "meta": {
+          "custom_endpoints": {
+            "https://api.dev88.tech": {
+              "url": "https://api.dev88.tech",
+              "addedAt": 1761876489341
+            }
+          }
+        }
+      },
+      "dd0b0260-8b40-4698-a582-5316d5b827bf": {
+        "id": "dd0b0260-8b40-4698-a582-5316d5b827bf",
+        "name": "DockCoding",
+        "settingsConfig": {
+          "env": {
+            "ANTHROPIC_AUTH_TOKEN": "sk-RXYZuBxLz9yKROtgcmmAYSOch2UD7owrQCJQq2XMSswSixED",
+            "ANTHROPIC_BASE_URL": "https://jp.duckcoding.com",
+            "API_TIMEOUT_MS": "600000",
+            "BASH_DEFAULT_TIMEOUT_MS": "600000",
+            "BASH_MAX_TIMEOUT_MS": "600000",
+            "CLAUDE_API_TIMEOUT": "600000",
+            "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+            "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "32000",
+            "MCP_TIMEOUT": "30000",
+            "MCP_TOOL_TIMEOUT": "600000"
+          },
+          "permissions": {
+            "allow": [],
+            "deny": []
+          }
+        },
+        "websiteUrl": "",
+        "category": "custom",
+        "createdAt": 1759329874057
+      },
+      "0c660f6c-558d-4eff-b3a2-759772000510": {
+        "id": "0c660f6c-558d-4eff-b3a2-759772000510",
+        "name": "SuperXiaoAI",
+        "settingsConfig": {
+          "env": {
+            "ANTHROPIC_AUTH_TOKEN": "sk-NH8EmjAeX1KYfOHh4fMZR4YsbGpoBOUnlAOsuv1q1sIw43XQ",
+            "ANTHROPIC_BASE_URL": "https://superxiaoai.com",
+            "API_TIMEOUT_MS": "600000",
+            "BASH_DEFAULT_TIMEOUT_MS": "600000",
+            "BASH_MAX_TIMEOUT_MS": "600000",
+            "CLAUDE_API_TIMEOUT": "600000",
+            "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+            "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "32000",
+            "MCP_TIMEOUT": "30000",
+            "MCP_TOOL_TIMEOUT": "600000"
+          },
+          "permissions": {
+            "allow": [],
+            "deny": []
+          }
+        },
+        "websiteUrl": "",
+        "category": "custom",
+        "createdAt": 1759856724799
+      },
+      "8d71aedb-9d1a-4d2d-a547-dcb19a83cee1": {
+        "id": "8d71aedb-9d1a-4d2d-a547-dcb19a83cee1",
+        "name": "AgentRouter",
+        "settingsConfig": {
+          "env": {
+            "ANTHROPIC_AUTH_TOKEN": "sk-hfeQHf1nsesO7d5dyIYsySyjUVfC3aEh4maGPqNFV10cNJm5",
+            "ANTHROPIC_BASE_URL": "https://anyrouter.cloud",
+            "API_TIMEOUT_MS": "600000",
+            "BASH_DEFAULT_TIMEOUT_MS": "600000",
+            "BASH_MAX_TIMEOUT_MS": "600000",
+            "CLAUDE_API_TIMEOUT": "600000",
+            "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+            "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "32000",
+            "MCP_TIMEOUT": "30000",
+            "MCP_TOOL_TIMEOUT": "600000"
+          },
+          "permissions": {
+            "allow": [],
+            "deny": []
+          }
+        },
+        "websiteUrl": "",
+        "category": "custom",
+        "createdAt": 1760885575968
+      }
+    },
+    "current": "dacb60d1-8ea2-4d6b-89ee-c5d2c6e58abd"
+  },
+  "mcp": {
+    "claude": {
+      "servers": {}
+    },
+    "codex": {
+      "servers": {}
+    }
+  }
+}

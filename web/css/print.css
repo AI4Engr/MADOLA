@@ -1,0 +1,97 @@
+/* Print styles for web app - hide UI elements when printing */
+
+@media print {
+    html,
+    body {
+        height: auto !important;
+        min-height: auto !important;
+        overflow: visible !important;
+    }
+
+    #app,
+    .main-container,
+    .panel,
+    .right-panel,
+    #output-content,
+    .output-container,
+    #output {
+        display: block !important;
+        height: auto !important;
+        min-height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+    }
+
+    .main-container {
+        flex-direction: column !important;
+    }
+
+    /* Hide all UI elements */
+    .menubar,
+    .sidebar-panel,
+    .panel-header,
+    .resize-handle,
+    .left-panel,
+    .messages-panel {
+        display: none !important;
+    }
+    
+    /* Hide source code blocks */
+    .madola-code {
+        display: none !important;
+    }
+
+    /* Hide code editor and non-output tabs */
+    .middle-panel,
+    .monaco-container,
+    #monaco-editor {
+        display: none !important;
+    }
+
+    /* Ensure only formatted output tab is visible */
+    .tab-content:not(#output-content),
+    #cpp-content,
+    #tab-cpp,
+    .cpp-files-container {
+        display: none !important;
+    }
+    
+    /* Make output panel full width */
+    .right-panel {
+        width: 100% !important;
+        max-width: 100% !important;
+        border: none !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        background: white !important;
+    }
+    
+    .output-container {
+        padding: 0 !important;
+        background: white !important;
+    }
+    
+    /* Hide output placeholder */
+    .output-placeholder {
+        display: none !important;
+    }
+    
+    /* Ensure content is visible */
+    #output {
+        display: block !important;
+        width: 100% !important;
+        background: white !important;
+    }
+    
+    /* Page break settings */
+    h1, h2, h3 {
+        page-break-after: avoid;
+    }
+    
+    .graph-container,
+    .execution-result,
+    .math-expression {
+        page-break-inside: avoid;
+    }
+}
+

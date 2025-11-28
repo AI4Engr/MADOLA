@@ -1,0 +1,63 @@
+# Claude Code settings (local)
+.claude/settings.local.json
+
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs
+dist/
+build/
+build-wasm/
+gen_cpp/
+target/
+
+# Compiled files
+*.o
+*.so
+*.dll
+*.exe
+*.obj
+*.wasm
+*.js.map
+*.gch
+*.pch
+*.exp
+*.lib
+*.a
+
+# Allow web/runtime/*.js (WASM runtime files)
+!web/runtime/*.js
+!web/runtime/*.wasm
+
+# Logs and temp files
+*.log
+*.tmp
+*.cache
+*.swp
+*.swo
+.DS_Store
+
+# Auto-generated files
+src/core/generator/embedded_css.h
+
+# C++ and WASM files are now stored in ~/.madola/gen_cpp and ~/.madola/trove
+trove/
+
+# Temporary and output files
+*.hml
+out.hml
+test_inline.mda
+
+# Distribution folders
+electron/dist/
+tauri/target/
+
+# VS Code extension builds
+.vscode/extensions/**/out/
+.vscode/extensions/**/*.vsix
+.vscode/extensions/**/node_modules/
+
+# Regression test results (generated)
+regression/results/
+

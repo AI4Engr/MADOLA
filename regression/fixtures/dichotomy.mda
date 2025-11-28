@@ -1,0 +1,55 @@
+﻿@version 0.01
+
+@h1[center] {Nonlinear equations solving with Dichotomy method}
+
+@p {Function}
+fn f(x) {
+    return x^3 - 8;
+}
+
+@p {Calculations precision}
+\epsilon := 0.00001;
+
+@p {Range}
+@layout1x2
+a := -10; 
+b := 10;
+
+@p {Calculation:}
+
+// Initialize iteration counter
+n := 0;
+
+// Dichotomy method - iterate while interval is large
+diff := math.abs(b - a);
+while (diff > \epsilon) {
+    x_{n} := (b + a) / 2;
+    f_{xn} := f(x_{n});
+    f_{a} := f(a);
+    product := f_{xn} * f_{a};
+
+    if (product <= 0) {
+        b := x_{n};
+    } else {
+        a := x_{n};
+    }
+
+    diff := math.abs(b - a);
+    n := n + 1;
+}
+
+// Final result
+x_{n} := (b + a) / 2;
+
+@p {Result:}
+@eval
+x_{n};
+
+@p {Left part value:}
+@eval
+f_{xn,r} := f(x_{n});
+
+@p {Number of iterations}
+@eval
+n;
+

@@ -1,0 +1,50 @@
+// Trigonometry Functions Example
+
+// Basic trigonometric functions with common angles
+
+// math.sin(0) = 0
+result1 := math.sin(0);
+print(result1);
+
+// math.cos(0) = 1
+result2 := math.cos(0);
+print(result2);
+
+// math.tan(0) = 0
+result3 := math.tan(0);
+print(result3);
+
+// math.sin(pi/6) = 0.5
+pi := 3.14159265358979323846;
+result4 := math.sin(pi/6);
+print(result4);
+
+// math.cos(pi/3) = 0.5
+result5 := math.cos(pi/3);
+print(result5);
+
+// math.sin(pi/2) = 1
+result6 := math.sin(pi/2);
+print(result6);
+
+// math.cos(pi/2) ~ 0
+result7 := math.cos(pi/2);
+print(result7);
+
+// math.tan(pi/4) = 1
+result8 := math.tan(pi/4);
+print(result8);
+
+// math.sin(pi) ~ 0
+result9 := math.sin(pi);
+print(result9);
+
+// math.cos(pi) = -1
+result10 := math.cos(pi);
+print(result10);
+
+// Using trigonometry in expressions
+// sin^2(x) + cos^2(x) = 1
+x := pi/4;
+identity := math.sin(x)^2 + math.cos(x)^2;
+print(identity);

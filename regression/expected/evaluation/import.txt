@@ -1,0 +1,11 @@
+Imported function: square from math_lib.mda
+Imported function: cube from math_lib.mda
+Imported function: factorial from math_lib.mda
+Imported function: pythagoras from math_lib.mda
+Execution completed successfully
+Output:
+  25
+  27
+  120
+  25
+  12

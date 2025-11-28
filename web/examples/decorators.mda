@@ -1,0 +1,47 @@
+// Decorators Test
+
+// Function with @gen_cpp decorator for C++ generation
+@gen_cpp
+fn factorial(n)
+{
+    if( n <= 1 )
+    {
+        return 1;
+    }
+    else
+    {
+        return n * factorial(n - 1);
+    }
+}
+
+// Function with @latex decorator for LaTeX formatting
+@latex
+fn quadratic(a, b, c, x)
+{
+    return a*x^2 + b*x + c;
+}
+
+// Function with both decorators
+@latex
+@gen_cpp
+fn power_series(x, n)
+{
+    result := 1;
+    term := 1;
+    for i in 1...n
+    {
+        term := term * x / i;
+        result := result + term;
+    }
+    return result;
+}
+
+// Test the functions
+fact_{result} := factorial(5);
+print(fact_{result});
+
+quad_{result} := quadratic(1, -3, 2, 2);
+print(quad_{result});
+
+series_{result} := power_series(1, 5);
+print(series_{result});

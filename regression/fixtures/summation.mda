@@ -1,0 +1,31 @@
+// Built-in Summation Function Example
+
+// Basic summation: sum of i from 1 to 10
+// Syntax: math.summation(expression, variable, lower_bound, upper_bound)
+result1 := math.summation(i, i, 1, 10);
+print(result1);
+
+// Sum of squares: sum of i^2 from 1 to 5
+result2 := math.summation(i^2, i, 1, 5);
+print(result2);
+
+// Sum with coefficient: sum of 2*i from 1 to 4
+result3 := math.summation(2*i, i, 1, 4);
+print(result3);
+
+// Sum of expression with constant: sum of (i + 3) from 0 to 3
+result4 := math.summation(i + 3, i, 0, 3);
+print(result4);
+
+// Sum of fractions: sum of 1/i from 1 to 4 (harmonic series partial sum)
+result5 := math.summation(1/i, i, 1, 4);
+print(result5);
+
+// Sum with variable bounds
+n := 6;
+result6 := math.summation(i, i, 1, n);
+print(result6);
+
+// Nested expression: sum of (i*2 + 1) from 2 to 5
+result7 := math.summation(i*2 + 1, i, 2, 5);
+print(result7);

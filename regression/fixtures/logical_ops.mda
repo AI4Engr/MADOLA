@@ -1,0 +1,42 @@
+@version 0.01
+
+@h1[center] {Testing Logical Operators}
+
+@p {AND operator tests}
+@eval
+a := 1 && 1;
+
+@eval
+b := 1 && 0;
+
+@eval
+c := 0 && 1;
+
+@eval
+d := 0 && 0;
+
+@p {OR operator tests}
+@eval
+e := 1 || 1;
+
+@eval
+f := 1 || 0;
+
+@eval
+g := 0 || 1;
+
+@eval
+h := 0 || 0;
+
+@p {Combined with comparisons}
+@eval
+x := 5;
+
+@eval
+result1 := (x > 3) && (x < 10);
+
+@eval
+result2 := (x < 3) || (x > 10);
+
+@eval
+result3 := (x > 0) && (x < 3);

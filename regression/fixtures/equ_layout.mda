@@ -1,0 +1,15 @@
+﻿@layout1x4
+\Omega_{b} := 1.667;
+F_{y} := 50 ksi;
+S_{x} := 1410 in^2;
+Z_{x} := 1620 in^3;
+
+@resolveAlign
+\frac{M_{px}}{\Omega_{b}} := F_{y} * Z_{x} / \Omega_{b};
+
+@resolveAlign
+\frac{M_{rx}}{\Omega_{b}} := 0.7 * F_{y} * S_{x} / \Omega_{b};
+
+print(\Omega_{b});
+print(F_{y});
+print(Z_{x});

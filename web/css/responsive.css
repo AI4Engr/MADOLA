@@ -1,0 +1,619 @@
+/* MADOLA Responsive Styles - Dark Theme & Media Queries */
+
+/* ========================================
+   Dark Theme
+   ======================================== */
+
+body.dark-theme {
+    --page-background: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.22) 0, rgba(59, 130, 246, 0) 55%), radial-gradient(circle at 78% 0%, rgba(236, 72, 153, 0.18) 0, rgba(236, 72, 153, 0) 48%), linear-gradient(180deg, #0b1221 0%, #101c34 45%, #0a101d 100%);
+    --surface-glass-1: rgba(17, 25, 40, 0.78);
+    --surface-glass-2: rgba(26, 37, 57, 0.86);
+    --surface-border: rgba(148, 163, 184, 0.16);
+    --shadow-soft: 0 32px 64px -36px rgba(2, 6, 23, 0.72);
+    --shadow-strong: 0 54px 100px -48px rgba(2, 6, 23, 0.82);
+    --text-primary: #e2e8f0;
+    --text-secondary: #94a3b8;
+}
+
+body.dark-theme::after {
+    background: radial-gradient(circle at 18% 25%, rgba(60, 130, 246, 0.14) 0, rgba(60, 130, 246, 0) 46%), radial-gradient(circle at 82% 18%, rgba(168, 85, 247, 0.14) 0, rgba(168, 85, 247, 0) 52%), linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 38%);
+}
+
+body.dark-theme .menubar-status {
+    background: rgba(148, 163, 184, 0.14);
+    border-color: rgba(148, 163, 184, 0.22);
+    color: var(--text-secondary);
+}
+
+body.dark-theme .menu-btn {
+    background: rgba(17, 25, 40, 0.55);
+    border-color: rgba(148, 163, 184, 0.24);
+    color: var(--text-primary);
+    box-shadow: 0 22px 44px -28px rgba(2, 6, 23, 0.65);
+}
+
+body.dark-theme .menu-btn:hover {
+    background: rgba(17, 25, 40, 0.7);
+    border-color: rgba(148, 163, 184, 0.3);
+}
+
+body.dark-theme .menu-btn--subtle {
+    background: transparent;
+    color: var(--text-secondary);
+    border-color: rgba(148, 163, 184, 0.28);
+}
+
+body.dark-theme .sidebar-content-panel {
+    background: linear-gradient(200deg, rgba(25, 70, 128, 0.96) 0%, rgba(18, 52, 98, 0.97) 65%, rgba(11, 37, 74, 0.98) 100%);
+    color: rgba(255, 255, 255, 0.95);
+    box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.05);
+    border-right: none;
+}
+
+body.dark-theme .sidebar-content-header {
+    border-bottom-color: rgba(255, 255, 255, 0.25);
+}
+
+body.dark-theme .sidebar-content-header h3 {
+    color: rgba(255, 255, 255, 0.95);
+}
+
+body.dark-theme .sidebar-tab-content h4 {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+body.dark-theme .settings-content,
+body.dark-theme .about-content {
+    color: #ecf0f1;
+}
+
+body.dark-theme .setting-item label {
+    color: #bdc3c7;
+}
+
+body.dark-theme .ai-placeholder {
+    color: #ecf0f1;
+}
+
+body.dark-theme .ai-placeholder p {
+    color: #95a5a6;
+}
+
+body.dark-theme .theme-toggle-btn {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.32);
+}
+
+body.dark-theme .theme-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.24);
+    border-color: rgba(255, 255, 255, 0.45);
+}
+
+body.dark-theme .theme-toggle-icon {
+    color: rgba(255, 255, 255, 0.95);
+}
+
+body.dark-theme .color-theme-btn.active {
+    border-color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-theme .format-btn,
+body.dark-theme .symbol-btn-sm,
+body.dark-theme .toolbar-btn {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.24);
+    color: rgba(255, 255, 255, 0.92);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+body.dark-theme .format-btn:hover,
+body.dark-theme .symbol-btn-sm:hover,
+body.dark-theme .toolbar-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.4);
+    color: white;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2), 0 10px 20px -18px rgba(15, 23, 42, 0.6);
+}
+
+body.dark-theme .file-item,
+body.dark-theme .toolbar-btn,
+body.dark-theme .file-tree-folder-header,
+body.dark-theme .file-tree-file {
+    box-shadow: 0 22px 44px -32px rgba(2, 6, 23, 0.7);
+}
+
+body.dark-theme #output {
+    background: rgba(17, 25, 40, 0.82);
+    border-color: rgba(148, 163, 184, 0.16);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05), 0 24px 50px -28px rgba(2, 6, 23, 0.75);
+}
+
+body.dark-theme .output-placeholder {
+    background: rgba(59, 130, 246, 0.14);
+    border-color: rgba(59, 130, 246, 0.32);
+    color: var(--text-secondary);
+}
+
+body.dark-theme .tab-container {
+    background: rgba(17, 25, 40, 0.5);
+    border-color: rgba(148, 163, 184, 0.18);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+body.dark-theme .tab-btn {
+    color: var(--text-secondary);
+}
+
+body.dark-theme .tab-btn:hover {
+    color: var(--text-primary);
+}
+
+body.dark-theme .tab-btn.active {
+    color: var(--text-primary);
+}
+
+/* File browser dark theme */
+body.dark-theme .file-browser-toolbar {
+    background: #1e1e1e;
+    border-bottom-color: #000;
+}
+
+body.dark-theme .toolbar-btn {
+    background: transparent;
+    border-color: #555;
+}
+
+body.dark-theme .toolbar-btn:hover {
+    background: var(--accent-color);
+    border-color: var(--accent-color-hover);
+}
+
+body.dark-theme .file-tree-folder-header {
+    background: #1e1e1e;
+    border-color: #555;
+    color: #cccccc;
+}
+
+body.dark-theme .file-tree-folder-header:hover {
+    background: #2d2d30;
+    border-color: #777;
+}
+
+body.dark-theme .file-tree-folder-header.expanded {
+    background: #2d2d30;
+}
+
+body.dark-theme .file-tree-file {
+    background: #1e1e1e;
+    border-color: #555;
+    color: #969696;
+}
+
+body.dark-theme .file-tree-file:hover {
+    background: var(--accent-color);
+    border-color: var(--accent-color-hover);
+    color: #ffffff;
+}
+
+/* ========================================
+   Dark Theme Overrides for Panels & Output
+   ======================================== */
+
+body.dark-theme .panel-header {
+    background: rgba(17, 25, 40, 0.78);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+body.dark-theme .panel-header h3 {
+    color: var(--text-primary);
+}
+
+body.dark-theme #monaco-editor {
+    background: transparent;
+    border-color: rgba(148, 163, 184, 0.16);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+/* MADOLA Output Dark Theme */
+body.dark-theme .container {
+    background: transparent;
+    color: var(--text-primary);
+    box-shadow: none;
+}
+
+body.dark-theme .madola-code {
+    background: rgba(15, 23, 42, 0.4);
+    color: #e2e8f0;
+    border-left-color: #3498db;
+}
+
+body.dark-theme .execution-result {
+    background: rgba(39, 174, 96, 0.15);
+    border-left-color: #2ecc71;
+    color: #e2e8f0;
+}
+
+body.dark-theme .variable-assignment {
+    background: rgba(241, 196, 15, 0.15);
+    border-left-color: #f1c40f;
+    color: #e2e8f0;
+}
+
+body.dark-theme .function-definition {
+    background: rgba(46, 204, 113, 0.15);
+    border-left-color: #2ecc71;
+    color: #e2e8f0;
+}
+
+body.dark-theme .output-line {
+    background: rgba(15, 23, 42, 0.4);
+    border-left-color: #94a3b8;
+    color: #e2e8f0;
+}
+
+body.dark-theme .graph-container {
+    background: rgba(15, 23, 42, 0.4);
+    border-color: rgba(148, 163, 184, 0.16);
+}
+
+body.dark-theme .graph-title {
+    color: var(--text-primary);
+}
+
+body.dark-theme mjx-container {
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme .data-table {
+    color: #e2e8f0;
+}
+
+body.dark-theme .data-table thead {
+    background: #2c3e50;
+}
+
+body.dark-theme .data-table th {
+    border-bottom-color: #34495e;
+}
+
+body.dark-theme .data-table tbody tr {
+    border-bottom-color: #2c3e50;
+}
+
+body.dark-theme .data-table tbody tr:nth-child(even) {
+    background-color: rgba(15, 23, 42, 0.3);
+}
+
+body.dark-theme .data-table tbody tr:hover {
+    background-color: rgba(52, 152, 219, 0.15);
+}
+
+body.dark-theme .message.error {
+    background: rgba(231, 76, 60, 0.15);
+    color: #ff6b6b;
+}
+
+/* Force light text for messages in day mode which now has light background */
+/* But wait, day mode uses var(--text-primary) which is dark. That's correct. */
+/* However, previous message styles had color: #ecf0f1 (white) which was invisible on light bg */
+/* We fixed that in components.css by using var(--text-primary) */
+/* But we need to ensure dark theme still uses light text if needed */
+
+body.dark-theme .message {
+    color: #ecf0f1;
+}
+
+body.dark-theme .message.info {
+    color: #3498db;
+}
+
+body.dark-theme .message.success {
+    color: #2ecc71;
+}
+
+body.dark-theme .message.warning {
+    color: #f1c40f;
+}
+
+body.dark-theme .message.error {
+    color: #e74c3c;
+}
+
+/* ========================================
+   Responsive Design - Mobile
+   ======================================== */
+
+@media (max-width: 768px) {
+    /* Reduce edge padding for mobile */
+    #app {
+        padding: 0.5rem 0.5rem 0.5rem;
+        gap: 0.4rem;
+    }
+
+    /* Main layout adjustments */
+    .main-container {
+        flex-direction: column;
+        gap: 0.4rem;
+        min-height: 0;
+        height: auto;
+    }
+
+    /* Sidebar adjustments */
+    .sidebar-panel {
+        flex-direction: column;
+        width: 100%;
+        flex-shrink: 0;
+        border-radius: calc(var(--panel-radius) - 8px);
+    }
+
+    .sidebar-icon-bar {
+        flex-direction: row;
+        width: 100%;
+        height: 48px;
+        box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.18);
+    }
+
+    .sidebar-header {
+        border-bottom: none;
+        border-right: none;
+        padding: 0.35rem;
+    }
+
+    .sidebar-toggle-btn {
+        font-size: 0.85rem;
+        padding: 0.2rem;
+    }
+
+    .sidebar-tabs {
+        flex-direction: row;
+        flex: 1;
+        overflow-x: auto;
+        padding: 0.25rem 0.3rem;
+        gap: 0.25rem;
+    }
+
+    .sidebar-tab {
+        padding: 0.35rem 0.45rem;
+        border-left: none;
+        border-bottom: none;
+        min-width: 40px;
+        border-radius: 10px;
+    }
+
+    .sidebar-tab.active {
+        border-left: none;
+    }
+
+    .tab-icon {
+        font-size: 0.95rem;
+    }
+
+    /* Sidebar content panel on mobile */
+    .sidebar-content-panel {
+        width: 100%;
+        max-width: 100%;
+        height: 0;
+        max-height: 0;
+        transition: height 0.3s ease, max-height 0.3s ease;
+    }
+
+    .sidebar-content-panel.expanded {
+        width: 100%;
+        min-width: 100%;
+        max-width: 100%;
+        height: clamp(240px, 40vh, 360px);
+        max-height: clamp(240px, 40vh, 360px);
+        flex: 0 0 auto;
+    }
+
+    /* Greek symbols - 12 per row on mobile, smaller size */
+    .symbol-grid-compact {
+        grid-template-columns: repeat(12, 1fr);
+        gap: 0.15rem;
+    }
+
+    .symbol-btn-sm {
+        height: 26px;
+        font-size: 0.7rem;
+        padding: 0.1rem;
+        min-width: 0;
+    }
+
+    /* Middle panel */
+    .middle-panel {
+        width: 100%;
+        min-width: 100%;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 220px;
+    }
+
+    /* Right panel */
+    .right-panel {
+        width: 100%;
+        min-width: 100%;
+        height: auto;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 220px;
+    }
+
+    /* Mobile resize handles */
+    .resize-handle#resize-left,
+    .resize-handle#resize-right {
+        display: block;
+        width: 100%;
+        height: 6px;
+        cursor: row-resize;
+        background: rgba(15, 23, 42, 0.1);
+        border-radius: 999px;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.24);
+    }
+
+    .resize-handle#resize-left.hidden {
+        display: none;
+    }
+
+    /* Menubar adjustments */
+    .menubar {
+        padding: 0.4rem 0.5rem;
+        border-radius: calc(var(--panel-radius) - 8px);
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .menubar-left {
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .menubar-right {
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .menubar-brand {
+        gap: 0.4rem;
+        padding-right: 0.5rem;
+        border-right: none;
+    }
+
+    .brand-icon {
+        width: 28px;
+        height: 28px;
+        font-size: 1rem;
+        border-radius: 8px;
+    }
+
+    .brand-name {
+        font-size: 0.75rem;
+    }
+
+    .brand-tagline {
+        font-size: 0.55rem;
+    }
+
+    /* Menu adjustments */
+    .menubar-actions {
+        flex-wrap: wrap;
+        gap: 0.2rem;
+    }
+
+    .menu-section {
+        gap: 0.2rem;
+        flex-wrap: wrap;
+    }
+
+    .menu-btn {
+        padding: 0.25rem 0.4rem;
+        font-size: 0.65rem;
+        white-space: nowrap;
+        border-radius: 8px;
+    }
+
+    .btn-icon {
+        display: none;
+    }
+
+    .menubar-status {
+        padding: 0.35rem 0.65rem;
+        font-size: 0.7rem;
+    }
+
+    .status-dot {
+        width: 6px;
+        height: 6px;
+    }
+
+    /* Panel adjustments */
+    .panel {
+        border-radius: calc(var(--panel-radius) - 8px);
+    }
+
+    /* Panel headers */
+    .panel-header {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+    }
+
+    .panel-header h3 {
+        font-size: 0.95rem;
+    }
+
+    /* Example selector */
+    .example-select {
+        min-width: 140px;
+        font-size: 0.8rem;
+        padding: 0.45rem 0.75rem;
+    }
+
+    /* Control buttons */
+    .editor-controls,
+    .output-controls {
+        gap: 0.3rem;
+    }
+
+    .control-btn {
+        padding: 0.35rem 0.6rem;
+        font-size: 0.75rem;
+        border-radius: 10px;
+    }
+
+    /* Monaco editor - fill available space */
+    .monaco-container {
+        flex: 1;
+        min-height: 220px;
+        padding: 0 0.75rem 0.75rem;
+    }
+
+    #monaco-editor {
+        border-radius: 14px;
+    }
+}
+
+/* ========================================
+   Responsive Design - Tablet
+   ======================================== */
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    .sidebar-content-panel.expanded {
+        width: 240px;
+        min-width: 240px;
+        max-width: 240px;
+    }
+
+    /* 5 symbols per row on tablets */
+    .symbol-grid-compact {
+        grid-template-columns: repeat(5, 1fr);
+    }
+
+    .middle-panel {
+        min-width: 300px;
+    }
+
+    .right-panel {
+        min-width: 300px;
+    }
+}
+
+/* ========================================
+   Responsive Design - Large Screens
+   ======================================== */
+
+@media (min-width: 1400px) {
+    .sidebar-content-panel.expanded {
+        width: 320px;
+    }
+}
+
+/* ========================================
+   Mobile Utilities
+   ======================================== */
+
+/* Hide mobile-only elements on desktop */
+.mobile-only {
+    display: none;
+}

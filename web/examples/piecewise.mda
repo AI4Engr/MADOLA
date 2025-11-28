@@ -1,0 +1,46 @@
+// Built-in Piecewise Function Example
+
+// Define a piecewise function using the built-in piecewise syntax
+// Syntax: function_name() := piecewise { (value, condition), (value, condition), (value, otherwise) }
+
+// Absolute value function using piecewise
+abs_val(x) := piecewise {
+    (x, x >= 0),
+    (-x, otherwise)
+};
+
+// Test the piecewise function
+result1 := abs_val(-5);
+print(result1);
+result2 := abs_val(3);
+print(result2);
+result3 := abs_val(0);
+print(result3);
+
+// More complex piecewise function - step function
+step_func(t) := piecewise {
+    (0, t < 1),
+    (1, t < 2),
+    (2, otherwise)
+};
+
+step1 := step_func(0.5);
+print(step1);
+step2 := step_func(1.5);
+print(step2);
+step3 := step_func(2.5);
+print(step3);
+
+// Mathematical piecewise function
+math_piece(x) := piecewise {
+    (x^2, x < 0),
+    (x + 1, x <= 2),
+    (2*x - 1, otherwise)
+};
+
+math1 := math_piece(-2);
+print(math1);
+math2 := math_piece(1);
+print(math2);
+math3 := math_piece(3);
+print(math3);

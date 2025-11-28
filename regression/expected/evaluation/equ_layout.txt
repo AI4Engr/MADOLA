@@ -1,0 +1,5 @@
+Execution completed successfully
+Output:
+  1.667
+  50 ksi
+  1620 in3

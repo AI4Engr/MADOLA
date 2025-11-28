@@ -1,0 +1,47 @@
+// Greatest Common Divisor (GCD)
+// Euclidean Algorithm implementation
+
+@h1[center]{
+Euclidean Algorithm for GCD}
+
+@p{
+The Euclidean algorithm finds the greatest common divisor (GCD)
+of two integers using repeated division.}
+
+// Define the GCD function
+fn gcd(a, b) {
+    while (b != 0) {
+        temp := b;
+        b := a % b;
+        a := temp;
+    }
+    return a;
+}
+
+@h2{
+Test Cases}
+
+// Test case 1
+a1 := 48;
+b1 := 18;
+result1 := gcd(a1, b1);
+print("gcd(" + a1 + ", " + b1 + ") = " + result1 + "\n");
+
+// Test case 2
+a2 := 100;
+b2 := 35;
+result2 := gcd(a2, b2);
+print("gcd(" + a2 + ", " + b2 + ") = " + result2 + "\n");
+
+// Test case 3
+a3 := 1071;
+b3 := 462;
+result3 := gcd(a3, b3);
+print("gcd(" + a3 + ", " + b3 + ") = " + result3 + "\n");
+
+// Test case 4 - coprime numbers
+a4 := 17;
+b4 := 13;
+result4 := gcd(a4, b4);
+print("gcd(" + a4 + ", " + b4 + ") = " + result4 + " (coprime)\n");
+

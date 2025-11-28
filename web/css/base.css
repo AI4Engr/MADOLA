@@ -1,0 +1,396 @@
+/* MADOLA Base Styles - Variables, Reset, Layout */
+
+/* ========================================
+   CSS Variables & Theme Colors
+   ======================================== */
+
+:root {
+    --accent-color: #3498db;
+    --accent-color-hover: #2980b9;
+    --accent-color-light: rgba(52, 152, 219, 0.2);
+    
+    /* Modern Colorful Mesh Gradient */
+    --page-background: 
+        radial-gradient(circle at 0% 0%, rgba(167, 197, 255, 0.4) 0%, rgba(167, 197, 255, 0) 50%), 
+        radial-gradient(circle at 100% 0%, rgba(130, 244, 225, 0.3) 0%, rgba(130, 244, 225, 0) 50%), 
+        radial-gradient(circle at 100% 100%, rgba(255, 200, 221, 0.35) 0%, rgba(255, 200, 221, 0) 50%), 
+        radial-gradient(circle at 0% 100%, rgba(200, 220, 255, 0.3) 0%, rgba(200, 220, 255, 0) 50%),
+        linear-gradient(135deg, #f6f8fd 0%, #f1f4f9 100%);
+
+    /* Glass Surfaces - Distinct Frost/Ice Style (Darker than Mist) */
+    /* Panels: Deep Frost Blue - clearly distinct from background */
+    --surface-glass-1: linear-gradient(160deg, rgba(195, 215, 240, 0.85) 0%, rgba(180, 200, 230, 0.75) 100%);
+    
+    /* Menubar: Lighter Frost */
+    --surface-glass-2: linear-gradient(160deg, rgba(215, 230, 250, 0.9) 0%, rgba(205, 220, 245, 0.85) 100%);
+    
+    --surface-border: rgba(255, 255, 255, 0.5);
+    --shadow-soft: 0 24px 48px -12px rgba(50, 70, 100, 0.15);
+    --shadow-strong: 0 48px 80px -24px rgba(50, 70, 100, 0.2);
+    
+    --text-primary: #1e293b;
+    --text-secondary: #475569;
+    --panel-radius: 24px;
+    --control-radius: 14px;
+    --glass-blur: saturate(110%) blur(30px);
+    --transition-snappy: 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+:root[data-color-theme="blue"] {
+    --accent-color: #3498db;
+    --accent-color-hover: #2980b9;
+    --accent-color-light: rgba(52, 152, 219, 0.2);
+}
+
+:root[data-color-theme="green"] {
+    --accent-color: #27ae60;
+    --accent-color-hover: #229954;
+    --accent-color-light: rgba(39, 174, 96, 0.2);
+}
+
+:root[data-color-theme="purple"] {
+    --accent-color: #9b59b6;
+    --accent-color-hover: #8e44ad;
+    --accent-color-light: rgba(155, 89, 182, 0.2);
+}
+
+:root[data-color-theme="orange"] {
+    --accent-color: #e67e22;
+    --accent-color-hover: #d35400;
+    --accent-color-light: rgba(230, 126, 34, 0.2);
+}
+
+:root[data-color-theme="red"] {
+    --accent-color: #e74c3c;
+    --accent-color-hover: #c0392b;
+    --accent-color-light: rgba(231, 76, 60, 0.2);
+}
+
+:root[data-color-theme="teal"] {
+    --accent-color: #1abc9c;
+    --accent-color-hover: #16a085;
+    --accent-color-light: rgba(26, 188, 156, 0.2);
+}
+
+:root[data-color-theme="pink"] {
+    --accent-color: #e91e63;
+    --accent-color-hover: #c2185b;
+    --accent-color-light: rgba(233, 30, 99, 0.2);
+}
+
+:root[data-color-theme="indigo"] {
+    --accent-color: #3f51b5;
+    --accent-color-hover: #303f9f;
+    --accent-color-light: rgba(63, 81, 181, 0.2);
+}
+
+:root[data-color-theme="cyan"] {
+    --accent-color: #00bcd4;
+    --accent-color-hover: #0097a7;
+    --accent-color-light: rgba(0, 188, 212, 0.2);
+}
+
+:root[data-color-theme="lime"] {
+    --accent-color: #8bc34a;
+    --accent-color-hover: #689f38;
+    --accent-color-light: rgba(139, 195, 74, 0.2);
+}
+
+:root[data-color-theme="amber"] {
+    --accent-color: #ffc107;
+    --accent-color-hover: #ffa000;
+    --accent-color-light: rgba(255, 193, 7, 0.2);
+}
+
+:root[data-color-theme="brown"] {
+    --accent-color: #795548;
+    --accent-color-hover: #5d4037;
+    --accent-color-light: rgba(121, 85, 72, 0.2);
+}
+
+:root[data-color-theme="navy"] {
+    --accent-color: #34495e;
+    --accent-color-hover: #2c3e50;
+    --accent-color-light: rgba(52, 73, 94, 0.2);
+}
+
+:root[data-color-theme="crimson"] {
+    --accent-color: #dc143c;
+    --accent-color-hover: #b8102e;
+    --accent-color-light: rgba(220, 20, 60, 0.2);
+}
+
+/* ========================================
+   Global Reset & Base Styles
+   ======================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    line-height: 1.6;
+    color: var(--text-primary);
+    background: var(--page-background);
+    height: 100vh;
+    min-height: 100vh;
+    overflow: hidden;
+    position: relative;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: var(--page-background);
+    z-index: -2;
+}
+
+body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at 15% 30%, rgba(255, 255, 255, 0.6) 0, rgba(255, 255, 255, 0) 42%), radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.55) 0, rgba(255, 255, 255, 0) 48%), linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0) 40%);
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* Computing/Waiting Cursor */
+body.computing,
+body.computing * {
+    cursor: wait !important;
+}
+
+body.computing::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.01);
+    z-index: 9998;
+    pointer-events: none;
+}
+
+/* ========================================
+   Main Layout Containers
+   ======================================== */
+
+#app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    padding: 0.2rem 0.4rem 0.4rem;
+    gap: 0.2rem;
+    position: relative;
+    z-index: 1;
+}
+
+.main-container {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    gap: 0.35rem;
+    align-items: stretch;
+}
+
+.panel {
+    display: flex;
+    flex-direction: column;
+    background: var(--surface-glass-1);
+    border: 1px solid var(--surface-border);
+    border-radius: var(--panel-radius);
+    box-shadow: var(--shadow-strong);
+    backdrop-filter: var(--glass-blur);
+    overflow: hidden;
+    position: relative;
+}
+
+.middle-panel {
+    flex: 1;
+    min-width: 400px;
+    min-height: 0;
+}
+
+.right-panel {
+    flex: 1;
+    min-width: 400px;
+    min-height: 0;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    background: linear-gradient(to bottom, rgba(215, 230, 250, 0.7), rgba(205, 220, 245, 0.6));
+    border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(16px);
+    box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.3);
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.panel-header h3 {
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+/* ========================================
+   Editor Container
+   ======================================== */
+
+.monaco-container {
+    flex: 1;
+    overflow: hidden;
+    padding: 0 1.25rem 1.25rem;
+    background: transparent;
+    display: flex;
+}
+
+#monaco-editor {
+    width: 100%;
+    height: 100%;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    background: rgba(240, 245, 255, 0.75);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+}
+
+.editor-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+#editor {
+    flex: 1;
+    border: none;
+    padding: 1rem;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    resize: none;
+    outline: none;
+    background: rgba(240, 245, 255, 0.75);
+    color: var(--text-primary);
+}
+
+#editor:focus {
+    background: rgba(250, 252, 255, 0.9);
+}
+
+/* ========================================
+   Output Panel
+   ======================================== */
+
+.output-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.25rem;
+    background: transparent;
+}
+
+#output {
+    background: rgba(240, 245, 255, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 18px;
+    padding: 1.5rem;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35), 0 20px 44px -28px rgba(15, 23, 42, 0.45);
+    min-height: 100%;
+}
+
+.output-placeholder {
+    text-align: center;
+    color: var(--text-secondary);
+    margin-top: 2rem;
+    padding: 2rem 1.5rem;
+    border-radius: 16px;
+    background: rgba(52, 152, 219, 0.08);
+    border: 1px dashed rgba(52, 152, 219, 0.25);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+}
+
+.output-placeholder p {
+    margin-bottom: 0.5rem;
+}
+
+/* Output Styling */
+.output-container h1,
+.output-container h2,
+.output-container h3,
+.output-container h4,
+.output-container h5,
+.output-container h6 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+    letter-spacing: 0.01em;
+}
+
+.output-container p {
+    margin-bottom: 1rem;
+}
+
+.output-container code {
+    background: rgba(15, 23, 42, 0.06);
+    padding: 0.25rem 0.45rem;
+    border-radius: 8px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.9em;
+}
+
+.output-container pre {
+    background: rgba(15, 23, 42, 0.035);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 16px;
+    padding: 1.25rem;
+    overflow-x: auto;
+    margin: 1.25rem 0;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+}
+
+.output-container pre code {
+    background: none;
+    padding: 0;
+}
+
+/* Math Styling */
+.math-block {
+    background: rgba(15, 23, 42, 0.035);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin: 1.25rem 0;
+    overflow-x: auto;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+}
+
+/* ========================================
+   Scrollbar Styling
+   ======================================== */
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.06);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(15, 23, 42, 0.25);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(15, 23, 42, 0.35);
+}

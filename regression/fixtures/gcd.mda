@@ -1,0 +1,33 @@
+﻿@h2[center] {Euclidean Algorithm (Calculationg the GCD)}
+
+@version 0.01
+
+@p {Input data:}
+@layout1x2
+a := 20405;
+b := 84645;
+
+@p {Calculation:}
+@layout1x2
+x := math.abs(a);
+y := math.abs(b);
+
+while ((x != 0) && (y != 0))
+{
+    if (x > y)
+        x := math.mod(x, y);
+    else
+        y := math.mod(y, x);
+}
+GCD := x + y;
+
+@p {Result:}
+@eval
+GCD;
+
+@p {Control:}
+@layout1x2
+@eval
+a/GCD;
+@eval
+b/GCD;

@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MADOLA Output</title>
+    <script>
+        window.MathJax = {
+            tex: {
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                processEscapes: true,
+                processEnvironments: true,
+                packages: {'[+]': ['ams', 'newcommand', 'configmacros']}
+            },
+            chtml: {
+                scale: 1.0,
+                displayAlign: 'left'
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <style>
+/* MADOLA Output Styles - Shared between HTML export and web app */
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 20px;
+    background-color: #f8f9fa;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+h1, h2, h3 {
+    color: #2c3e50;
+    padding-bottom: 10px;
+}
+
+.madola-code {
+    background: #f1f2f6;
+    border-left: 4px solid #3498db;
+    padding: 15px;
+    margin: 20px 0;
+    font-family: 'Courier New', monospace;
+    border-radius: 4px;
+}
+
+.execution-result {
+    background: #e8f5e8;
+    border-left: 4px solid #27ae60;
+    padding: 15px;
+    margin: 20px 0;
+    border-radius: 4px;
+}
+
+.math-expression {
+    margin: 0 0;
+    text-align: center;
+    font-size: 1.1em;
+}
+
+.math-expression.align-expression {
+    margin-left: 0.25in;
+}
+
+/* Indent two-column tables to line up with aligned equations */
+.madola-pair-table {
+    /* Align with .math-expression.align-expression (0.25in) minus 10px cell padding */
+    margin-left: calc(0.25in - 10px);
+}
+
+.graph-container {
+    margin: 30px 0;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fafafa;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+/* Ensure legacy graph renderers (graph0, graph1, etc.) shrink with the panel */
+.graph-container > div[id^="graph"] {
+    width: 100%;
+}
+
+.graph-container > div[id^="graph"] svg {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+}
+
+.graph-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    color: #2c3e50;
+    text-align: center;
+}
+
+.web-graph {
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.web-graph svg {
+    width: 100%;
+    height: auto;
+    display: block;
+    max-width: 100%;
+}
+
+.axis { stroke: #333; }
+.grid line { stroke: #ddd; stroke-dasharray: 2,2; }
+.line { fill: none; stroke: #3498db; stroke-width: 2px; }
+.dot { fill: #3498db; }
+
+.variable-assignment {
+    background: #fff3cd;
+    border-left: 4px solid #ffc107;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 4px;
+}
+
+.function-definition {
+    background: #d4edda;
+    border-left: 4px solid #28a745;
+    padding: 15px;
+    margin: 20px 0;
+    border-radius: 4px;
+}
+
+.output-line {
+    background: #f8f9fa;
+    border-left: 4px solid #6c757d;
+    padding: 10px;
+    margin: 10px 0;
+    font-family: 'Courier New', monospace;
+    border-radius: 4px;
+}
+
+/* MathJax Styling */
+mjx-math {
+    font-weight: normal !important;
+    font-size: 95% !important;
+}
+
+mjx-container {
+    font-weight: normal !important;
+    font-size: 95% !important;
+}
+
+mjx-container[display="true"] {
+    text-align: left !important;
+}
+
+.MathJax_Display {
+    text-align: left !important;
+}
+
+/*
+   Tighten spacing for display math placed inside table cells.
+   MathJax's display containers add vertical margins by default (~0.75em).
+   This creates large row heights when we render two-column layouts using
+   tables. Limit the override strictly to tables to keep block equations
+   elsewhere unaffected.
+*/
+table mjx-container[display="true"] {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+/* Ensure the display container doesn't expand the row vertically */
+table td mjx-container[display="true"] {
+    display: inline-block !important; /* behave like inline equation inside cells */
+    vertical-align: middle;
+}
+
+/* Reduce any extra padding that MathJax might inject within the math box */
+table td mjx-container[display="true"] mjx-math {
+    line-height: 1.1; /* slightly compact but readable */
+}
+
+/* Ensure any HTML text we render in the right column (
+   headings or paragraphs injected by @h1-@h4/@p) lines up
+   with the math baseline by removing default margins/padding
+   and aligning them vertically to middle. */
+table td > h1,
+table td > h2,
+table td > h3,
+table td > h4,
+table td > p {
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1.1; /* match math line-height above */
+    vertical-align: middle;
+    display: inline-block; /* allow vertical-align to take effect */
+}
+
+/* Keep right-column paragraph styling (white-space: pre-wrap) intact */
+table td > p[style] {
+    white-space: pre-wrap !important;
+}
+
+/* Data table styles for table() function output */
+.table-container {
+    margin: 20px 0;
+    overflow-x: auto;
+}
+
+.data-table {
+    border-collapse: collapse;
+    width: auto;
+    min-width: 300px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+    margin-left: 0.25in;
+}
+
+.data-table thead {
+    background: #3498db;
+    color: white;
+}
+
+.data-table th {
+    padding: 8px 12px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid #2980b9;
+}
+
+.data-table tbody tr {
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.data-table tbody tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+.data-table tbody tr:hover {
+    background-color: #e8f4fc;
+}
+
+.data-table td {
+    padding: 6px 12px;
+    text-align: right;
+}
+
+/* Print styles for PDF output */
+@media print {
+    body {
+        padding: 0;
+        margin: 0;
+        background-color: white;
+    }
+    
+    .container {
+        max-width: 100%;
+        padding: 15px;
+        margin: 0;
+        box-shadow: none;
+        border-radius: 0;
+    }
+    
+    /* Hide source code blocks */
+    .madola-code {
+        display: none !important;
+    }
+    
+    /* Hide graph container borders and backgrounds for cleaner print */
+    .graph-container {
+        border: none;
+        background: white;
+        box-shadow: none;
+        page-break-inside: avoid;
+    }
+    
+    /* Ensure graphs print well */
+    .graph-container svg {
+        max-width: 100%;
+        height: auto;
+    }
+    
+    @page {
+        margin: 0.5in;
+        size: A4;
+    }
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+<div class="math-expression align-expression">
+$$\begin{array}{l}
+\textbf{function } boltEcc(n, P_x, P_y, l_x, l_y, s_x, s_y) \\
+\left|
+\begin{array}{l}
+\quad M_o = -\left(P_x \cdot l_y - P_y \cdot l_x\right) \\
+\quad m = \frac{n}{2} \qquad l = \left(m - 1\right) \cdot s_y \\
+\quad \textbf{for } i \textbf{ in } 0...n - 1 \\
+\quad \left|
+\begin{array}{l}
+\quad \textbf{if } i < \frac{n}{2} \textbf{ then} \\
+\quad \left|
+\begin{array}{l}
+\quad d_x[i] = \frac{-s_x}{2}
+\end{array}
+\right.\\
+\quad \textbf{else} \\
+\quad \left|
+\begin{array}{l}
+\quad d_x[i] = \frac{s_x}{2}
+\end{array}
+\right. \\
+\end{array}
+\right. \\
+\quad \textbf{for } i \textbf{ in } 0...m - 1 \\
+\quad \left|
+\begin{array}{l}
+\quad d_y[i] = i \cdot s_y - \frac{l}{2} \\
+\quad d_y[i + m] = i \cdot s_y - \frac{l}{2} \\
+\end{array}
+\right. \\
+\quad M_o = -\left(P_x \cdot l_y - P_y \cdot l_x\right) \qquad J = \sum d_x^{2} + d_y^{2} \\
+\quad a_x = \frac{-P_y \cdot J}{n \cdot M_o} \qquad a_y = \frac{P_x \cdot J}{n \cdot M_o} \\
+\quad x_{ic} = a_x \qquad y_{ic} = a_y \\
+\quad x_{p,new} = l_x - a_x \qquad y_{p,new} = l_y - a_y \\
+\quad C_u = n \\
+\quad \textbf{for } i \textbf{ in } 0...10 \\
+\quad \left|
+\begin{array}{l}
+\quad M_p = -\left(P_x \cdot y_{p,new} - P_y \cdot x_{p,new}\right) \\
+\quad d_x = d_x - a_x \qquad d_y = d_y - a_y \qquad d = \sqrt{d_x^{2} + d_y^{2}} \\
+\quad d_{sqr} = d^{2} \qquad d_{max} = \text{max}(d) \\
+\quad \Delta = 0.34 \frac{d}{d_{max}} \qquad \frac{R_i}{R_{ult}} = \left(1 - e^{-10 \cdot \Delta}\right)^{0.55} \\
+\quad M = d \cdot \frac{R_i}{R_{ult}} \qquad M_{sum} = \sum M \\
+\quad R_{ult} = \frac{-M_p}{M_{sum}} \\
+\quad R_x = \frac{-d_y}{d} \cdot \frac{R_i}{R_{ult}} \cdot R_{ult} \qquad R_y = \frac{d_x}{d} \cdot \frac{R_i}{R_{ult}} \cdot R_{ult} \\
+\quad C_u = \left|\frac{M_{sum}}{M_p}\right| \\
+\quad F_{xx} = P_x + \sum R_x \qquad F_{yy} = P_y + \sum R_y \qquad F = \sqrt{F_{xx}^{2} + F_{yy}^{2}} \\
+\quad a_x = \frac{-F_{yy} \cdot J}{n \cdot M_o} \qquad a_y = \frac{F_{xx} \cdot J}{n \cdot M_o} \\
+\quad x_{ic} = x_{ic} + a_x \qquad y_{ic} = y_{ic} + a_y \\
+\quad x_{p,new} = x_{p,new} - a_x \qquad y_{p,new} = y_{p,new} - a_y \\
+\quad \textbf{if } \left|F\right| < 0.001 \textbf{ then} \\
+\quad \left|
+\begin{array}{l}
+\quad \text{break}
+\end{array}
+\right. \\
+\end{array}
+\right. \\
+\quad \text{return } C_u
+\end{array}
+\right.
+\end{array}$$
+</div>
+<div class="math-expression align-expression">
+$$C_u = boltEcc(6, 0.6, -0.8, 20, 5, 6, 3) = 1.095$$
+</div>
+    </div>
+</body>
+</html>

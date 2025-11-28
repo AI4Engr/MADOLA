@@ -1,0 +1,10 @@
+Execution completed successfully
+Generated C++ file: C:\Users\370\.madola\gen_cpp/testSquare.cpp
+Generated C++ file: C:\Users\370\.madola\gen_cpp/testDouble.cpp
+Generated C++ file: C:\Users\370\.madola\gen_cpp/testAdd.cpp
+Generated WASM addon: C:\Users\370\.madola\trove\test_wasm_generator/testSquare.wasm
+Generated JS wrapper: C:\Users\370\.madola\trove\test_wasm_generator/testSquare.js
+Generated WASM addon: C:\Users\370\.madola\trove\test_wasm_generator/testDouble.wasm
+Generated JS wrapper: C:\Users\370\.madola\trove\test_wasm_generator/testDouble.js
+Generated WASM addon: C:\Users\370\.madola\trove\test_wasm_generator/testAdd.wasm
+Generated JS wrapper: C:\Users\370\.madola\trove\test_wasm_generator/testAdd.js
