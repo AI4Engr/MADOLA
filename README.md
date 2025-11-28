@@ -1,10 +1,12 @@
 # MADOLA — Math Domain Language
 
-**Math-Driven Coding with
-Automatic Documentation.**  
+**Math-Driven Coding with Automatic Documentation.**  
+
 MADOLA integrates *mathematical notation, computation, documentation,* and *code generation* within a single file. It is not intended to replace existing languages or applications. MADOLA is still in its **early** stages and under active development.
 
+![Screenshot](images/Screenshot.jpg)
 
+👉 Try it here: [https://ai4engr.com/MADOLA/](https://ai4engr.com/MADOLA/)
 ---
 
 ## 🧭 Why Not Create a New Wheel?
