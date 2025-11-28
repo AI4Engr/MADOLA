@@ -4,6 +4,7 @@
 # Dependencies
 node_modules/
 **/node_modules/
+vendor/
 
 # Build outputs
 dist/

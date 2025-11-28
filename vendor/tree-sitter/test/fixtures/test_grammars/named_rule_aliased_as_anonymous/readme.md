@@ -1,1 +1,0 @@
-This grammar checks that if a named node is aliased as an anonymous node (e.g. `alias($.foo, 'bar')`), then the rule will behave like an anonymous node. In particular, it will not show up in the tree's S-expression representation.

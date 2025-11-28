@@ -1,1 +1,0 @@
-This grammar is just like the `external_and_internal_tokens` grammar, except that the shared external token is *anonymous*; it's specified as a string in the grammar.

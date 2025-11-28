@@ -1,1 +1,0 @@
-This language has an external scanner that calls `lexer->advance(lexer, true)` (in order to skip whitespace) *after* having called `lexer->mark_end(lexer)`. This tests an edge case in the parser's handling of token start and end positions.

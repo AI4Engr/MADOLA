@@ -1,9 +1,0 @@
-==========================
-A leading zero-width token
-==========================
-
-hello
-
----
-
-(document (zero_width))
