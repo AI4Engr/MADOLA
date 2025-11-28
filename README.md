@@ -67,8 +67,8 @@ This single `.mda` file cane execute directly, generate HTML documentation with 
 Funciton to calculate π Using the Leibniz Series
 </h2>
 
-$
-\begin{array}{l}
+$$
+\begin{flalign}
 \textbf{function } calcPi(n) \\
 \left|
 \begin{array}{l}
@@ -82,8 +82,8 @@ $
 \quad \text{return } sum \cdot 4
 \end{array}
 \right.
-\end{array}
-$
+\end{flalign}
+$$
 
 
 ```cpp
