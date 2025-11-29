@@ -143,6 +143,7 @@ add_dependencies(madola_core_obj generate_css_header)
 # Target-specific include directories (better than global include_directories)
 target_include_directories(madola_core_obj PUBLIC
     ${CMAKE_SOURCE_DIR}/src/core
+    ${CMAKE_SOURCE_DIR}/external/eigen
 )
 
 target_include_directories(madola_core_obj PRIVATE
@@ -320,6 +321,7 @@ message(STATUS "MADOLA Build Configuration")
 message(STATUS "==============================================")
 message(STATUS "  Build Type:            ${CMAKE_BUILD_TYPE}")
 message(STATUS "  C++ Standard:          ${CMAKE_CXX_STANDARD}")
+message(STATUS "  Eigen Support:         Enabled (external/eigen)")
 message(STATUS "  Tree-sitter Support:   ${WITH_TREE_SITTER}")
 message(STATUS "  Unity Build:           ${USE_UNITY_BUILD}")
 message(STATUS "  Precompiled Headers:   ${USE_PRECOMPILED_HEADERS}")
