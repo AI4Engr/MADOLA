@@ -770,11 +770,121 @@ std::string HtmlFormatter::formatStatementAsMath(const Statement& stmt, Evaluato
                     }
                     // Now evaluate with the fresh evaluator
                     Value result = freshEvaluator.evaluateExpression(*assignment->expression);
+
+                    // If result is a string (symbolic expression), format it as LaTeX
+#ifdef WITH_SYMENGINE
+                    if (std::holds_alternative<std::string>(result)) {
+                        // For symbolic expressions, parse and format as LaTeX
+                        std::string symbolicStr = std::get<std::string>(result);
+
+                        // Clean up formatting: remove .0 from numbers
+                        size_t pos = 0;
+                        while ((pos = symbolicStr.find(".0", pos)) != std::string::npos) {
+                            // Check if followed by * or ^ or end of string
+                            if (pos + 2 >= symbolicStr.length() ||
+                                symbolicStr[pos + 2] == '*' ||
+                                symbolicStr[pos + 2] == ' ') {
+                                symbolicStr.erase(pos, 2);
+                            } else {
+                                pos++;
+                            }
+                        }
+
+                        // Remove ^1.0 or ^1 (x^1 = x)
+                        pos = 0;
+                        while ((pos = symbolicStr.find("**1.0", pos)) != std::string::npos) {
+                            symbolicStr.erase(pos, 5);
+                        }
+                        pos = 0;
+                        while ((pos = symbolicStr.find("**1", pos)) != std::string::npos) {
+                            // Make sure it's not **10, **11, etc.
+                            if (pos + 3 >= symbolicStr.length() || !isdigit(symbolicStr[pos + 3])) {
+                                symbolicStr.erase(pos, 3);
+                            } else {
+                                pos++;
+                            }
+                        }
+
+                        // Replace ** with ^
+                        pos = 0;
+                        while ((pos = symbolicStr.find("**", pos)) != std::string::npos) {
+                            symbolicStr.replace(pos, 2, "^");
+                            pos += 1;
+                        }
+
+                        // Replace * with \cdot
+                        pos = 0;
+                        while ((pos = symbolicStr.find("*", pos)) != std::string::npos) {
+                            symbolicStr.replace(pos, 1, " \\cdot ");
+                            pos += 7;
+                        }
+
+                        ss << symbolicStr;
+                    } else {
+                        ss << formatValueAsMath(result);
+                    }
+#else
                     ss << formatValueAsMath(result);
+#endif
                 } else {
                     // Fallback to old behavior if context not available
                     Value result = evaluator.evaluateExpression(*assignment->expression);
+
+                    // If result is a string (symbolic expression), format it as LaTeX
+#ifdef WITH_SYMENGINE
+                    if (std::holds_alternative<std::string>(result)) {
+                        // For symbolic expressions, parse and format as LaTeX
+                        std::string symbolicStr = std::get<std::string>(result);
+
+                        // Clean up formatting: remove .0 from numbers
+                        size_t pos = 0;
+                        while ((pos = symbolicStr.find(".0", pos)) != std::string::npos) {
+                            // Check if followed by * or ^ or end of string
+                            if (pos + 2 >= symbolicStr.length() ||
+                                symbolicStr[pos + 2] == '*' ||
+                                symbolicStr[pos + 2] == ' ') {
+                                symbolicStr.erase(pos, 2);
+                            } else {
+                                pos++;
+                            }
+                        }
+
+                        // Remove ^1.0 or ^1 (x^1 = x)
+                        pos = 0;
+                        while ((pos = symbolicStr.find("**1.0", pos)) != std::string::npos) {
+                            symbolicStr.erase(pos, 5);
+                        }
+                        pos = 0;
+                        while ((pos = symbolicStr.find("**1", pos)) != std::string::npos) {
+                            // Make sure it's not **10, **11, etc.
+                            if (pos + 3 >= symbolicStr.length() || !isdigit(symbolicStr[pos + 3])) {
+                                symbolicStr.erase(pos, 3);
+                            } else {
+                                pos++;
+                            }
+                        }
+
+                        // Replace ** with ^
+                        pos = 0;
+                        while ((pos = symbolicStr.find("**", pos)) != std::string::npos) {
+                            symbolicStr.replace(pos, 2, "^");
+                            pos += 1;
+                        }
+
+                        // Replace * with \cdot
+                        pos = 0;
+                        while ((pos = symbolicStr.find("*", pos)) != std::string::npos) {
+                            symbolicStr.replace(pos, 1, " \\cdot ");
+                            pos += 7;
+                        }
+
+                        ss << symbolicStr;
+                    } else {
+                        ss << formatValueAsMath(result);
+                    }
+#else
                     ss << formatValueAsMath(result);
+#endif
                 }
 
                 return ss.str();
@@ -800,9 +910,31 @@ std::string HtmlFormatter::formatStatementAsMath(const Statement& stmt, Evaluato
                         }
                     }
                     Value result = freshEvaluator.evaluateExpression(*exprStmt->expression);
+
+                    // If result is a string (symbolic expression), evaluate it symbolically
+#ifdef WITH_SYMENGINE
+                    if (std::holds_alternative<std::string>(result)) {
+                        try {
+                            result = freshEvaluator.evaluateSymbolicExpression(std::get<std::string>(result));
+                        } catch (...) {
+                            // If symbolic evaluation fails, keep the string
+                        }
+                    }
+#endif
                     ss << formatValueAsMath(result);
                 } else {
                     Value result = evaluator.evaluateExpression(*exprStmt->expression);
+
+                    // If result is a string (symbolic expression), evaluate it symbolically
+#ifdef WITH_SYMENGINE
+                    if (std::holds_alternative<std::string>(result)) {
+                        try {
+                            result = evaluator.evaluateSymbolicExpression(std::get<std::string>(result));
+                        } catch (...) {
+                            // If symbolic evaluation fails, keep the string
+                        }
+                    }
+#endif
                     ss << formatValueAsMath(result);
                 }
 

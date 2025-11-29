@@ -165,6 +165,11 @@ public:
     Value getVariableValue(const std::string& name) const;
     void executeStatement(const Statement& stmt, std::vector<std::string>& outputs);
 
+#ifdef WITH_SYMENGINE
+    // Public symbolic computation functions
+    Value evaluateSymbolicExpression(const std::string& symbolicExpr);
+#endif
+
 private:
     Environment env;
     CppGenerator cppGen;
@@ -207,6 +212,12 @@ private:
     Value matrixEigenvalues(const ArrayValue& matrix);
     Value matrixEigenvectors(const ArrayValue& matrix);
     std::string valueToString(const Value& value);
+
+#ifdef WITH_SYMENGINE
+    // Symbolic computation functions (private)
+    Value evaluateSymbolicDiff(const Expression& expr, const std::string& variable);
+    Value evaluateSymbolicMatrixDiff(const ArrayValue& matrix, const std::string& variable);
+#endif
     Value generateGraph(const ArrayValue& xArray, const ArrayValue& yArray, const std::string& title = "");
     Value generate3DGraph(const std::string& title, const std::vector<double>& dimensions);
     Value generateTable(const std::vector<std::string>& headers, const std::vector<TableData::ColumnData>& columns);

@@ -502,6 +502,13 @@ std::string HtmlFormatter::formatExpressionAsMath(const Expression& expr, Evalua
             if (func->arguments.size() == 1) {
                 return "\\sqrt{" + formatExpressionAsMath(*func->arguments[0], evaluator) + "}";
             }
+        } else if (func->function_name == "diff") {
+            // Format diff(expression, variable) as \frac{d}{dx} \left( expression \right)
+            if (func->arguments.size() == 2) {
+                std::string expression = formatExpressionAsMath(*func->arguments[0], evaluator);
+                std::string variable = formatExpressionAsMath(*func->arguments[1], evaluator);
+                return "\\frac{d}{d" + variable + "} \\left( " + expression + " \\right)";
+            }
         } else if (func->function_name == "summation") {
             if (func->arguments.size() == 4) {
                 // Format as LaTeX summation: \sum_{var=lower}^{upper} expression

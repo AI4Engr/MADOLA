@@ -106,6 +106,9 @@ set(CORE_SOURCES
 # Optional Tree-sitter support
 option(WITH_TREE_SITTER "Build with Tree-sitter support" ON)
 
+# Optional SymEngine support
+option(WITH_SYMENGINE "Build with SymEngine symbolic computation support" ON)
+
 # Optional debug features
 option(WITH_DEBUG_FEATURES "Build with debug features" ON)
 
@@ -124,6 +127,144 @@ if(WITH_TREE_SITTER)
     set(MADOLA_GRAMMAR_SOURCES
         tree-sitter-madola/src/parser.c
     )
+endif()
+
+# SymEngine configuration
+if(WITH_SYMENGINE)
+    # Add symbolic evaluator to core sources
+    list(APPEND CORE_SOURCES
+        src/core/evaluator/evaluator_symbolic.cpp
+    )
+endif()
+
+if(WITH_SYMENGINE)
+
+    # Configure SymEngine with minimal dependencies
+    set(BUILD_TESTS OFF CACHE BOOL "Build SymEngine tests" FORCE)
+    set(BUILD_BENCHMARKS OFF CACHE BOOL "Build SymEngine benchmarks" FORCE)
+    set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries" FORCE)
+
+    # Configure integer class based on target platform
+    # NOTE: For production Tauri/server builds, you can enable GMP for better performance:
+    #   - Uncomment the GMP section below for native builds
+    #   - Install GMP: pacman -S mingw-w64-x86_64-gmp (MSYS2) or apt-get install libgmp-dev (Linux)
+    #   - GMP provides faster arbitrary-precision arithmetic than Boost.Multiprecision
+    #   - Other optional dependencies for advanced features:
+    #     * MPFR (arbitrary-precision floating-point): -DWITH_MPFR=ON
+    #     * MPC (complex numbers): -DWITH_MPC=ON
+    #     * ARB (ball arithmetic): -DWITH_ARB=ON
+
+    if(EMSCRIPTEN)
+        # WASM builds: Use Boost.Multiprecision (header-only, no linking required)
+        set(INTEGER_CLASS "boostmp" CACHE STRING "Integer class for SymEngine" FORCE)
+        set(WITH_BOOST ON CACHE BOOL "Build with Boost (header-only for boostmp)" FORCE)
+
+        # Set Boost paths for SymEngine to find (header-only, no CMake config needed)
+        set(BOOST_ROOT "${CMAKE_SOURCE_DIR}/external/boost" CACHE PATH "Boost root directory")
+        set(Boost_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/external/boost" CACHE PATH "Boost include directory")
+        set(Boost_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/external/boost" CACHE PATH "Boost include directories")
+        set(Boost_FOUND TRUE CACHE BOOL "Boost found")
+        set(Boost_LIBRARIES "" CACHE STRING "Boost libraries (header-only)")
+        set(Boost_NO_SYSTEM_PATHS ON CACHE BOOL "Do not search system for Boost")
+        set(Boost_NO_BOOST_CMAKE ON CACHE BOOL "Disable BoostConfig.cmake search")
+
+        # For header-only Boost, we just need the include directory
+        include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/external/boost")
+
+        message(STATUS "SymEngine for WASM: Using Boost.Multiprecision (header-only)")
+    else()
+        # Native builds: Currently using Boost.Multiprecision for consistency
+        # TODO: For production Tauri/server builds, enable GMP for better performance:
+        # set(INTEGER_CLASS "gmp" CACHE STRING "Integer class for SymEngine" FORCE)
+
+        # For now, use Boost.Multiprecision (same as WASM)
+        set(INTEGER_CLASS "boostmp" CACHE STRING "Integer class for SymEngine" FORCE)
+        set(WITH_BOOST ON CACHE BOOL "Build with Boost (header-only for boostmp)" FORCE)
+
+        # Set Boost paths for native builds
+        set(BOOST_ROOT "${CMAKE_SOURCE_DIR}/external/boost" CACHE PATH "Boost root directory")
+        set(Boost_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/external/boost" CACHE PATH "Boost include directory")
+        set(Boost_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/external/boost" CACHE PATH "Boost include directories")
+        set(Boost_FOUND TRUE CACHE BOOL "Boost found")
+        set(Boost_LIBRARIES "" CACHE STRING "Boost libraries (header-only)")
+        set(Boost_NO_SYSTEM_PATHS ON CACHE BOOL "Do not search system for Boost")
+        set(Boost_NO_BOOST_CMAKE ON CACHE BOOL "Disable BoostConfig.cmake search")
+
+        include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/external/boost")
+
+        message(STATUS "SymEngine for Native: Using Boost.Multiprecision (header-only)")
+    endif()
+
+    # Disable all other external dependencies
+    set(WITH_MPFR OFF CACHE BOOL "Build with MPFR" FORCE)
+    set(WITH_MPC OFF CACHE BOOL "Build with MPC" FORCE)
+    set(WITH_ARB OFF CACHE BOOL "Build with ARB" FORCE)
+    set(WITH_FLINT OFF CACHE BOOL "Build with FLINT" FORCE)
+    set(WITH_SYMENGINE_VECTORIZER OFF CACHE BOOL "Build with vectorizer" FORCE)
+    set(WITH_LLVM OFF CACHE BOOL "Build with LLVM" FORCE)
+    set(WITH_BFD OFF CACHE BOOL "Build with BFD" FORCE)
+    set(WITH_COTIRE OFF CACHE BOOL "Build with cotire" FORCE)
+    set(WITH_SYMENGINE_THREAD_SAFE OFF CACHE BOOL "Thread safe" FORCE)
+    set(WITH_SYMENGINE_RCP OFF CACHE BOOL "Use RCP" FORCE)
+
+    # Add SymEngine subdirectory
+    if(EXISTS "${CMAKE_SOURCE_DIR}/external/symengine/CMakeLists.txt")
+        # For builds with Boost, we need to bypass find_package(Boost) since we're using header-only
+        if(WITH_BOOST)
+            # Set Boost variables before SymEngine tries to find it
+            set(Boost_FOUND TRUE PARENT_SCOPE)
+            set(Boost_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/external/boost" PARENT_SCOPE)
+            set(Boost_LIBRARIES "" PARENT_SCOPE)
+
+            # Also set them in current scope
+            set(Boost_FOUND TRUE)
+            set(Boost_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/external/boost")
+            set(Boost_LIBRARIES "")
+
+            # Create a FindBoost.cmake override with correct include paths
+            # Boost modular structure has headers in libs/*/include
+            set(BOOST_INCLUDE_PATHS
+                "${CMAKE_SOURCE_DIR}/external/boost/libs/multiprecision/include"
+                "${CMAKE_SOURCE_DIR}/external/boost/libs/config/include"
+                "${CMAKE_SOURCE_DIR}/external/boost/libs/assert/include"
+                "${CMAKE_SOURCE_DIR}/external/boost/libs/core/include"
+                "${CMAKE_SOURCE_DIR}/external/boost/libs/integer/include"
+                "${CMAKE_SOURCE_DIR}/external/boost/libs/mpl/include"
+                "${CMAKE_SOURCE_DIR}/external/boost/libs/preprocessor/include"
+                "${CMAKE_SOURCE_DIR}/external/boost/libs/static_assert/include"
+                "${CMAKE_SOURCE_DIR}/external/boost/libs/throw_exception/include"
+                "${CMAKE_SOURCE_DIR}/external/boost/libs/type_traits/include"
+                "${CMAKE_SOURCE_DIR}/external/boost/libs/predef/include"
+                "${CMAKE_SOURCE_DIR}/external/boost/libs/random/include"
+                "${CMAKE_SOURCE_DIR}/external/boost/libs/system/include"
+                "${CMAKE_SOURCE_DIR}/external/boost/libs/utility/include"
+                "${CMAKE_SOURCE_DIR}/external/boost/libs/move/include"
+                "${CMAKE_SOURCE_DIR}/external/boost/libs/detail/include"
+                "${CMAKE_SOURCE_DIR}/external/boost/libs/io/include"
+                "${CMAKE_SOURCE_DIR}/external/boost/libs/range/include"
+                "${CMAKE_SOURCE_DIR}/external/boost/libs/concept_check/include"
+                "${CMAKE_SOURCE_DIR}/external/boost/libs/iterator/include"
+                "${CMAKE_SOURCE_DIR}/external/boost/libs/function_types/include"
+                "${CMAKE_SOURCE_DIR}/external/boost/libs/fusion/include"
+                "${CMAKE_SOURCE_DIR}/external/boost/libs/optional/include"
+                "${CMAKE_SOURCE_DIR}/external/boost/libs/smart_ptr/include"
+                "${CMAKE_SOURCE_DIR}/external/boost/libs/tuple/include"
+                "${CMAKE_SOURCE_DIR}/external/boost/libs/typeof/include"
+                "${CMAKE_SOURCE_DIR}/external/boost/libs/array/include"
+            )
+            string(REPLACE ";" "\" \"" BOOST_INCLUDE_PATHS_STR "${BOOST_INCLUDE_PATHS}")
+
+            file(WRITE "${CMAKE_BINARY_DIR}/FindBoost.cmake" "
+                set(Boost_FOUND TRUE)
+                set(Boost_INCLUDE_DIRS \"${BOOST_INCLUDE_PATHS_STR}\")
+                set(Boost_LIBRARIES \"\")
+                set(HAVE_SYMENGINE_BOOST yes)
+            ")
+            list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_BINARY_DIR}")
+        endif()
+
+        add_subdirectory(external/symengine EXCLUDE_FROM_ALL)
+    endif()
 endif()
 
 # Debug sources
@@ -145,6 +286,50 @@ target_include_directories(madola_core_obj PUBLIC
     ${CMAKE_SOURCE_DIR}/src/core
     ${CMAKE_SOURCE_DIR}/external/eigen
 )
+
+# Add SymEngine include directories if enabled
+if(WITH_SYMENGINE)
+    target_include_directories(madola_core_obj PUBLIC
+        ${CMAKE_SOURCE_DIR}/external/symengine
+        ${CMAKE_SOURCE_DIR}/external/symengine/symengine
+        ${CMAKE_BINARY_DIR}/external/symengine
+        ${CMAKE_BINARY_DIR}/external/symengine/symengine
+        ${CMAKE_BINARY_DIR}/external/symengine/symengine/utilities/teuchos
+    )
+
+    # For builds with Boost, add Boost include paths to madola_core_obj
+    if(WITH_BOOST)
+        target_include_directories(madola_core_obj SYSTEM PUBLIC
+            ${CMAKE_SOURCE_DIR}/external/boost/libs/multiprecision/include
+            ${CMAKE_SOURCE_DIR}/external/boost/libs/config/include
+            ${CMAKE_SOURCE_DIR}/external/boost/libs/assert/include
+            ${CMAKE_SOURCE_DIR}/external/boost/libs/core/include
+            ${CMAKE_SOURCE_DIR}/external/boost/libs/integer/include
+            ${CMAKE_SOURCE_DIR}/external/boost/libs/mpl/include
+            ${CMAKE_SOURCE_DIR}/external/boost/libs/preprocessor/include
+            ${CMAKE_SOURCE_DIR}/external/boost/libs/static_assert/include
+            ${CMAKE_SOURCE_DIR}/external/boost/libs/throw_exception/include
+            ${CMAKE_SOURCE_DIR}/external/boost/libs/type_traits/include
+            ${CMAKE_SOURCE_DIR}/external/boost/libs/predef/include
+            ${CMAKE_SOURCE_DIR}/external/boost/libs/random/include
+            ${CMAKE_SOURCE_DIR}/external/boost/libs/system/include
+            ${CMAKE_SOURCE_DIR}/external/boost/libs/utility/include
+            ${CMAKE_SOURCE_DIR}/external/boost/libs/move/include
+            ${CMAKE_SOURCE_DIR}/external/boost/libs/detail/include
+            ${CMAKE_SOURCE_DIR}/external/boost/libs/io/include
+            ${CMAKE_SOURCE_DIR}/external/boost/libs/range/include
+            ${CMAKE_SOURCE_DIR}/external/boost/libs/concept_check/include
+            ${CMAKE_SOURCE_DIR}/external/boost/libs/iterator/include
+            ${CMAKE_SOURCE_DIR}/external/boost/libs/function_types/include
+            ${CMAKE_SOURCE_DIR}/external/boost/libs/fusion/include
+            ${CMAKE_SOURCE_DIR}/external/boost/libs/optional/include
+            ${CMAKE_SOURCE_DIR}/external/boost/libs/smart_ptr/include
+            ${CMAKE_SOURCE_DIR}/external/boost/libs/tuple/include
+            ${CMAKE_SOURCE_DIR}/external/boost/libs/typeof/include
+            ${CMAKE_SOURCE_DIR}/external/boost/libs/array/include
+        )
+    endif()
+endif()
 
 target_include_directories(madola_core_obj PRIVATE
     ${CMAKE_SOURCE_DIR}/vendor/tree-sitter/lib/include
@@ -290,6 +475,29 @@ if(WITH_TREE_SITTER)
     endif()
 endif()
 
+# Configure SymEngine linking after executables are defined
+if(WITH_SYMENGINE)
+    if(TARGET symengine)
+        # Link SymEngine to core library (propagates to all targets)
+        target_link_libraries(madola_core PUBLIC symengine)
+        target_compile_definitions(madola_core_obj PUBLIC WITH_SYMENGINE)
+
+        # Link to specific targets
+        if(NOT EMSCRIPTEN)
+            target_compile_definitions(madola PRIVATE WITH_SYMENGINE)
+
+            # Link SymEngine to debug executable if it exists
+            if(TARGET madola-debug)
+                target_compile_definitions(madola-debug PRIVATE WITH_SYMENGINE)
+            endif()
+        endif()
+
+        if(EMSCRIPTEN)
+            target_compile_definitions(madola_wasm PRIVATE WITH_SYMENGINE)
+        endif()
+    endif()
+endif()
+
 # Testing
 if(NOT EMSCRIPTEN)
     enable_testing()
@@ -323,6 +531,7 @@ message(STATUS "  Build Type:            ${CMAKE_BUILD_TYPE}")
 message(STATUS "  C++ Standard:          ${CMAKE_CXX_STANDARD}")
 message(STATUS "  Eigen Support:         Enabled (external/eigen)")
 message(STATUS "  Tree-sitter Support:   ${WITH_TREE_SITTER}")
+message(STATUS "  SymEngine Support:     ${WITH_SYMENGINE}")
 message(STATUS "  Unity Build:           ${USE_UNITY_BUILD}")
 message(STATUS "  Precompiled Headers:   ${USE_PRECOMPILED_HEADERS}")
 if(CCACHE_PROGRAM)
