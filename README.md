@@ -6,7 +6,7 @@ MADOLA integrates *mathematical notation, computation, documentation,* and *code
 
 ![Screenshot](images/Screenshot.jpg)
 
-👉 Try it here: [https://ai4engr.com/MADOLA/](https://ai4engr.com/MADOLA/)
+👉 Try it here: [Playground](https://playground.madola.org/)
 ---
 
 ## 🧭 Why Not Create a New Wheel?
