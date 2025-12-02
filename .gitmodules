@@ -1,12 +1,16 @@
 [submodule "vendor/tree-sitter"]
 	path = vendor/tree-sitter
 	url = https://github.com/tree-sitter/tree-sitter.git
+	shallow = true
 [submodule "external/eigen"]
 	path = external/eigen
 	url = https://gitlab.com/libeigen/eigen.git
+	shallow = true
 [submodule "external/symengine"]
 	path = external/symengine
 	url = https://github.com/symengine/symengine.git
+	shallow = true
 [submodule "external/boost"]
 	path = external/boost
 	url = https://github.com/boostorg/boost.git
+	shallow = true
