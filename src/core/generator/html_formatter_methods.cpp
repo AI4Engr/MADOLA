@@ -502,13 +502,6 @@ std::string HtmlFormatter::formatExpressionAsMath(const Expression& expr, Evalua
             if (func->arguments.size() == 1) {
                 return "\\sqrt{" + formatExpressionAsMath(*func->arguments[0], evaluator) + "}";
             }
-        } else if (func->function_name == "diff") {
-            // Format diff(expression, variable) as \frac{d}{dx} \left( expression \right)
-            if (func->arguments.size() == 2) {
-                std::string expression = formatExpressionAsMath(*func->arguments[0], evaluator);
-                std::string variable = formatExpressionAsMath(*func->arguments[1], evaluator);
-                return "\\frac{d}{d" + variable + "} \\left( " + expression + " \\right)";
-            }
         } else if (func->function_name == "summation") {
             if (func->arguments.size() == 4) {
                 // Format as LaTeX summation: \sum_{var=lower}^{upper} expression
@@ -564,6 +557,11 @@ std::string HtmlFormatter::formatExpressionAsMath(const Expression& expr, Evalua
                     return "\\text{min}(" + formatExpressionAsMath(*methodCall->arguments[0], evaluator) + ")";
                 } else if (methodCall->method_name == "exp" && methodCall->arguments.size() == 1) {
                     return "e^{" + formatExpressionAsMath(*methodCall->arguments[0], evaluator) + "}";
+                } else if (methodCall->method_name == "diff" && methodCall->arguments.size() == 2) {
+                    // Format math.diff(expression, variable) as \frac{d}{dx} \left( expression \right)
+                    std::string expression = formatExpressionAsMath(*methodCall->arguments[0], evaluator);
+                    std::string variable = formatExpressionAsMath(*methodCall->arguments[1], evaluator);
+                    return "\\frac{d}{d" + variable + "} \\left( " + expression + " \\right)";
                 }
             }
         }
@@ -1002,6 +1000,11 @@ std::string HtmlFormatter::formatExpressionWithValuesAsMath(const Expression& ex
                     return "\\text{min}(" + formatExpressionWithValuesAsMath(*methodCall->arguments[0], evaluator) + ")";
                 } else if (methodCall->method_name == "exp" && methodCall->arguments.size() == 1) {
                     return "e^{" + formatExpressionWithValuesAsMath(*methodCall->arguments[0], evaluator) + "}";
+                } else if (methodCall->method_name == "diff" && methodCall->arguments.size() == 2) {
+                    // Format math.diff(expression, variable) as \frac{d}{dx} \left( expression \right)
+                    std::string expression = formatExpressionAsMath(*methodCall->arguments[0], evaluator);
+                    std::string variable = formatExpressionAsMath(*methodCall->arguments[1], evaluator);
+                    return "\\frac{d}{d" + variable + "} \\left( " + expression + " \\right)";
                 }
             }
         }

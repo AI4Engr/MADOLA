@@ -6,19 +6,19 @@
 x := 2;
 
 @eval
-df1 := diff(x^2, x);
+df1 := math.diff(x^2, x);
 
 @eval
 df1;
 
 // Test 2: More complex polynomial
 @eval
-df2 := diff(x^3 + 2*x^2 + 3*x + 4, x);
+df2 := math.diff(x^3 + 2*x^2 + 3*x + 4, x);
 
 // Test 3: Product rule
 @eval
-df3 := diff(x^2 * x^3, x);
+df3 := math.diff(x^2 * x^3, x);
 
 // Test 4: Nested expression
 @eval
-df4 := diff((x + 1)^2, x);
+df4 := math.diff((x + 1)^2, x);

@@ -198,24 +198,6 @@ Value Evaluator::evaluateFunctionCall(const FunctionCall& expr) {
         return generateTable(headers, columns);
     }
 
-#ifdef WITH_SYMENGINE
-    // Special handling for diff() function (symbolic differentiation)
-    if (expr.function_name == "diff") {
-        if (expr.arguments.size() != 2) {
-            throw std::runtime_error("Function diff() expects 2 arguments (expression, variable), got " + std::to_string(expr.arguments.size()));
-        }
-
-        // Second argument must be an identifier (the variable to differentiate with respect to)
-        const auto* varIdentifier = dynamic_cast<const Identifier*>(expr.arguments[1].get());
-        if (!varIdentifier) {
-            throw std::runtime_error("Second argument to diff() must be a variable identifier");
-        }
-
-        // First argument is the expression to differentiate
-        // Don't evaluate it - pass it directly to symbolic differentiation
-        return evaluateSymbolicDiff(*expr.arguments[0], varIdentifier->name);
-    }
-#endif
 
     // Regular function call - evaluate arguments
     std::vector<Value> arguments;
@@ -994,6 +976,24 @@ Value Evaluator::evaluateMethodCall(const MethodCall& expr) {
 
                 return val;
             }
+#ifdef WITH_SYMENGINE
+            // math.diff
+            else if (expr.method_name == "diff") {
+                if (expr.arguments.size() != 2) {
+                    throw std::runtime_error("Function math.diff() expects 2 arguments (expression, variable), got " + std::to_string(expr.arguments.size()));
+                }
+
+                // Second argument must be an identifier (the variable to differentiate with respect to)
+                const auto* varIdentifier = dynamic_cast<const Identifier*>(expr.arguments[1].get());
+                if (!varIdentifier) {
+                    throw std::runtime_error("Second argument to math.diff() must be a variable identifier");
+                }
+
+                // First argument is the expression to differentiate
+                // Don't evaluate it - pass it directly to symbolic differentiation
+                return evaluateSymbolicDiff(*expr.arguments[0], varIdentifier->name);
+            }
+#endif
         }
     }
 
