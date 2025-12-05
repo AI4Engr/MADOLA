@@ -36,6 +36,8 @@ ExpressionPtr ASTBuilder::buildExpression(TSNode node, const std::string& source
         return buildUnaryExpression(node, source);
     } else if (strcmp(node_type, "range_expression") == 0) {
         return buildRangeExpression(node, source);
+    } else if (strcmp(node_type, "pipe_expression") == 0) {
+        return buildPipeExpression(node, source);
     } else if (strcmp(node_type, "piecewise_expression") == 0) {
         return buildPiecewiseExpression(node, source);
     } else if (strcmp(node_type, "array_expression") == 0) {
@@ -353,6 +355,45 @@ ExpressionPtr ASTBuilder::buildRangeExpression(TSNode node, const std::string& s
     auto end = buildExpression(ts_node_child(node, 2), source); // Skip "..."
 
     return std::make_unique<RangeExpression>(std::move(start), std::move(end));
+}
+
+ExpressionPtr ASTBuilder::buildPipeExpression(TSNode node, const std::string& source) {
+    // pipe_expression: logical_or_expression "|" substitution_list
+    // substitution_list: substitution_pair ("," substitution_pair)*
+    // substitution_pair: identifier ":" logical_or_expression
+
+    uint32_t nodeChildCount = ts_node_child_count(node);
+
+    // If there's only 1 child, it's just a logical_or_expression without substitution
+    if (nodeChildCount == 1) {
+        return buildExpression(ts_node_child(node, 0), source);
+    }
+
+    auto expression = buildExpression(ts_node_child(node, 0), source);
+
+    // Child 1 is the "|" operator, child 2 is the substitution_list
+    TSNode substitutionListNode = ts_node_child(node, 2);
+
+    std::vector<SubstitutionPair> substitutions;
+    uint32_t childCount = ts_node_child_count(substitutionListNode);
+
+    for (uint32_t i = 0; i < childCount; ++i) {
+        TSNode child = ts_node_child(substitutionListNode, i);
+        const char* childType = ts_node_type(child);
+
+        if (strcmp(childType, "substitution_pair") == 0) {
+            // substitution_pair: identifier ":" logical_or_expression
+            TSNode identifierNode = ts_node_child(child, 0);
+            TSNode valueNode = ts_node_child(child, 2); // Skip ":"
+
+            std::string variable = getNodeText(identifierNode, source);
+            auto value = buildExpression(valueNode, source);
+
+            substitutions.push_back(SubstitutionPair(variable, std::move(value)));
+        }
+    }
+
+    return std::make_unique<PipeExpression>(std::move(expression), std::move(substitutions));
 }
 
 ExpressionPtr ASTBuilder::buildPiecewiseExpression(TSNode node, const std::string& source) {

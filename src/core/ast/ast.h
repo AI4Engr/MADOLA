@@ -242,6 +242,50 @@ public:
     }
 };
 
+// Pipe substitution expression for variable substitution like "x^2 + y | x:2, y:3"
+struct SubstitutionPair {
+    std::string variable;
+    ExpressionPtr value;
+
+    SubstitutionPair(const std::string& var, ExpressionPtr val)
+        : variable(var), value(std::move(val)) {}
+
+    // Move constructor
+    SubstitutionPair(SubstitutionPair&& other) noexcept
+        : variable(std::move(other.variable)), value(std::move(other.value)) {}
+
+    // Move assignment operator
+    SubstitutionPair& operator=(SubstitutionPair&& other) noexcept {
+        if (this != &other) {
+            variable = std::move(other.variable);
+            value = std::move(other.value);
+        }
+        return *this;
+    }
+
+    // Delete copy constructor and copy assignment
+    SubstitutionPair(const SubstitutionPair&) = delete;
+    SubstitutionPair& operator=(const SubstitutionPair&) = delete;
+};
+
+class PipeExpression : public Expression {
+public:
+    ExpressionPtr expression;
+    std::vector<SubstitutionPair> substitutions;
+
+    PipeExpression(ExpressionPtr expr, std::vector<SubstitutionPair> subs)
+        : expression(std::move(expr)), substitutions(std::move(subs)) {}
+
+    std::string toString() const override {
+        std::string result = expression->toString() + " | ";
+        for (size_t i = 0; i < substitutions.size(); ++i) {
+            if (i > 0) result += ", ";
+            result += substitutions[i].variable + ":" + substitutions[i].value->toString();
+        }
+        return result;
+    }
+};
+
 // Summation expression for mathematical summations like sum(i^2, i, 1, n)
 class SummationExpression : public Expression {
 public:

@@ -208,7 +208,23 @@ module.exports = grammar({
       $.primary_expression
     )),
 
-    expression: $ => $.logical_or_expression,
+    expression: $ => $.pipe_expression,
+
+    pipe_expression: $ => choice(
+      $.logical_or_expression,
+      prec.left(-3, seq($.logical_or_expression, '|', $.substitution_list))
+    ),
+
+    substitution_list: $ => prec.left(seq(
+      $.substitution_pair,
+      repeat(seq(',', $.substitution_pair))
+    )),
+
+    substitution_pair: $ => seq(
+      $.identifier,
+      ':',
+      $.logical_or_expression
+    ),
 
     logical_or_expression: $ => choice(
       $.logical_and_expression,

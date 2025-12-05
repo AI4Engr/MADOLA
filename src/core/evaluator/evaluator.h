@@ -129,6 +129,7 @@ public:
     void define(const std::string& name, const Value& value);
     Value get(const std::string& name) const;
     bool exists(const std::string& name) const;
+    void remove(const std::string& name);
 
     void defineFunction(const std::string& name, const FunctionDeclaration& func);
     const FunctionDeclaration* getFunction(const std::string& name) const;
@@ -193,6 +194,7 @@ private:
     Value executeReturn(const ReturnStatement& stmt);
     Value evaluateBinaryExpression(const BinaryExpression& expr);
     Value evaluateUnaryExpression(const UnaryExpression& expr);
+    Value evaluatePipeExpression(const PipeExpression& expr);
     Value evaluatePiecewiseExpression(const PiecewiseExpression& expr);
     Value evaluateSummationExpression(const SummationExpression& expr);
     Value evaluateSummation(const Expression& expr, const std::string& variable, const Expression& lowerBound, const Expression& upperBound);

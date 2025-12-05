@@ -27,6 +27,8 @@ Value Evaluator::evaluateExpression(const Expression& expr) {
     } else if (dynamic_cast<const RangeExpression*>(&expr)) {
         // Range expressions are evaluated by for loops, not standalone
         throw std::runtime_error("Range expressions can only be used in for loops");
+    } else if (const auto* pipeExpr = dynamic_cast<const PipeExpression*>(&expr)) {
+        return evaluatePipeExpression(*pipeExpr);
     } else if (const auto* unitExpr = dynamic_cast<const UnitExpression*>(&expr)) {
         return evaluateUnitExpression(*unitExpr);
     } else if (const auto* piecewiseExpr = dynamic_cast<const PiecewiseExpression*>(&expr)) {
@@ -86,6 +88,54 @@ Value Evaluator::evaluateUnaryExpression(const UnaryExpression& expr) {
     } else {
         throw std::runtime_error("Unary operations only supported on numbers and arrays");
     }
+}
+
+Value Evaluator::evaluatePipeExpression(const PipeExpression& expr) {
+    // Create a temporary environment with the substituted values
+    // Save the current values of the variables being substituted
+    std::vector<std::pair<std::string, Value>> savedValues;
+    std::vector<std::string> newVariables;
+
+    for (const auto& sub : expr.substitutions) {
+        try {
+            // Try to get the current value (if it exists)
+            Value currentValue = env.get(sub.variable);
+            savedValues.push_back({sub.variable, currentValue});
+        } catch (...) {
+            // Variable doesn't exist yet, mark it as new
+            newVariables.push_back(sub.variable);
+        }
+
+        // Evaluate the substitution value and set it in the environment
+        Value subValue = evaluateExpression(*sub.value);
+        env.define(sub.variable, subValue);
+    }
+
+    // Evaluate the expression with the substituted values
+    Value result = evaluateExpression(*expr.expression);
+
+    // If the result is a string (symbolic expression), try to evaluate it numerically
+    #ifdef WITH_SYMENGINE
+    if (std::holds_alternative<std::string>(result)) {
+        try {
+            result = evaluateSymbolicExpression(std::get<std::string>(result));
+        } catch (...) {
+            // If evaluation fails, keep the string result
+        }
+    }
+    #endif
+
+    // Restore the original values
+    for (const auto& [var, val] : savedValues) {
+        env.define(var, val);
+    }
+
+    // Remove newly created variables
+    for (const auto& var : newVariables) {
+        env.remove(var);
+    }
+
+    return result;
 }
 
 Value Evaluator::evaluateBinaryExpression(const BinaryExpression& expr) {

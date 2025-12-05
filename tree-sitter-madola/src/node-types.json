@@ -281,7 +281,7 @@
       "required": true,
       "types": [
         {
-          "type": "logical_or_expression",
+          "type": "pipe_expression",
           "named": true
         }
       ]
@@ -736,6 +736,25 @@
     }
   },
   {
+    "type": "pipe_expression",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "logical_or_expression",
+          "named": true
+        },
+        {
+          "type": "substitution_list",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "power_expression",
     "named": true,
     "fields": {},
@@ -983,6 +1002,40 @@
     "fields": {}
   },
   {
+    "type": "substitution_list",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "substitution_pair",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "substitution_pair",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "identifier",
+          "named": true
+        },
+        {
+          "type": "logical_or_expression",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "unary_expression",
     "named": true,
     "fields": {},
@@ -1113,6 +1166,10 @@
   },
   {
     "type": "/",
+    "named": false
+  },
+  {
+    "type": ":",
     "named": false
   },
   {
@@ -1825,6 +1882,10 @@
   },
   {
     "type": "{",
+    "named": false
+  },
+  {
+    "type": "|",
     "named": false
   },
   {

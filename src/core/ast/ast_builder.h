@@ -48,6 +48,7 @@ private:
     ExpressionPtr buildBinaryExpression(TSNode node, const std::string& source);
     ExpressionPtr buildUnaryExpression(TSNode node, const std::string& source);
     ExpressionPtr buildRangeExpression(TSNode node, const std::string& source);
+    ExpressionPtr buildPipeExpression(TSNode node, const std::string& source);
     ExpressionPtr buildPiecewiseExpression(TSNode node, const std::string& source);
     ExpressionPtr buildArrayExpression(TSNode node, const std::string& source);
     ExpressionPtr buildArrayAccess(TSNode node, const std::string& source);

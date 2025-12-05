@@ -617,6 +617,18 @@ std::string HtmlFormatter::formatExpressionAsMath(const Expression& expr, Evalua
         std::string arrayName = convertToMathJax(arrayAccess->arrayName);
         std::string indexStr = formatExpressionAsMath(*arrayAccess->index, evaluator);
         return arrayName + "_{" + indexStr + "}";
+    } else if (const auto* pipeExpr = dynamic_cast<const PipeExpression*>(&expr)) {
+        // Format pipe expression as: \left.expression\right|_{var=val, var=val}
+        std::string exprStr = formatExpressionAsMath(*pipeExpr->expression, evaluator);
+        std::stringstream ss;
+        ss << "\\left." << exprStr << "\\right|_{";
+        for (size_t i = 0; i < pipeExpr->substitutions.size(); ++i) {
+            if (i > 0) ss << ", ";
+            ss << pipeExpr->substitutions[i].variable << "=";
+            ss << formatExpressionAsMath(*pipeExpr->substitutions[i].value, evaluator);
+        }
+        ss << "}";
+        return ss.str();
     } else {
         // Unknown expression type - debug
         return "[UNKNOWN:" + expr.toString() + "]";

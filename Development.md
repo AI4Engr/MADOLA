@@ -457,5 +457,43 @@ print(det);
 print(inv);
 ```
 
+### Symbolic Derivatives
+```madola
+// Symbolic Differentiation
+// Pass expressions directly to math.diff()
+df := math.diff(x^2 + 2*x + 1, x);     // Result: 2.0 + 2.0*x**1.0
+
+dg := math.diff(sin(x) * cos(x), x);   // Result: -sin(x)**2 + cos(x)**2
+
+dh := math.diff(exp(x^2), x);          // Result: 2.0*x**1.0*exp(x**2.0)
+
+print(df);
+print(dg);
+print(dh);
+```
+
+### Variable Substitution
+```madola
+// Pipe Substitution Operator (|)
+// Syntax: expression | var1:value1, var2:value2, ...
+
+// Basic substitution with multiple variables
+@eval
+result := x^2 + 2*y | x:3, y:4;     // Evaluates to: 9 + 8 = 17
+
+// Single variable substitution
+@eval
+value := x^3 + 2*x^2 | x:2;         // Evaluates to: 8 + 8 = 16
+
+// Combining derivatives and substitution
+@eval
+derivative := math.diff(x^3 + 2*x^2, x);  // Result: 4.0*x + 3.0*x**2.0
+@eval
+x_2 := derivative | x:2;              // Evaluates to: 12 + 8 = 20
+
+print(result);
+print(x_2);
+```
+
 
 

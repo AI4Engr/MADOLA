@@ -19,6 +19,10 @@ bool Environment::exists(const std::string& name) const {
     return variables.find(name) != variables.end();
 }
 
+void Environment::remove(const std::string& name) {
+    variables.erase(name);
+}
+
 void Environment::defineFunction(const std::string& name, const FunctionDeclaration& func) {
     functions[name] = &func;
 }
