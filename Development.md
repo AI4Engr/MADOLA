@@ -457,20 +457,6 @@ print(det);
 print(inv);
 ```
 
-### Symbolic Derivatives
-```madola
-// Symbolic Differentiation
-// Pass expressions directly to math.diff()
-df := math.diff(x^2 + 2*x + 1, x);     // Result: 2.0 + 2.0*x**1.0
-
-dg := math.diff(sin(x) * cos(x), x);   // Result: -sin(x)**2 + cos(x)**2
-
-dh := math.diff(exp(x^2), x);          // Result: 2.0*x**1.0*exp(x**2.0)
-
-print(df);
-print(dg);
-print(dh);
-```
 
 ### Variable Substitution
 ```madola

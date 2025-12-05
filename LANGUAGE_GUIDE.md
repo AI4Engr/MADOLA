@@ -14,11 +14,12 @@ MADOLA (Math Domain Language) is a specialized language for mathematical computa
 8. [Built-in Functions](#built-in-functions)
 9. [Arrays and Matrices](#arrays-and-matrices)
 10. [Units](#units)
-11. [Comments](#comments)
-12. [Document Structure](#document-structure)
-13. [Decorators](#decorators)
-14. [Importing](#importing)
-15. [Visualization and Graphing](#visualization-and-graphing)
+11. [Symbolic Calculation](#symbolic-calculation)
+12. [Comments](#comments)
+13. [Document Structure](#document-structure)
+14. [Decorators](#decorators)
+15. [Importing](#importing)
+16. [Visualization and Graphing](#visualization-and-graphing)
 
 ---
 
@@ -42,6 +43,8 @@ MADOLA supports:
 - **Function Calls**: `pi := calcPi(1000);`
 - **Mathematical Functions**: `math.sqrt()`, `math.abs()`, `math.sin()`, `math.cos()`, `math.tan()` - standard mathematical and trigonometric functions
 - **Summation**: `math.summation(expression, variable, lower, upper)` - symbolic summation with LaTeX output
+- **Symbolic Differentiation**: `math.diff(expression, variable)` - computes symbolic derivatives
+- **Variable Substitution**: `expression | var1:value1, var2:value2` - pipe operator for variable substitution
 - **Imports**: `from math_lib import square, cube;` - imports functions from `.mda` files or WASM modules (searches current directory and `~/.madola/trove/`)
 - **Print Statements**: `print(result);`
 - **For Loops**: `for i in 1...10 { ... }`
@@ -669,6 +672,146 @@ print(acceleration); // Output: 9.8 m/s^2
 - Compound units: `25 * m/s`, `9.8 * m/s^2`, `1000 * kg/m^3`
 
 **Note:** For compound units, use multiplication and division operators with unit identifiers (e.g., `25 * m/s` not `25 m/s`).
+
+---
+
+## Symbolic Calculation
+
+MADOLA supports symbolic mathematics, including differentiation and variable substitution.
+
+### Symbolic Differentiation with math.diff()
+
+The `math.diff()` function computes symbolic derivatives of mathematical expressions.
+
+**Syntax:** `math.diff(expression, variable)`
+
+- `expression` - Mathematical expression to differentiate (can include variables)
+- `variable` - Variable with respect to which to differentiate
+
+```madola
+// Polynomial differentiation
+df := math.diff(x^2 + 2*x + 1, x);     // Result: 2.0 + 2.0*x**1.0
+
+print(df);  // Output: 2.0 + 2.0*x**1.0
+```
+
+**Examples with Different Functions:**
+
+```madola
+// Trigonometric functions
+dg := math.diff(sin(x) * cos(x), x);   // Result: -sin(x)**2 + cos(x)**2
+
+// Exponential functions
+dh := math.diff(exp(x^2), x);          // Result: 2.0*x**1.0*exp(x**2.0)
+
+// Higher power functions
+dj := math.diff(x^4 + 3*x^2 - 2*x + 1, x);  // Result: 8.0*x + 6.0*x**1.0
+
+print(dg);
+print(dh);
+print(dj);
+```
+
+### Variable Substitution with Pipe Operator
+
+The pipe substitution operator (`|`) allows you to substitute specific values for variables in expressions.
+
+**Syntax:** `expression | variable1:value1, variable2:value2, ...`
+
+```madola
+// Basic substitution with multiple variables
+@eval
+result := x^2 + 2*y | x:3, y:4;     // Evaluates to: 9 + 8 = 17
+
+// Single variable substitution
+@eval
+value := x^3 + 2*x^2 | x:2;         // Evaluates to: 8 + 8 = 16
+
+print(result);
+print(value);
+```
+
+### Combining Differentiation and Substitution
+
+You can combine symbolic differentiation with variable substitution for powerful mathematical calculations:
+
+```madola
+// First find the derivative, then evaluate at a specific point
+@eval
+derivative := math.diff(x^3 + 2*x^2, x);     // Result: 4.0*x + 3.0*x**2.0
+@eval
+x_2 := derivative | x:2;                    // Evaluates to: 8 + 12 = 20
+
+print(derivative);
+print(x_2);
+```
+
+**Practical Example: Finding Critical Points**
+
+```madola
+// Find critical points of f(x) = x^3 - 6x^2 + 9x + 1
+@h3{Finding Critical Points}
+
+// Define the function
+f(x) := x^3 - 6*x^2 + 9*x + 1;
+
+// Find the derivative
+@eval
+f_prime := math.diff(x^3 - 6*x^2 + 9*x + 1, x);  // Result: 12.0*x - 9.0*x**2.0 + 3.0
+
+// Solve f'(x) = 0 by testing values
+@eval
+critical1 := f_prime | x:1;    // Result: 6.0 - 9.0 + 3.0 = 0
+@eval
+critical2 := f_prime | x:3;    // Result: 36.0 - 81.0 + 3.0 = -42.0
+
+print("f'(1) = " + critical1);  // Critical point at x = 1
+print("f'(3) = " + critical2);
+```
+
+**Advanced Example: Chain Rule Verification**
+
+```madola
+// Verify chain rule: d/dx[f(g(x))] = f'(g(x)) * g'(x)
+@h3{Chain Rule Verification}
+
+// Define composite function: h(x) = sin(x^2)
+@eval
+h_prime_direct := math.diff(sin(x^2), x);  // Direct differentiation
+
+// Apply chain rule step by step
+@eval
+inner_deriv := math.diff(x^2, x);          // g'(x) = 2x
+@eval
+outer_deriv := math.diff(sin(x), x);       // f'(x) = cos(x)
+
+// Chain rule result: cos(x^2) * 2x
+@eval
+h_prime_chain := cos(x^2) * 2*x;
+
+print("Direct derivative: " + h_prime_direct);
+print("Chain rule result: " + h_prime_chain);
+
+// Verify they're equivalent by testing at x = 2
+@eval
+test_direct := h_prime_direct | x:2;
+@eval
+test_chain := h_prime_chain | x:2;
+
+print("At x = 2: " + test_direct + " = " + test_chain);
+```
+
+### Supported Functions for Symbolic Differentiation
+
+`math.diff()` supports differentiation of:
+
+- **Polynomials**: `x^n`, `ax^2 + bx + c`
+- **Trigonometric**: `sin(x)`, `cos(x)`, `tan(x)`
+- **Exponential**: `exp(x)`, `a^x`
+- **Logarithmic**: `log(x)`, `ln(x)`
+- **Combinations**: Products, quotients, and compositions using chain rule
+
+**Note:** Results are displayed in symbolic form with decimal coefficients (e.g., `2.0*x**1.0` instead of `2x`).
 
 ---
 
