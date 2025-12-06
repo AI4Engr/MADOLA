@@ -227,13 +227,12 @@ if "%1"=="wasm" (
     %TREE_SITTER% generate
     cd ..
 
-    REM Clean and create build directory
-    if exist build\wasm rmdir /s /q build\wasm
-    if not exist build\wasm mkdir build\wasm
-    cd build\wasm
+    REM Create build directory if it doesn't exist
+    if not exist build_wasm mkdir build_wasm
+    cd build_wasm
 
     REM Configure with emcmake
-    call emcmake cmake ..\.. -G Ninja -DCMAKE_BUILD_TYPE=Release
+    call emcmake cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
 
     REM Build with emmake
     call emmake cmake --build . --parallel
@@ -242,8 +241,8 @@ if "%1"=="wasm" (
 
     REM Copy WASM output to web\runtime
     if not exist web\runtime mkdir web\runtime
-    if exist build\wasm\madola.js copy /Y build\wasm\madola.js web\runtime\
-    if exist build\wasm\madola.wasm copy /Y build\wasm\madola.wasm web\runtime\
+    if exist build_wasm\madola.js copy /Y build_wasm\madola.js web\runtime\
+    if exist build_wasm\madola.wasm copy /Y build_wasm\madola.wasm web\runtime\
 
     echo [INFO] WASM build complete
     echo [INFO] Output files:
@@ -384,6 +383,7 @@ if "%1"=="serve" (
 if "%1"=="clean" (
     echo [INFO] Cleaning...
     if exist build rmdir /s /q build
+    if exist build_wasm rmdir /s /q build_wasm
     if exist dist rmdir /s /q dist
     if exist web\runtime rmdir /s /q web\runtime
     goto :eof

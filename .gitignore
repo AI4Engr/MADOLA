@@ -11,6 +11,7 @@ vendor/*
 dist/
 build/
 build-wasm/
+build_wasm/
 gen_cpp/
 target/
 

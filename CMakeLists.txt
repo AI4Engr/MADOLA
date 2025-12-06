@@ -425,6 +425,7 @@ if(EMSCRIPTEN)
             -s ENVIRONMENT=web,node \
             -fwasm-exceptions \
             -s EXIT_RUNTIME=1"
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build_wasm"
         OUTPUT_NAME "madola"
         SUFFIX ".js"
     )

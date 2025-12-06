@@ -130,13 +130,12 @@ case "${1:-help}" in
             cd tree-sitter-madola && $TREE_SITTER generate && cd ..
         fi
 
-        # Clean and create build directory
-        rm -rf build/wasm
-        mkdir -p build/wasm
-        cd build/wasm
+        # Create build directory if it doesn't exist
+        mkdir -p build_wasm
+        cd build_wasm
 
         # Configure with emcmake
-        emcmake cmake ../.. -DCMAKE_BUILD_TYPE=Release
+        emcmake cmake .. -DCMAKE_BUILD_TYPE=Release
 
         # Build with emmake
         emmake cmake --build . --parallel
@@ -145,8 +144,8 @@ case "${1:-help}" in
 
         # Copy WASM output to web/runtime
         mkdir -p web/runtime
-        [ -f build/wasm/madola.js ] && cp build/wasm/madola.js web/runtime/
-        [ -f build/wasm/madola.wasm ] && cp build/wasm/madola.wasm web/runtime/
+        [ -f build_wasm/madola.js ] && cp build_wasm/madola.js web/runtime/
+        [ -f build_wasm/madola.wasm ] && cp build_wasm/madola.wasm web/runtime/
 
         info "✅ WASM build complete"
         info "📁 Output files:"
@@ -249,7 +248,7 @@ case "${1:-help}" in
 
     "clean")
         info "Cleaning..."
-        rm -rf build/ dist/ web/runtime/
+        rm -rf build/ build_wasm/ dist/ web/runtime/
         ;;
 
     "help"|*)
