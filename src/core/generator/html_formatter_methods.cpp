@@ -562,6 +562,11 @@ std::string HtmlFormatter::formatExpressionAsMath(const Expression& expr, Evalua
                     std::string expression = formatExpressionAsMath(*methodCall->arguments[0], evaluator);
                     std::string variable = formatExpressionAsMath(*methodCall->arguments[1], evaluator);
                     return "\\frac{d}{d" + variable + "} \\left( " + expression + " \\right)";
+                } else if (methodCall->method_name == "intg" && methodCall->arguments.size() == 2) {
+                    // Format math.intg(expression, variable) as \int expression \, dvariable
+                    std::string expression = formatExpressionAsMath(*methodCall->arguments[0], evaluator);
+                    std::string variable = formatExpressionAsMath(*methodCall->arguments[1], evaluator);
+                    return "\\int " + expression + " \\, d" + variable;
                 }
             }
         }
@@ -1017,6 +1022,11 @@ std::string HtmlFormatter::formatExpressionWithValuesAsMath(const Expression& ex
                     std::string expression = formatExpressionAsMath(*methodCall->arguments[0], evaluator);
                     std::string variable = formatExpressionAsMath(*methodCall->arguments[1], evaluator);
                     return "\\frac{d}{d" + variable + "} \\left( " + expression + " \\right)";
+                } else if (methodCall->method_name == "intg" && methodCall->arguments.size() == 2) {
+                    // Format math.intg(expression, variable) as \int expression \, dvariable
+                    std::string expression = formatExpressionWithValuesAsMath(*methodCall->arguments[0], evaluator);
+                    std::string variable = formatExpressionWithValuesAsMath(*methodCall->arguments[1], evaluator);
+                    return "\\int " + expression + " \\, d" + variable;
                 }
             }
         }

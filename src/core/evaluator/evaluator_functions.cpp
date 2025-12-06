@@ -993,6 +993,22 @@ Value Evaluator::evaluateMethodCall(const MethodCall& expr) {
                 // Don't evaluate it - pass it directly to symbolic differentiation
                 return evaluateSymbolicDiff(*expr.arguments[0], varIdentifier->name);
             }
+            // math.intg
+            else if (expr.method_name == "intg") {
+                if (expr.arguments.size() != 2) {
+                    throw std::runtime_error("Function math.intg() expects 2 arguments (expression, variable), got " + std::to_string(expr.arguments.size()));
+                }
+
+                // Second argument must be an identifier (the variable to integrate with respect to)
+                const auto* varIdentifier = dynamic_cast<const Identifier*>(expr.arguments[1].get());
+                if (!varIdentifier) {
+                    throw std::runtime_error("Second argument to math.intg() must be a variable identifier");
+                }
+
+                // First argument is the expression to integrate
+                // Don't evaluate it - pass it directly to symbolic integration
+                return evaluateSymbolicIntegral(*expr.arguments[0], varIdentifier->name);
+            }
 #endif
         }
     }

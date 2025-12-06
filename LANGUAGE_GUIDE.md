@@ -44,6 +44,7 @@ MADOLA supports:
 - **Mathematical Functions**: `math.sqrt()`, `math.abs()`, `math.sin()`, `math.cos()`, `math.tan()` - standard mathematical and trigonometric functions
 - **Summation**: `math.summation(expression, variable, lower, upper)` - symbolic summation with LaTeX output
 - **Symbolic Differentiation**: `math.diff(expression, variable)` - computes symbolic derivatives
+- **Symbolic Integration**: `math.intg(expression, variable)` - computes symbolic indefinite integrals
 - **Variable Substitution**: `expression | var1:value1, var2:value2` - pipe operator for variable substitution
 - **Imports**: `from math_lib import square, cube;` - imports functions from `.mda` files or WASM modules (searches current directory and `~/.madola/trove/`)
 - **Print Statements**: `print(result);`
@@ -752,18 +753,15 @@ print(x_2);
 // Find critical points of f(x) = x^3 - 6x^2 + 9x + 1
 @h3{Finding Critical Points}
 
-// Define the function
-f(x) := x^3 - 6*x^2 + 9*x + 1;
-
 // Find the derivative
 @eval
-f_prime := math.diff(x^3 - 6*x^2 + 9*x + 1, x);  // Result: 12.0*x - 9.0*x**2.0 + 3.0
+f_{prime} := math.diff(x^3 - 6*x^2 + 9*x + 1, x);  // Result: 12.0*x - 9.0*x**2.0 + 3.0
 
 // Solve f'(x) = 0 by testing values
 @eval
-critical1 := f_prime | x:1;    // Result: 6.0 - 9.0 + 3.0 = 0
+critical1 := f_{prime} | x:1;    // Result: 6.0 - 9.0 + 3.0 = 0
 @eval
-critical2 := f_prime | x:3;    // Result: 36.0 - 81.0 + 3.0 = -42.0
+critical2 := f_{prime} | x:3;    // Result: 36.0 - 81.0 + 3.0 = -42.0
 
 print("f'(1) = " + critical1);  // Critical point at x = 1
 print("f'(3) = " + critical2);
@@ -774,6 +772,8 @@ print("f'(3) = " + critical2);
 ```madola
 // Verify chain rule: d/dx[f(g(x))] = f'(g(x)) * g'(x)
 @h3{Chain Rule Verification}
+
+x := 2;
 
 // Define composite function: h(x) = sin(x^2)
 @eval
@@ -801,17 +801,158 @@ test_chain := h_prime_chain | x:2;
 print("At x = 2: " + test_direct + " = " + test_chain);
 ```
 
-### Supported Functions for Symbolic Differentiation
+### Symbolic Integration with math.intg()
 
-`math.diff()` supports differentiation of:
+The `math.intg()` function computes symbolic indefinite integrals (antiderivatives) of mathematical expressions.
+
+**Syntax:** `math.intg(expression, variable)`
+
+- `expression` - Mathematical expression to integrate (can include variables)
+- `variable` - Variable with respect to which to integrate
+
+```madola
+// Polynomial integration
+F := math.intg(x^2 + 2*x + 1, x);     // Result: x + x**2 + x**3/3
+
+print(F);  // Output: x + x**2 + x**3/3
+```
+
+**Examples with Different Functions:**
+
+```madola
+// Power functions
+I1 := math.intg(x^3, x);              // Result: x**4/4
+I2 := math.intg(1/x, x);              // Result: log(x)
+
+// Exponential functions
+I3 := math.intg(exp(x), x);           // Result: exp(x)
+
+// Trigonometric functions
+I4 := math.intg(sin(x), x);           // Result: -cos(x)
+I5 := math.intg(cos(x), x);           // Result: sin(x)
+
+print(I1);
+print(I2);
+print(I3);
+print(I4);
+print(I5);
+```
+
+**More Complex Examples:**
+
+```madola
+// Polynomial with coefficients
+I6 := math.intg(3*x^2 + 2*x - 5, x);  // Result: -5*x + x**2 + x**3
+
+// Sum of monomials
+I7 := math.intg(4*x^3 + 2*x + 1, x);   // Result: x + x**2 + x**4
+
+print(I6);
+print(I7);
+```
+
+### Supported Functions for Symbolic Integration
+
+`math.intg()` supports integration of:
 
 - **Polynomials**: `x^n`, `ax^2 + bx + c`
-- **Trigonometric**: `sin(x)`, `cos(x)`, `tan(x)`
-- **Exponential**: `exp(x)`, `a^x`
-- **Logarithmic**: `log(x)`, `ln(x)`
-- **Combinations**: Products, quotients, and compositions using chain rule
+- **Trigonometric**: `sin(x)`, `cos(x)` (basic integrals)
+- **Exponential**: `exp(x)`
+- **Logarithmic**: `1/x` → `log(x)`
+- **Power functions**: `x^n` → `x^(n+1)/(n+1)` (for n ≠ -1)
 
-**Note:** Results are displayed in symbolic form with decimal coefficients (e.g., `2.0*x**1.0` instead of `2x`).
+**Note:** Not all functions have closed-form antiderivatives. Results are displayed in symbolic form using SymEngine's notation.
+
+### Combining Integration and Substitution
+
+You can combine symbolic integration with variable substitution:
+
+```madola
+// Find the antiderivative and evaluate at specific points
+@eval
+antiderivative := math.intg(2*x + 3, x);  // Result: 3*x + x**2
+@eval
+F_5 := antiderivative | x:5;                  // Evaluates to: 15 + 25 = 40
+@eval
+F_1 := antiderivative | x:1;                  // Evaluates to: 3 + 1 = 4
+
+// Calculate definite integral F(5) - F(1)
+definite_integral := 40 - 4;                   // Result: 36
+
+print(antiderivative);
+print("F(5) = " + F_5);
+print("F(1) = " + F_1);
+print("∫[1 to 5] (2x + 3) dx = " + definite_integral);
+```
+
+**Practical Example: Area Under Curve**
+
+```madola
+// Calculate area under y = x^2 from x = 0 to x = 2
+@h3{Area Under Parabola}
+
+// Find antiderivative
+@eval
+F := math.intg(x^2, x);                   // Result: x**3/3
+
+// Evaluate at bounds
+@eval
+upper := F | x:2;                             // Result: 8/3
+@eval
+lower := F | x:0;                             // Result: 0
+
+// Calculate definite integral
+area := upper - lower;                         // Result: 8/3
+
+print("Antiderivative: F(x) = " + F);
+print("F(2) = " + upper);
+print("F(0) = " + lower);
+print("Area = ∫[0 to 2] x² dx = " + area);
+```
+
+**Advanced Example: Fundamental Theorem Verification**
+
+```madola
+// Verify that d/dx[∫f(x)dx] = f(x)
+@h3{Fundamental Theorem of Calculus Verification}
+
+// Start with a function
+f(x) := 3*x^2 + 2*x + 1;
+
+// Find its antiderivative
+@eval
+F := math.intg(f(x), x);                  // Result: x + x**2 + x**3
+
+// Differentiate the result
+@eval
+f_recovered := math.diff(F, x);               // Should equal original function
+
+print("Original function: f(x) = " + f(x));
+print("Antiderivative: F(x) = " + F);
+print("Recovered function: F'(x) = " + f_recovered);
+
+// Verify equivalence by testing at x = 2
+@eval
+test_original := f(x) | x:2;
+@eval
+test_recovered := f_recovered | x:2;
+
+print("f(2) = " + test_original);
+print("F'(2) = " + test_recovered);
+```
+
+### Supported Functions for Symbolic Integration
+
+`math.intg()` supports integration of:
+
+- **Polynomials**: `x^n`, `ax^2 + bx + c`
+- **Trigonometric**: `sin(x)`, `cos(x)` (basic integrals)
+- **Exponential**: `exp(x)`
+- **Logarithmic**: `1/x` → `log(x)`
+- **Power functions**: `x^n` → `x^(n+1)/(n+1)` (for n ≠ -1)
+- **Combinations**: Sums and constant multiples of the above
+
+**Note:** Results are displayed in symbolic form using SymEngine's notation (e.g., `x**2` for x², `x**3/3` for x³/3).
 
 ---
 

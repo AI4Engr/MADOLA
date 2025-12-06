@@ -218,6 +218,7 @@ private:
 #ifdef WITH_SYMENGINE
     // Symbolic computation functions (private)
     Value evaluateSymbolicDiff(const Expression& expr, const std::string& variable);
+    Value evaluateSymbolicIntegral(const Expression& expr, const std::string& variable);
     Value evaluateSymbolicMatrixDiff(const ArrayValue& matrix, const std::string& variable);
 #endif
     Value generateGraph(const ArrayValue& xArray, const ArrayValue& yArray, const std::string& title = "");
