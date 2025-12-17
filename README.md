@@ -19,7 +19,7 @@ Because existing tools each solve *only part* of the problem.
 | You want strong computation | **Python / Julia / MATLAB** | Requires libraries; syntax differs from standard math notation |
 | You want visual documentation | **Mathcad / Mathematica / Maple** | Proprietary and closed |
 | You want modern web deployment | **None of the above** | No native WASM or HTML flow |
-| You want **AI** to help you | **None of the above** | No direct AI suport |
+| You want **AI** to help you | **None of the above** | No direct AI support |
 
 MADOLA exists because **no single tool unites mathematics, documentation, and computation** in an open, compiler-based environment.  
 > It’s not another wheel — it’s the **hub** connecting them all.
@@ -50,7 +50,7 @@ Although it is organized as source code, it is built on the belief that code sho
 
 ```madola
 @h2{
-Funciton to calculate π Using the Leibniz Series
+Function to calculate π Using the Leibniz Series
 }
 
 @gen_cpp
@@ -63,10 +63,10 @@ fn calcPi(n) {
 }
 ```
 
-This single `.mda` file cane execute directly, generate HTML documentation with Latex eqaution and produce optimized **C++** or **WASM** modules  
+This single `.mda` file can execute directly, generate HTML documentation with LaTeX equation and produce optimized **C++** or **WASM** modules  
 
 <h2>
-Funciton to calculate π Using the Leibniz Series
+Function to calculate π Using the Leibniz Series
 </h2>
 
 $$
