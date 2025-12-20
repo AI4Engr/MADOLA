@@ -65,7 +65,7 @@ fn calcPi(n) {
 
 This single `.mda` file can execute directly, generate HTML documentation with LaTeX equation and produce optimized **C++** or **WASM** modules  
 
-![Screenshot](images/html_output.jpg.jpg)
+![Screenshot](images/html_output.jpg)
 
 ```cpp
 #include <cmath>
