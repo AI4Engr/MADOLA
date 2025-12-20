@@ -65,28 +65,7 @@ fn calcPi(n) {
 
 This single `.mda` file can execute directly, generate HTML documentation with LaTeX equation and produce optimized **C++** or **WASM** modules  
 
-<h2>
-Function to calculate π Using the Leibniz Series
-</h2>
-
-$$
-\begin{flalign}
-\textbf{function } calcPi(n) \\
-\left|
-\begin{array}{l}
-\quad sum =0 \\
-\quad \textbf{for } i \textbf{ in } 0...n \\
-\quad \left|
-\begin{array}{l}
-\quad sum =sum + \frac{{(-1)}^{i}}{\left(2 \cdot i + 1\right)} \\
-\end{array}
-\right. \\
-\quad \text{return } sum \cdot 4
-\end{array}
-\right.
-\end{flalign}
-$$
-
+![Screenshot](images/html_output.jpg.jpg)
 
 ```cpp
 #include <cmath>
