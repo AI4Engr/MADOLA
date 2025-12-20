@@ -75,13 +75,17 @@ If you're using MADOLA for mathematical computation:
 ## Documentation Structure
 
 ```
-doc/
+docs/
 ├── README.md                    # This file - documentation index
 ├── ARCHITECTURE.md              # System architecture overview
 ├── SYMENGINE.md                 # SymEngine integration guide
 ├── DEPENDENCIES.md              # Complete dependency documentation
 ├── CMAKE_SYSTEM.md              # CMake build system guide
-└── BUILD_CONFIGURATION.md       # Build configuration reference
+├── BUILD_CONFIGURATION.md       # Build configuration reference
+├── TODO.md                      # Project roadmap and improvement plan
+├── WASM_COMPLETE_GUIDE.md       # Complete WASM build guide
+├── interactive_debugging.md     # Interactive debugging guide
+└── source_map_debugging.md      # Source map debugging guide
 ```
 
 ## Common Tasks
