@@ -42,9 +42,11 @@ MADOLA is a domain-specific language designed for mathematical computations with
 - **GCC/MinGW** via MSYS2 (recommended) or MinGW-w64
 - **Ninja** (build tool, required for Windows with GCC/MSYS2)
 
-#### Installing Build Tools on Windows
+#### Installing Build Tools
 
-**Option 1: MSYS2 (Recommended)**
+**Windows:**
+
+*Option 1: MSYS2 (Recommended)*
 ```bash
 # Download and install MSYS2 from https://www.msys2.org/
 
@@ -54,13 +56,13 @@ pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja
 # Add to PATH: C:\msys64\mingw64\bin
 ```
 
-**Option 2: Standalone MinGW-w64**
+*Option 2: Standalone MinGW-w64*
 ```bash
 # Download from: https://github.com/niXman/mingw-builds-binaries/releases
 # Extract and add to PATH
 ```
 
-**Installing Emscripten on Windows:**
+*Emscripten (for WASM builds)*
 ```bash
 # Clone Emscripten SDK
 git clone https://github.com/emscripten-core/emsdk.git
@@ -74,11 +76,64 @@ emsdk activate latest
 emsdk_env.bat
 ```
 
-**Installing Node.js on Windows:**
+*Node.js (for Tree-sitter)*
 - Download installer from https://nodejs.org/
 - Or use package manager: `winget install OpenJS.NodeJS`
 
-This is required before running any build commands as MADOLA uses Tree-sitter for parsing.
+---
+
+**Ubuntu/Debian:**
+```bash
+sudo apt-get update
+sudo apt-get install build-essential cmake ninja-build nodejs npm
+
+# Emscripten (for WASM builds)
+git clone https://github.com/emscripten-core/emsdk.git
+cd emsdk
+./emsdk install latest
+./emsdk activate latest
+source ./emsdk_env.sh  # Add to ~/.bashrc for persistence
+```
+
+**Fedora/RHEL/CentOS:**
+```bash
+sudo dnf install gcc gcc-c++ cmake ninja-build nodejs npm
+
+# Emscripten (for WASM builds)
+git clone https://github.com/emscripten-core/emsdk.git
+cd emsdk
+./emsdk install latest
+./emsdk activate latest
+source ./emsdk_env.sh  # Add to ~/.bashrc for persistence
+```
+
+**Arch Linux:**
+```bash
+sudo pacman -S base-devel cmake ninja nodejs npm
+
+# Emscripten (for WASM builds)
+git clone https://github.com/emscripten-core/emsdk.git
+cd emsdk
+./emsdk install latest
+./emsdk activate latest
+source ./emsdk_env.sh  # Add to ~/.bashrc for persistence
+```
+
+**macOS:**
+```bash
+# Install Xcode Command Line Tools
+xcode-select --install
+
+# Install build tools and Node.js via Homebrew
+brew install cmake ninja node
+
+# Emscripten (for WASM builds)
+git clone https://github.com/emscripten-core/emsdk.git
+cd emsdk
+./emsdk install latest
+./emsdk activate latest
+source ./emsdk_env.sh  # Add to ~/.zshrc for persistence
+```
 
 ### First-Time Setup
 
@@ -97,7 +152,7 @@ npm install
 
 **Windows:**
 
-Make sure to add both the **`mingw64`** path and the **Emscripten** path to your terminal **before** you start.
+Make sure to add the **`mingw64`** path to your terminal **before** you start.
 
 MODOLA uses:
 
@@ -110,22 +165,18 @@ It’s best to update your PATH **first**, then launch your IDE (e.g., `code .` 
 
 ```powershell
 $env:PATH += ";C:\msys64\mingw64\bin"
-$env:PATH += ";C:\emsdk\upstream\emscripten"
 ```
 
 *CMD*
 
 ```cmd
 set PATH=%PATH%;C:\msys64\mingw64\bin
-set PATH=%PATH%;C:\emsdk\upstream\emscripten
 ```
 
 
 ```bash
 # Initialize and build
 dev.bat setup
-dev.bat generate-grammar
-dev.bat configure
 dev.bat build
 
 # Run example
@@ -137,12 +188,11 @@ dev.bat regression wasm      # Run WASM regression tests
 dev.bat regression update    # Update native test baselines
 ```
 
-**Unix/Linux:**
+**Unix/Linux/macOS:**
+
 ```bash
 # Initialize and build
 ./dev.sh setup
-./dev.sh generate-grammar
-./dev.sh configure
 ./dev.sh build
 
 # Run example
@@ -328,47 +378,21 @@ madola/
 - **Ninja/MSBuild**: Fast parallel builds
 - **Emscripten**: WASM compilation toolchain
 
-## Tree-sitter Submodule Management
-
-### Why a Submodule?
-
-Tree-sitter is included as a Git submodule for proper dependency management. This ensures:
-- Version consistency across builds
-- Clean separation of external dependencies
-- Easy updates and maintenance
-
-### Initial Setup
-
-When cloning the repository for the first time:
-
-```bash
-git clone <repository-url>
-cd madola
-./dev.sh init-submodules  # or dev.bat init-submodules on Windows
-./dev.sh generate-grammar # Generate parser from grammar.js
-```
-
-### Updating the Submodule
-
-To update Tree-sitter to a newer version:
-
-```bash
-cd vendor/tree-sitter
-git pull origin master
-cd ../..
-git add vendor/tree-sitter
-git commit -m "Update Tree-sitter submodule"
-```
 ## Troubleshooting
 
 **Issue:** `dev.bat build` does nothing or fails silently
 **Solution:** Run from **Windows Command Prompt (cmd.exe)**, NOT Git Bash. Git Bash has path issues with MinGW-w64.
 
-**Issue:** `tree-sitter` directory is empty
-**Solution:** Initialize Git submodule:
+**Issue:** `tree-sitter` directory is empty or submodules not initialized
+**Solution:** Run the setup script to initialize all submodules:
 ```bash
-git submodule update --init --recursive
+# Windows
+dev.bat setup
+
+# Unix/Linux/macOS
+./dev.sh setup
 ```
+**Warning:** Do NOT use `git submodule update --init --recursive` as it will download all 150+ Boost libraries (~1.2GB) instead of the required 27 libraries (~131MB).
 
 **Issue:** Parser generation fails
 **Solution:** Install Tree-sitter CLI globally:

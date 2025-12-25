@@ -194,10 +194,15 @@ See [CMake Build System](CMAKE_SYSTEM.md) and [Build Configuration](BUILD_CONFIG
 
 **Problem**: Build fails with missing dependencies
 
-**Solution**: Initialize git submodules:
+**Solution**: Run the setup script to initialize all submodules:
 ```bash
-git submodule update --init --recursive
+# Windows
+dev.bat setup
+
+# Unix/Linux/macOS
+./dev.sh setup
 ```
+**Warning**: Do NOT use `git submodule update --init --recursive` as it will download all 150+ Boost libraries (~1.2GB) instead of the required 27 libraries (~131MB).
 
 **Problem**: Out of memory during compilation
 
@@ -219,10 +224,7 @@ See [Build Configuration](BUILD_CONFIGURATION.md) for more troubleshooting.
 
 **Problem**: SymEngine build fails
 
-**Solution**: Ensure Boost submodule is initialized:
-```bash
-git submodule update --init --recursive
-```
+**Solution**: Ensure all submodules are initialized (run `dev.bat setup` or `./dev.sh setup`)
 
 **Problem**: Symbolic differentiation fails
 
