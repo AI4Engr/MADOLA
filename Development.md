@@ -91,8 +91,6 @@ npm install -g tree-sitter-cli
 # 2. Install project dependencies
 npm install
 
-# 3. Initialize Tree-sitter submodule (Git submodule)
-git submodule update --init --recursive
 ```
 
 ### Quick Start
@@ -125,7 +123,7 @@ set PATH=%PATH%;C:\emsdk\upstream\emscripten
 
 ```bash
 # Initialize and build
-dev.bat init-submodules
+dev.bat setup
 dev.bat generate-grammar
 dev.bat configure
 dev.bat build
@@ -142,7 +140,7 @@ dev.bat regression update    # Update native test baselines
 **Unix/Linux:**
 ```bash
 # Initialize and build
-./dev.sh init-submodules
+./dev.sh setup
 ./dev.sh generate-grammar
 ./dev.sh configure
 ./dev.sh build
