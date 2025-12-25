@@ -558,14 +558,16 @@ cmake -B build -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
 
 **Solution**:
 ```bash
-git submodule update --init --recursive
+# WARNING: Do NOT use "git submodule update --init --recursive" (downloads ~1.2GB)
+# Use setup script instead: dev.bat setup (Windows) or ./dev.sh setup (Unix)
 ```
 
 **Issue**: SymEngine build fails
 
 **Solution**: Ensure Boost submodule is initialized:
 ```bash
-git submodule update --init --recursive
+# WARNING: Do NOT use "git submodule update --init --recursive" (downloads ~1.2GB)
+# Use setup script instead: dev.bat setup (Windows) or ./dev.sh setup (Unix)
 ```
 
 **Issue**: Ninja not found

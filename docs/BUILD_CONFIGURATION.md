@@ -606,7 +606,8 @@ cmake --build build --parallel 2
 
 **Solution**: Initialize submodules:
 ```bash
-git submodule update --init --recursive
+# WARNING: Do NOT use "git submodule update --init --recursive" (downloads ~1.2GB)
+# Use setup script instead: dev.bat setup (Windows) or ./dev.sh setup (Unix)
 ```
 
 ## Build Presets

@@ -228,7 +228,8 @@ Total:           ~110 MB (same total size, but split)
 **Windows:**
 ```cmd
 # Initialize submodules
-git submodule update --init --recursive
+# WARNING: Do NOT use "git submodule update --init --recursive" (downloads ~1.2GB)
+# Use setup script instead: dev.bat setup (Windows) or ./dev.sh setup (Unix)
 
 # Configure with SymEngine (default)
 dev.bat configure
@@ -240,7 +241,8 @@ dev.bat build
 **Unix/Linux:**
 ```bash
 # Initialize submodules
-git submodule update --init --recursive
+# WARNING: Do NOT use "git submodule update --init --recursive" (downloads ~1.2GB)
+# Use setup script instead: dev.bat setup (Windows) or ./dev.sh setup (Unix)
 
 # Configure with SymEngine (default)
 ./dev.sh configure
@@ -298,7 +300,8 @@ MADOLA includes several test files for symbolic computation:
 
 **Solution**: Ensure Boost submodule is initialized:
 ```bash
-git submodule update --init --recursive
+# WARNING: Do NOT use "git submodule update --init --recursive" (downloads ~1.2GB)
+# Use setup script instead: dev.bat setup (Windows) or ./dev.sh setup (Unix)
 ```
 
 **Issue**: Missing Boost headers during compilation

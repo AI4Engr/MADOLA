@@ -109,7 +109,8 @@ These dependencies enable additional features:
 **Installation:**
 ```bash
 # Initialize submodule
-git submodule update --init --recursive
+# WARNING: Do NOT use "git submodule update --init --recursive" (downloads ~1.2GB)
+# Use setup script instead: dev.bat setup (Windows) or ./dev.sh setup (Unix)
 ```
 
 **Tree-sitter CLI:**
@@ -143,7 +144,8 @@ npm install
 **Installation:**
 ```bash
 # Initialize submodule
-git submodule update --init --recursive
+# WARNING: Do NOT use "git submodule update --init --recursive" (downloads ~1.2GB)
+# Use setup script instead: dev.bat setup (Windows) or ./dev.sh setup (Unix)
 ```
 
 **Usage in MADOLA:**
@@ -171,7 +173,8 @@ git submodule update --init --recursive
 **Installation:**
 ```bash
 # Initialize submodule
-git submodule update --init --recursive
+# WARNING: Do NOT use "git submodule update --init --recursive" (downloads ~1.2GB)
+# Use setup script instead: dev.bat setup (Windows) or ./dev.sh setup (Unix)
 ```
 
 **Usage in MADOLA:**
@@ -196,7 +199,8 @@ git submodule update --init --recursive
 **Installation:**
 ```bash
 # Initialize submodule
-git submodule update --init --recursive
+# WARNING: Do NOT use "git submodule update --init --recursive" (downloads ~1.2GB)
+# Use setup script instead: dev.bat setup (Windows) or ./dev.sh setup (Unix)
 ```
 
 **Components Used:**
@@ -319,7 +323,8 @@ MADOLA uses git submodules for C++ dependencies to ensure version consistency an
 
 **First-time setup:**
 ```bash
-git submodule update --init --recursive
+# WARNING: Do NOT use "git submodule update --init --recursive" (downloads ~1.2GB)
+# Use setup script instead: dev.bat setup (Windows) or ./dev.sh setup (Unix)
 ```
 
 **Updating submodules:**
@@ -455,7 +460,8 @@ MADOLA
 
 **Solution**:
 ```bash
-git submodule update --init --recursive
+# WARNING: Do NOT use "git submodule update --init --recursive" (downloads ~1.2GB)
+# Use setup script instead: dev.bat setup (Windows) or ./dev.sh setup (Unix)
 ```
 
 **Issue**: Submodule update fails
@@ -464,7 +470,8 @@ git submodule update --init --recursive
 ```bash
 # Reset submodules
 git submodule deinit -f .
-git submodule update --init --recursive
+# WARNING: Do NOT use "git submodule update --init --recursive" (downloads ~1.2GB)
+# Use setup script instead: dev.bat setup (Windows) or ./dev.sh setup (Unix)
 ```
 
 ### Compiler Issues
