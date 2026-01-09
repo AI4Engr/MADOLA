@@ -1,4 +1,6 @@
-﻿@layout1x4
+﻿@version 0.01
+
+@layout1x4
 \Omega_{b} := 1.667;
 F_{y} := 50 ksi;
 S_{x} := 1410 in^2;

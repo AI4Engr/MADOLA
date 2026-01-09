@@ -1,3 +1,5 @@
+@version 0.01
+
 // Decorators Test
 
 // Function with @gen_cpp decorator for C++ generation

@@ -195,7 +195,17 @@ HtmlFormatter::FormatResult HtmlFormatter::formatProgramWithExecution(const Prog
         result.html = html.str();
         result.success = true;
     } catch (const std::exception& e) {
-        result.success = false;
+        // Generate error HTML so the web app can display the error
+        std::stringstream errorHtml;
+        errorHtml << generateHtmlHeader("MADOLA Error");
+        errorHtml << "<div class=\"error-container\" style=\"background: #f8d7da; border: 1px solid #dc3545; border-radius: 4px; padding: 16px; margin: 16px 0;\">\n";
+        errorHtml << "<h2 style=\"color: #721c24; margin-top: 0;\">Error</h2>\n";
+        errorHtml << "<p style=\"color: #721c24; margin-bottom: 0;\">" << escapeHtml(e.what()) << "</p>\n";
+        errorHtml << "</div>\n";
+        errorHtml << generateHtmlFooter();
+
+        result.html = errorHtml.str();
+        result.success = true;  // Set to true so HTML is returned to display the error
         result.error = e.what();
     }
 

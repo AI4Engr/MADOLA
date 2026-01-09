@@ -1,6 +1,6 @@
-﻿@h2[center] {Euclidean Algorithm (Calculationg the GCD)}
+﻿@version 0.01
 
-@version 0.01
+@h2[center] {Euclidean Algorithm (Calculationg the GCD)}
 
 @p {Input data:}
 @layout1x2

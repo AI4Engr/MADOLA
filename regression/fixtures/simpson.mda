@@ -1,6 +1,6 @@
-@h2[center] {Numeric integration method (Simpson's rule)}
-
 @version 0.01
+
+@h2[center] {Numeric integration method (Simpson's rule)}
 
 @p {Input data:}
 

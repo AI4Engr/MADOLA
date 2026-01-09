@@ -440,7 +440,9 @@ class MadolaApp {
     }
 
     loadDefaultContent() {
-        const defaultCode = `// HTML Formatter Demo
+        const defaultCode = `
+@version 0.01
+// HTML Formatter Demo
 // This demonstrates math, text, and graphs
 
 // Greek letters and mathematical expressions

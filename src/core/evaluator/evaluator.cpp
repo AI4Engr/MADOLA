@@ -76,6 +76,21 @@ Evaluator::EvaluationResult Evaluator::evaluate(const Program& program, const st
     loopDepth = 0;
 
     try {
+        // Check for @version directive at the start of the program
+        bool hasVersion = false;
+        if (!program.statements.empty()) {
+            if (auto* versionStmt = dynamic_cast<const VersionStatement*>(program.statements[0].get())) {
+                hasVersion = true;
+                if (versionStmt->version != "0.01") {
+                    throw std::runtime_error("Unsupported version: " + versionStmt->version + ". Expected version 0.01");
+                }
+            }
+        }
+
+        if (!hasVersion) {
+            throw std::runtime_error("Missing @version directive. Every MADOLA file must start with '@version' to specify the language version.");
+        }
+
         // First pass: execute all statements
         for (const auto& stmt : program.statements) {
             executeStatement(*stmt, result.outputs);

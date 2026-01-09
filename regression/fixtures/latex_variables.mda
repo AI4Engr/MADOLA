@@ -1,4 +1,6 @@
-﻿// Example for latex equations
+﻿@version 0.01
+
+// Example for latex equations
 
 @layout1x3
 \alpha := 1;

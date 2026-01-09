@@ -64,3 +64,6 @@ tauri/target/
 # Regression test results (generated)
 regression/results/
 
+# Private editor directory (not tracked)
+editor/
+

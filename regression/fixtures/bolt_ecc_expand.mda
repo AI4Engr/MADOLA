@@ -1,4 +1,6 @@
-﻿@layout1x5
+﻿@version 0.01
+
+@layout1x5
 P_x := 0.6;
 P_y := -0.8;
 a_x := -0.632;

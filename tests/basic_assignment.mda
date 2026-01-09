@@ -1,3 +1,5 @@
+@version 0.01
+
 # Test basic assignment
 x1 := 42;
 print(x1);

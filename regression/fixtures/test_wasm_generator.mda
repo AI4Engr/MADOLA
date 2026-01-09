@@ -1,3 +1,5 @@
+@version 0.01
+
 // Generate Test WASM Module for Regression Tests
 // This file generates a simple WASM module for testing imports
 

@@ -342,7 +342,7 @@ int main(int argc, char* argv[]) {
                 std::cout.flush(); // Ensure immediate output
                 pauseIfNeeded(); // Pause to see results
             } else {
-                std::cerr << "❌ Execution failed: " << result.error << std::endl;
+                std::cerr << "Error: " << result.error << std::endl;
                 std::cerr.flush(); // Ensure immediate output
                 pauseIfNeeded();
                 return 1;

@@ -1,3 +1,4 @@
+@version 0.01
 // WASM Import Example
 
 // Import calcPi function from the calcPi module

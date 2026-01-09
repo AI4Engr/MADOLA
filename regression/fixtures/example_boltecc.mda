@@ -1,4 +1,6 @@
-﻿fn boltEcc(n, P_x, P_y, l_x, l_y, s_x, s_y) {
+﻿@version 0.01
+
+fn boltEcc(n, P_x, P_y, l_x, l_y, s_x, s_y) {
     M_o := -(P_x * l_y - P_y * l_x);
 
     @layout1x2
