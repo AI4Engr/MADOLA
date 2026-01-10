@@ -140,7 +140,7 @@ case "${1:-help}" in
         # Build with emmake
         emmake cmake --build . --parallel
 
-        cd ../..
+        cd ..
 
         # Copy WASM output to web/runtime
         mkdir -p web/runtime

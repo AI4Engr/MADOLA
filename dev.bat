@@ -237,7 +237,7 @@ if "%1"=="wasm" (
     REM Build with emmake
     call emmake cmake --build . --parallel
 
-    cd ..\..
+    cd ..
 
     REM Copy WASM output to web\runtime
     if not exist web\runtime mkdir web\runtime
