@@ -89,6 +89,20 @@
   - **Current workaround:** Use `math.summation` for integration methods
   - **See:** Simpson's rule example in LANGUAGE_GUIDE.md line 806-830
 
+- [ ] **🔥 Generic SVG Output Primitive** - First-class SVG drawing for engineering diagrams
+  - Emit arbitrary line/circle/arrow/text/path (not just xy line plots)
+  - Unblocks: structural free-body diagrams (supports, load arrows), beam deflection
+    shapes, generalizing the hard-coded `graph_3d` brick
+  - Foundation for interactive/animated visuals (drag a load → redraw)
+  - **Impact:** Core differentiator vs Mathcad/BlockPad/EnerCalc — "calculations that move"
+  - **See:** existing `graph()` is static D3; `graph_3d` is a placeholder brick
+
+- [ ] **🔥 Numerical Integration / ODE Solver Primitive** - Out-of-the-box, no hand-rolled Simpson
+  - Numeric definite integral (handles piecewise/trapezoidal loads where `math.intg` can't)
+  - ODE/difference-equation stepper (e.g. draining-tank demo, dynamic systems)
+  - Unblocks: beam deflection (∫∫ M/EI), education-grade dynamic visualizations
+  - **Pairs with:** Higher-Order Functions above (pass the integrand/derivative as `f`)
+
 - [ ] **Standard Library** - Comprehensive math library
   - Trigonometry: sin, cos, tan, arcsin, arccos, arctan
   - Logarithmic: log, ln, exp
@@ -107,6 +121,24 @@
   - Dimensional analysis validation
   - Physical constants library
 
+- [~] **🔥 Parse Error Diagnostics** - Replace bare "Parse error detected in source"
+  - **Root cause:** `ast_builder_statements.cpp:58` only calls `ts_node_has_error(root)`
+    (boolean) then throws a generic string — discards all location info
+  - [x] Walk tree to find first error node (`ts_node_is_error` / `ts_node_is_missing`)
+  - [x] Report 1-based line/column via existing `getNodeStartPosition()` → `SourceLocation`
+  - [x] Include offending source snippet via existing `getNodeText(errorNode)`
+  - [x] Distinguish ERROR ("unexpected '...'") vs MISSING ("missing '}'")
+  - [ ] Return structured error `{line, column, type, snippet}` from `wasm_interface.cpp`
+        instead of an exception string (so the App can highlight the line)
+  - [ ] (stretch) Collect ALL error nodes, not just the first
+  - **Done (2026-06-16):** `describeParseError()` in `ast_builder_statements.cpp` now emits
+    e.g. `Line 3:16 - syntax error: missing '}'`. Message passes through to the WASM
+    `error` field unchanged, so the App shows it with no front-end change.
+  - **Remaining:** structured JSON + multi-error collection (need error-field reshape
+    + front-end parsing).
+  - **Impact:** Turns the opaque UI error into a locatable message — baseline for a
+    commercial editor
+
 - [ ] **Error Recovery** - Better error messages with suggestions
 - [ ] **Debugging Support** - Breakpoints, variable inspection, call stack
 
@@ -118,7 +150,8 @@
 - [ ] **Output Formats**
   - LaTeX export for academic papers
   - MathML for web standards
-  - SVG/PNG for graphics
+  - SVG/PNG for graphics (see Generic SVG Output Primitive under High Priority)
+  - Typst → PDF for signable engineering reports (headers/footers/page numbers)
 
 ### Low Priority
 - [ ] Macro System - Compile-time code generation

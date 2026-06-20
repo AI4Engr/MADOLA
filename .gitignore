@@ -66,4 +66,5 @@ regression/results/
 
 # Private editor directory (not tracked)
 editor/
+app/
 

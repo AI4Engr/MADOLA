@@ -5,6 +5,8 @@
 #include <iostream>
 #include <cctype>
 #include <optional>
+#include <vector>
+#include <string>
 
 namespace madola {
 
@@ -56,7 +58,7 @@ ProgramPtr ASTBuilder::buildProgram(const std::string& source) {
 
     // Check for parse errors
     if (ts_node_has_error(root_node)) {
-        std::string error_msg = "Parse error detected in source";
+        std::string error_msg = describeParseError(root_node, source);
         ts_tree_delete(tree);
         throw std::runtime_error(error_msg);
     }
@@ -76,6 +78,78 @@ ProgramPtr ASTBuilder::buildProgram(const std::string& source) {
 
     ts_tree_delete(tree);
     return program;
+}
+
+std::string ASTBuilder::describeParseError(TSNode root, const std::string& source) {
+    // Depth-first walk to find the first ERROR or MISSING node. Tree-sitter marks
+    // syntax errors as ERROR nodes (unexpected tokens) and recoverable omissions
+    // as MISSING nodes (e.g. an expected ';' or '}' that was not supplied).
+    TSNode found = {};
+    bool found_missing = false;
+    bool has_found = false;
+
+    std::vector<TSNode> stack;
+    stack.push_back(root);
+    while (!stack.empty()) {
+        TSNode node = stack.back();
+        stack.pop_back();
+
+        if (ts_node_is_missing(node)) {
+            found = node;
+            found_missing = true;
+            has_found = true;
+            break; // MISSING is the most precise diagnostic; prefer it
+        }
+        if (ts_node_is_error(node) && !has_found) {
+            found = node;
+            found_missing = false;
+            has_found = true;
+            // keep scanning in case a more precise MISSING node exists deeper
+        }
+
+        // Push children in reverse so the leftmost child is processed first.
+        uint32_t n = ts_node_child_count(node);
+        for (uint32_t i = n; i > 0; --i) {
+            stack.push_back(ts_node_child(node, i - 1));
+        }
+    }
+
+    if (!has_found) {
+        return "Parse error detected in source";
+    }
+
+    SourceLocation loc = getNodeStartPosition(found);
+
+    if (found_missing) {
+        // The grammar symbol name of a MISSING node is what was expected.
+        const char* expected = ts_node_type(found);
+        return "Line " + std::to_string(loc.line) + ":" + std::to_string(loc.column)
+             + " - syntax error: missing '" + std::string(expected ? expected : "?") + "'";
+    }
+
+    std::string snippet = getNodeText(found, source);
+    // Collapse to a single line and trim so the message stays readable.
+    for (char& c : snippet) {
+        if (c == '\n' || c == '\r' || c == '\t') c = ' ';
+    }
+    size_t start = snippet.find_first_not_of(' ');
+    size_t end = snippet.find_last_not_of(' ');
+    if (start == std::string::npos) {
+        snippet.clear();
+    } else {
+        snippet = snippet.substr(start, end - start + 1);
+    }
+    const size_t kMaxSnippet = 40;
+    if (snippet.size() > kMaxSnippet) {
+        snippet = snippet.substr(0, kMaxSnippet) + "...";
+    }
+
+    if (snippet.empty()) {
+        return "Line " + std::to_string(loc.line) + ":" + std::to_string(loc.column)
+             + " - syntax error: unexpected token";
+    }
+    return "Line " + std::to_string(loc.line) + ":" + std::to_string(loc.column)
+         + " - syntax error: unexpected '" + snippet + "'";
 }
 
 StatementPtr ASTBuilder::buildStatement(TSNode node, const std::string& source) {

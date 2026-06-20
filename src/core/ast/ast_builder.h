@@ -58,6 +58,11 @@ private:
     // Helper methods for position tracking
     SourceLocation getNodeStartPosition(TSNode node) const;
     SourceLocation getNodeEndPosition(TSNode node) const;
+
+    // Build a located parse-error message (line/column/type/snippet) by walking
+    // the tree for the first ERROR or MISSING node. Returns a generic message
+    // if no specific error node can be found.
+    std::string describeParseError(TSNode root, const std::string& source);
 };
 
 using ASTBuilderPtr = std::unique_ptr<ASTBuilder>;
