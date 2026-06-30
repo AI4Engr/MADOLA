@@ -271,7 +271,15 @@ void Evaluator::executePrint(const PrintStatement& stmt, std::vector<std::string
 
 void Evaluator::executeExpressionStatement(const ExpressionStatement& stmt, std::vector<std::string>& outputs) {
     Value value = evaluateExpression(*stmt.expression);
-    // For expression statements, only add to output if it returns a meaningful value
+    // eval(...) is an explicit "show me the result" expression form.
+    if (const auto* functionCall = dynamic_cast<const FunctionCall*>(stmt.expression.get())) {
+        if (functionCall->function_name == "eval") {
+            outputs.push_back(valueToString(value));
+            return;
+        }
+    }
+
+    // For other expression statements, only add to output if they return a meaningful string.
     if (std::holds_alternative<std::string>(value)) {
         std::string result = std::get<std::string>(value);
         if (!result.empty()) {

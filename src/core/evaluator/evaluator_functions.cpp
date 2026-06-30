@@ -27,6 +27,14 @@ static std::map<std::string, const PiecewiseFunctionDeclaration*> piecewiseFunct
 Value Evaluator::evaluateFunctionCall(const FunctionCall& expr) {
     // Special handling for matrix functions
 
+    // Special handling for eval() - explicitly evaluate and surface the value.
+    if (expr.function_name == "eval") {
+        if (expr.arguments.size() != 1) {
+            throw std::runtime_error("Function eval() expects 1 argument, got " + std::to_string(expr.arguments.size()));
+        }
+        return evaluateExpression(*expr.arguments[0]);
+    }
+
     // Special handling for type() function
     if (expr.function_name == "type") {
         if (expr.arguments.size() != 1) {

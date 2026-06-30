@@ -980,6 +980,13 @@ std::string HtmlFormatter::formatStatementAsMath(const Statement& stmt, Evaluato
         // Print statements are not formatted as math blocks - shown in execution results
         return "";
     } else if (const auto* exprStmt = dynamic_cast<const ExpressionStatement*>(&stmt)) {
+        // eval(...) is an explicit display form, so show the expression only.
+        if (const auto* functionCall = dynamic_cast<const FunctionCall*>(exprStmt->expression.get())) {
+            if (functionCall->function_name == "eval" && functionCall->arguments.size() == 1) {
+                return formatExpressionAsMath(*functionCall->arguments[0], evaluator);
+            }
+        }
+
         // Format standalone expression statements (e.g., comparisons: x < y;)
         // Just show the expression itself, without evaluating it
         return formatExpressionAsMath(*exprStmt->expression, evaluator);

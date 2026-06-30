@@ -695,6 +695,11 @@ std::string HtmlFormatter::formatPrint(const PrintStatement& stmt) {
 }
 
 std::string HtmlFormatter::formatExpressionStatement(const ExpressionStatement& stmt) {
+    if (const auto* functionCall = dynamic_cast<const FunctionCall*>(stmt.expression.get())) {
+        if (functionCall->function_name == "eval" && functionCall->arguments.size() == 1) {
+            return "eval(" + formatExpression(*functionCall->arguments[0]) + ");";
+        }
+    }
     return formatExpression(*stmt.expression) + ";";
 }
 

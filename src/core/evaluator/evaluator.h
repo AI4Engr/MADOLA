@@ -165,6 +165,7 @@ public:
     Value evaluateExpression(const Expression& expr);
     Value getVariableValue(const std::string& name) const;
     void executeStatement(const Statement& stmt, std::vector<std::string>& outputs);
+    std::string valueToString(const Value& value);
 
 #ifdef WITH_SYMENGINE
     // Public symbolic computation functions
@@ -213,7 +214,6 @@ private:
     Value matrixTranspose(const ArrayValue& matrix);
     Value matrixEigenvalues(const ArrayValue& matrix);
     Value matrixEigenvectors(const ArrayValue& matrix);
-    std::string valueToString(const Value& value);
 
 #ifdef WITH_SYMENGINE
     // Symbolic computation functions (private)
