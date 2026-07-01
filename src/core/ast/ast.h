@@ -319,6 +319,21 @@ public:
     }
 };
 
+class ArchitecturalLengthLiteral : public Expression {
+public:
+    std::string originalText;
+    double totalInches;
+
+    ArchitecturalLengthLiteral(const std::string& text, double inches,
+                               const SourceLocation& start = SourceLocation(),
+                               const SourceLocation& end = SourceLocation())
+        : Expression(start, end), originalText(text), totalInches(inches) {}
+
+    std::string toString() const override {
+        return originalText;
+    }
+};
+
 // Array expression for vectors like [1, 2, 3] (row) or [1; 2; 3] (column) or matrices
 class ArrayExpression : public Expression {
 public:

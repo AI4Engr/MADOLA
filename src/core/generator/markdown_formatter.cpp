@@ -950,6 +950,8 @@ std::string MarkdownFormatter::formatExpression(const Expression& expr) {
         }
 
         return ss.str();
+    } else if (const auto* archLength = dynamic_cast<const ArchitecturalLengthLiteral*>(&expr)) {
+        return archLength->originalText;
     } else if (const auto* unitExpr = dynamic_cast<const UnitExpression*>(&expr)) {
         std::string valueStr = formatExpression(*unitExpr->value);
         std::string unit = unitExpr->unit;

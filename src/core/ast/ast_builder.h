@@ -43,6 +43,7 @@ private:
     ExpressionPtr buildNumber(TSNode node, const std::string& source);
     ExpressionPtr buildComplexNumber(TSNode node, const std::string& source);
     ExpressionPtr buildUnitExpression(TSNode node, const std::string& source);
+    ExpressionPtr buildArchitecturalLength(TSNode node, const std::string& source);
     ExpressionPtr buildFunctionCall(TSNode node, const std::string& source);
     ExpressionPtr buildMethodCall(TSNode node, const std::string& source);
     ExpressionPtr buildBinaryExpression(TSNode node, const std::string& source);

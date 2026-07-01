@@ -736,24 +736,7 @@ std::string Evaluator::valueToString(const Value& value) {
         }
         oss << processed;
     } else if (std::holds_alternative<UnitValue>(value)) {
-        const UnitValue& unitVal = std::get<UnitValue>(value);
-
-        // Check if the numeric part is effectively an integer
-        if (std::floor(unitVal.value) == unitVal.value && std::abs(unitVal.value) < 1e15) {
-            oss << static_cast<long long>(unitVal.value);
-        } else {
-            std::ostringstream tempSs;
-            tempSs << std::fixed << std::setprecision(3) << unitVal.value;
-            std::string numStr = tempSs.str();
-            // Remove trailing zeros
-            numStr.erase(numStr.find_last_not_of('0') + 1, std::string::npos);
-            if (numStr.back() == '.') numStr.pop_back();
-            oss << numStr;
-        }
-
-        if (!unitVal.unit.empty()) {
-            oss << " " << unitVal.unit;
-        }
+        oss << std::get<UnitValue>(value).toString();
     } else if (std::holds_alternative<ArrayValue>(value)) {
         const ArrayValue& arr = std::get<ArrayValue>(value);
 

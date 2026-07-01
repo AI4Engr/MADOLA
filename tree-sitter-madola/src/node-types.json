@@ -794,6 +794,10 @@
       "required": true,
       "types": [
         {
+          "type": "architectural_length",
+          "named": true
+        },
+        {
           "type": "array_access",
           "named": true
         },
@@ -1591,6 +1595,10 @@
   {
     "type": "alpha",
     "named": false
+  },
+  {
+    "type": "architectural_length",
+    "named": true
   },
   {
     "type": "array",

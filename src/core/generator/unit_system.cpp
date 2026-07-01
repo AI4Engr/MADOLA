@@ -9,7 +9,68 @@
 
 namespace madola {
 
+namespace {
+
+long long gcd_ll(long long a, long long b) {
+    a = std::llabs(a);
+    b = std::llabs(b);
+    while (b != 0) {
+        long long t = a % b;
+        a = b;
+        b = t;
+    }
+    return a == 0 ? 1 : a;
+}
+
+std::string formatArchitecturalImperial(double totalInches) {
+    const bool negative = totalInches < 0.0;
+    const double absInches = std::abs(totalInches);
+    const long long totalSixteenths = static_cast<long long>(std::llround(absInches * 16.0));
+    const long long feet = totalSixteenths / (12 * 16);
+    const long long remainderSixteenths = totalSixteenths % (12 * 16);
+    const long long wholeInches = remainderSixteenths / 16;
+    long long fracNum = remainderSixteenths % 16;
+    long long fracDen = 16;
+
+    if (fracNum != 0) {
+        long long divisor = gcd_ll(fracNum, fracDen);
+        fracNum /= divisor;
+        fracDen /= divisor;
+    }
+
+    std::stringstream ss;
+    if (negative && totalSixteenths != 0) {
+        ss << "-";
+    }
+
+    if (feet > 0) {
+        ss << feet << "'";
+        if (fracNum == 0) {
+            ss << wholeInches << "\"";
+        } else {
+            ss << wholeInches << "-" << fracNum << "/" << fracDen << "\"";
+        }
+        return ss.str();
+    }
+
+    if (fracNum == 0) {
+        ss << wholeInches << "\"";
+    } else if (wholeInches > 0) {
+        ss << wholeInches << "-" << fracNum << "/" << fracDen << "\"";
+    } else {
+        ss << fracNum << "/" << fracDen << "\"";
+    }
+
+    return ss.str();
+}
+
+}
+
 std::string UnitValue::toString() const {
+    if (displayStyle == UnitDisplayStyle::ARCHITECTURAL_IMPERIAL && unit == "in") {
+        return formatArchitecturalImperial(value);
+    }
+
     std::stringstream ss;
     // Format as integer if it's a whole number
     if (value == static_cast<int>(value)) {
@@ -30,6 +91,10 @@ std::string UnitValue::toString() const {
 }
 
 std::string UnitValue::toLatex() const {
+    if (displayStyle == UnitDisplayStyle::ARCHITECTURAL_IMPERIAL && unit == "in") {
+        return "\\text{" + formatArchitecturalImperial(value) + "}";
+    }
+
     std::stringstream ss;
     // Format as integer if it's a whole number
     if (value == static_cast<int>(value)) {
@@ -164,7 +229,18 @@ UnitValue UnitValue::operator+(const UnitValue& other) const {
 
     // Convert to same unit (use first operand's unit)
     double otherValueConverted = other.value * unitSys.getConversionFactor(other.unit) / unitSys.getConversionFactor(unit);
-    return UnitValue(value + otherValueConverted, unit);
+    if (displayStyle == UnitDisplayStyle::ARCHITECTURAL_IMPERIAL && other.displayStyle != UnitDisplayStyle::ARCHITECTURAL_IMPERIAL) {
+        double lhsMeters = value * unitSys.getConversionFactor(unit);
+        double rhsMeters = other.value * unitSys.getConversionFactor(other.unit);
+        double totalMeters = lhsMeters + rhsMeters;
+        double totalInches = totalMeters / unitSys.getConversionFactor("in");
+        return UnitValue(totalInches, "in", UnitDisplayStyle::ARCHITECTURAL_IMPERIAL);
+    }
+
+    UnitDisplayStyle style = displayStyle == UnitDisplayStyle::ARCHITECTURAL_IMPERIAL
+        ? displayStyle
+        : other.displayStyle;
+    return UnitValue(value + otherValueConverted, unit, style);
 }
 
 UnitValue UnitValue::operator-(const UnitValue& other) const {
@@ -184,15 +260,26 @@ UnitValue UnitValue::operator-(const UnitValue& other) const {
 
     // Convert to same unit (use first operand's unit)
     double otherValueConverted = other.value * unitSys.getConversionFactor(other.unit) / unitSys.getConversionFactor(unit);
-    return UnitValue(value - otherValueConverted, unit);
+    if (displayStyle == UnitDisplayStyle::ARCHITECTURAL_IMPERIAL && other.displayStyle != UnitDisplayStyle::ARCHITECTURAL_IMPERIAL) {
+        double lhsMeters = value * unitSys.getConversionFactor(unit);
+        double rhsMeters = other.value * unitSys.getConversionFactor(other.unit);
+        double totalMeters = lhsMeters - rhsMeters;
+        double totalInches = totalMeters / unitSys.getConversionFactor("in");
+        return UnitValue(totalInches, "in", UnitDisplayStyle::ARCHITECTURAL_IMPERIAL);
+    }
+
+    UnitDisplayStyle style = displayStyle == UnitDisplayStyle::ARCHITECTURAL_IMPERIAL
+        ? displayStyle
+        : other.displayStyle;
+    return UnitValue(value - otherValueConverted, unit, style);
 }
 
 UnitValue UnitValue::operator*(const UnitValue& other) const {
     if (isDimensionless()) {
-        return UnitValue(value * other.value, other.unit);
+        return UnitValue(value * other.value, other.unit, other.displayStyle);
     }
     if (other.isDimensionless()) {
-        return UnitValue(value * other.value, unit);
+        return UnitValue(value * other.value, unit, displayStyle);
     }
 
     // Multiply units and simplify
@@ -212,7 +299,7 @@ UnitValue UnitValue::operator/(const UnitValue& other) const {
         return UnitValue(value / other.value, resultUnit);
     }
     if (other.isDimensionless()) {
-        return UnitValue(value / other.value, unit);
+        return UnitValue(value / other.value, unit, displayStyle);
     }
 
     // Divide units and simplify
@@ -238,7 +325,7 @@ UnitValue UnitValue::operator^(const UnitValue& other) const {
 }
 
 UnitValue UnitValue::operator-() const {
-    return UnitValue(-value, unit);
+    return UnitValue(-value, unit, displayStyle);
 }
 
 UnitSystem& UnitSystem::getInstance() {

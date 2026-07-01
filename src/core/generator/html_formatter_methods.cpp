@@ -387,6 +387,8 @@ std::string HtmlFormatter::formatExpressionAsMath(const Expression& expr, Evalua
         }
 
         return ss.str();
+    } else if (const auto* archLength = dynamic_cast<const ArchitecturalLengthLiteral*>(&expr)) {
+        return "\\text{" + archLength->originalText + "}";
     } else if (const auto* unitExpr = dynamic_cast<const UnitExpression*>(&expr)) {
         std::string valueStr = formatExpressionAsMath(*unitExpr->value, evaluator);
         std::string unitFormatted = formatUnitForLatex(unitExpr->unit);
@@ -794,6 +796,8 @@ std::string HtmlFormatter::formatExpression(const Expression& expr) {
         return formatVariableName(identifier->name);
     } else if (const auto* number = dynamic_cast<const Number*>(&expr)) {
         return formatDouble(number->value);
+    } else if (const auto* archLength = dynamic_cast<const ArchitecturalLengthLiteral*>(&expr)) {
+        return archLength->originalText;
     } else if (const auto* binary = dynamic_cast<const BinaryExpression*>(&expr)) {
         return formatBinaryExpression(*binary);
     } else if (const auto* unary = dynamic_cast<const UnaryExpression*>(&expr)) {
@@ -1076,7 +1080,7 @@ std::string HtmlFormatter::formatValueAsMath(const Value& value) {
         return formatDouble(std::get<double>(value));
     } else if (std::holds_alternative<UnitValue>(value)) {
         UnitValue unitVal = std::get<UnitValue>(value);
-        return formatDouble(unitVal.value) + " " + formatUnitForLatex(unitVal.unit);
+        return unitVal.toLatex();
     } else if (std::holds_alternative<ArrayValue>(value)) {
         ArrayValue arrayVal = std::get<ArrayValue>(value);
         if (arrayVal.isMatrix) {

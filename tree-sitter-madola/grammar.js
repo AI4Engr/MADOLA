@@ -278,6 +278,7 @@ module.exports = grammar({
       $.complex_number,
       $.number,
       $.string_literal,
+      $.architectural_length,
       $.unit_expression,
       $.piecewise_expression,
       $.array_expression,
@@ -290,6 +291,14 @@ module.exports = grammar({
       /[^"]*/,
       '"'
     ),
+
+    architectural_length: $ => token(choice(
+      /\d+'\d+(?:-\d+\/\d+)?"?/,
+      /\d+'\d*"/,
+      /\d+-\d+\/\d+"/,
+      /\d+\/\d+"/,
+      /\d+"/
+    )),
 
     unit_expression: $ => prec(10, seq(
       $.number,

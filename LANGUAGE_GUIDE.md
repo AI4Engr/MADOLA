@@ -41,6 +41,7 @@ MADOLA supports:
   - `A.eigenvalues()` - Matrix eigenvalues (returns vector)
   - `A.eigenvectors()` - Matrix eigenvectors (returns matrix with eigenvectors as columns)
 - **Function Calls**: `pi := calcPi(1000);`
+- **Direct Evaluation**: `eval(1 + 2);` or `eval(3 m + 20 cm);`
 - **Mathematical Functions**: `math.sqrt()`, `math.abs()`, `math.sin()`, `math.cos()`, `math.tan()` - standard mathematical and trigonometric functions
 - **Summation**: `math.summation(expression, variable, lower, upper)` - symbolic summation with LaTeX output
 - **Symbolic Differentiation**: `math.diff(expression, variable)` - computes symbolic derivatives
@@ -57,6 +58,7 @@ MADOLA supports:
 - **Visualization**: `graph(x, y, "title")` for 2D graphs, `graph_3d(...)` for 3D visualizations
 - **Data Tables**: `table(headers, col1, col2, ...)` for formatted data tables
 - **Physical Units**: `5 mm`, `3.5 kg`, `25 * m/s` - values with physical units
+- **Architectural Lengths**: `5'4"`, `3'1-1/2"`, `8-7/8"` with default `1/16"` imperial display rounding
 
 ### Decorators
 
@@ -521,6 +523,21 @@ print(sum_n);  // Output: 21
 
 ### Utility Functions
 
+#### eval
+
+Use `eval(expr)` to explicitly evaluate and display an expression without assigning it to a variable.
+
+```madola
+@version 0.01
+
+eval(1 + 2);           // Output: 3
+eval(3 m + 20 cm);     // Output: 3.2 m
+eval(5'4" + 3'1-1/2"); // Output: 8'5-1/2"
+eval((5'4" + 100mm) / 2); // Output: 2'9-15/16"
+```
+
+This is useful for quick calculations, examples, and report-style documents.
+
 #### Type Checking
 
 ```madola
@@ -673,6 +690,57 @@ print(acceleration); // Output: 9.8 m/s^2
 - Compound units: `25 * m/s`, `9.8 * m/s^2`, `1000 * kg/m^3`
 
 **Note:** For compound units, use multiplication and division operators with unit identifiers (e.g., `25 * m/s` not `25 m/s`).
+
+### Architectural Length Literals
+
+MADOLA also supports common architectural imperial length notation directly as literals:
+
+```madola
+eval(5'4");
+eval(3'1-1/2");
+eval(8-7/8");
+eval(1/2");
+```
+
+Supported forms include:
+
+- `5'4"` for feet and inches
+- `3'1-1/2"` for feet, inches, and fractional inches
+- `8-7/8"` for inches plus fractional inches
+- `1/2"` for fractional inches only
+
+Default imperial display precision is rounded to **1/16 inch**.
+
+```madola
+eval(5'4" + 3'1-1/2");  // Output: 8'5-1/2"
+eval(5'4" - 8-7/8");    // Output: 4'7-1/8"
+eval(5'4" * 2);         // Output: 10'8"
+eval((5'4" + 100mm) / 2); // Output: 2'9-15/16"
+```
+
+### Mixed Metric and Imperial Lengths
+
+Mixed expressions are supported.
+
+Display follows this rule:
+
+- If the left side of the length expression is an architectural imperial length, the result is displayed in architectural imperial form.
+- Otherwise, the result is displayed in the left operand's unit style.
+
+Examples:
+
+```madola
+eval(5'4" + 100mm);  // Output: 5'7-15/16"
+eval(100mm + 5'4");  // Output: 1725.6 mm
+eval((5'4" + 100mm) / 2);  // Output: 2'9-15/16"
+```
+
+For first-pass support, length multiplication/division is intended for scalar operations:
+
+- length `*` number
+- length `/` number
+
+Length `*` length is not yet treated as area output.
 
 ---
 

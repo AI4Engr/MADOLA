@@ -24,6 +24,8 @@ ExpressionPtr ASTBuilder::buildExpression(TSNode node, const std::string& source
         return buildNumber(node, source);
     } else if (strcmp(node_type, "complex_number") == 0) {
         return buildComplexNumber(node, source);
+    } else if (strcmp(node_type, "architectural_length") == 0) {
+        return buildArchitecturalLength(node, source);
     } else if (strcmp(node_type, "unit_expression") == 0) {
         return buildUnitExpression(node, source);
     } else if (strcmp(node_type, "function_call") == 0) {
@@ -221,6 +223,64 @@ ExpressionPtr ASTBuilder::buildUnitExpression(TSNode node, const std::string& so
     }
 
     return std::make_unique<UnitExpression>(std::move(valueExpr), unitStr);
+}
+
+ExpressionPtr ASTBuilder::buildArchitecturalLength(TSNode node, const std::string& source) {
+    std::string text = getNodeText(node, source);
+    std::string normalized = text;
+    normalized.erase(std::remove_if(normalized.begin(), normalized.end(), [](unsigned char ch) {
+        return std::isspace(ch) != 0;
+    }), normalized.end());
+
+    double feet = 0.0;
+    double inches = 0.0;
+
+    size_t feetPos = normalized.find('\'');
+    size_t inchPos = normalized.find('"');
+
+    auto parseFraction = [](const std::string& token) -> double {
+        size_t slash = token.find('/');
+        if (slash == std::string::npos) {
+            return std::stod(token);
+        }
+
+        double numerator = std::stod(token.substr(0, slash));
+        double denominator = std::stod(token.substr(slash + 1));
+        if (denominator == 0.0) {
+            throw std::runtime_error("Architectural length denominator cannot be zero: " + token);
+        }
+        return numerator / denominator;
+    };
+
+    if (feetPos != std::string::npos) {
+        feet = std::stod(normalized.substr(0, feetPos));
+    }
+
+    std::string inchPart;
+    if (inchPos != std::string::npos) {
+        size_t inchStart = feetPos == std::string::npos ? 0 : feetPos + 1;
+        inchPart = normalized.substr(inchStart, inchPos - inchStart);
+    } else if (feetPos == std::string::npos) {
+        inchPart = normalized;
+    }
+
+    if (!inchPart.empty()) {
+        size_t dash = inchPart.find('-');
+        size_t slash = inchPart.find('/');
+
+        if (dash != std::string::npos) {
+            inches += std::stod(inchPart.substr(0, dash));
+            inches += parseFraction(inchPart.substr(dash + 1));
+        } else if (slash != std::string::npos) {
+            inches += parseFraction(inchPart);
+        } else {
+            inches += std::stod(inchPart);
+        }
+    }
+
+    SourceLocation start_pos = getNodeStartPosition(node);
+    SourceLocation end_pos = getNodeEndPosition(node);
+    return std::make_unique<ArchitecturalLengthLiteral>(text, feet * 12.0 + inches, start_pos, end_pos);
 }
 
 ExpressionPtr ASTBuilder::buildFunctionCall(TSNode node, const std::string& source) {

@@ -6,6 +6,11 @@
 
 namespace madola {
 
+enum class UnitDisplayStyle {
+    STANDARD,
+    ARCHITECTURAL_IMPERIAL
+};
+
 // Unit dimension types (for dimensional analysis)
 enum class UnitDimension {
     LENGTH,
@@ -36,9 +41,10 @@ class UnitValue {
 public:
     double value;
     std::string unit;
+    UnitDisplayStyle displayStyle;
 
-    UnitValue(double val, const std::string& unit_str = "")
-        : value(val), unit(unit_str) {}
+    UnitValue(double val, const std::string& unit_str = "", UnitDisplayStyle style = UnitDisplayStyle::STANDARD)
+        : value(val), unit(unit_str), displayStyle(style) {}
 
     // Check if this is a dimensionless value
     bool isDimensionless() const { return unit.empty(); }

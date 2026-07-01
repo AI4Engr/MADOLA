@@ -16,6 +16,8 @@ Value Evaluator::evaluateExpression(const Expression& expr) {
         return stringLit->value;
     } else if (const auto* complexNum = dynamic_cast<const ComplexNumber*>(&expr)) {
         return ComplexValue(complexNum->real, complexNum->imaginary);
+    } else if (const auto* archLength = dynamic_cast<const ArchitecturalLengthLiteral*>(&expr)) {
+        return UnitValue(archLength->totalInches, "in", UnitDisplayStyle::ARCHITECTURAL_IMPERIAL);
     } else if (const auto* binary = dynamic_cast<const BinaryExpression*>(&expr)) {
         return evaluateBinaryExpression(*binary);
     } else if (const auto* unary = dynamic_cast<const UnaryExpression*>(&expr)) {

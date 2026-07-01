@@ -1340,6 +1340,10 @@
         },
         {
           "type": "SYMBOL",
+          "name": "architectural_length"
+        },
+        {
+          "type": "SYMBOL",
           "name": "unit_expression"
         },
         {
@@ -1389,6 +1393,34 @@
           "value": "\""
         }
       ]
+    },
+    "architectural_length": {
+      "type": "TOKEN",
+      "content": {
+        "type": "CHOICE",
+        "members": [
+          {
+            "type": "PATTERN",
+            "value": "\\d+'\\d+(?:-\\d+\\/\\d+)?\"?"
+          },
+          {
+            "type": "PATTERN",
+            "value": "\\d+'\\d*\""
+          },
+          {
+            "type": "PATTERN",
+            "value": "\\d+-\\d+\\/\\d+\""
+          },
+          {
+            "type": "PATTERN",
+            "value": "\\d+\\/\\d+\""
+          },
+          {
+            "type": "PATTERN",
+            "value": "\\d+\""
+          }
+        ]
+      }
     },
     "unit_expression": {
       "type": "PREC",
