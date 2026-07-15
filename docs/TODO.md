@@ -126,10 +126,34 @@
   - Set theory: ∈, ∪, ∩, ⊂, ∅
   - Logic: ∀, ∃, ∧, ∨, ¬
 
-- [ ] **Engineering Unit System** - Full dimensional analysis with automatic conversion
-  - Unit support: meters, seconds, kilograms
-  - Dimensional analysis validation
-  - Physical constants library
+- [ ] **Engineering Unit System Rewrite** - Real dimensional algebra (current system silently
+      produces wrong numbers for mixed-unit expressions with exponents)
+  - **Root cause:** `UnitValue`/`UnitDefinition` (`unit_system.h`) store units as a formatted
+    *string* (e.g. `"kip/in^2"`), not a dimension vector. `operator*`/`operator/`/`operator^`
+    in `unit_system.cpp` just concatenate/parse those strings and call `simplifyUnit()` (regex/
+    string-level composite expansion only, e.g. `ksi → kip/in^2`) — there is no "convert both
+    operands to a common base unit before combining" step, and no cross-unit cancellation.
+  - **Confirmed broken:** `example.mda`'s beam deflection formula `δ = 5wL⁴/(384EI)` with
+    `L in ft`, `w in kip/in`, `E in ksi`, `I in in^4` — `operator^` computes `L^4` using the
+    raw `4.75` (ft) value and just appends `^4` to the unit string (`509.066 ft^4`), without
+    scaling by the ft→base conversion factor raised to the 4th power. The final division never
+    cancels `ft^4` against `in`/`kip` across numerator and denominator, producing `0` instead
+    of the correct ≈0.021 in.
+  - **Scope for a real fix:**
+    - Replace the unit string with a dimension-vector representation (length/mass/time/force
+      exponents) + numeric factor to SI base, so `*`/`/`/`^` become vector add/subtract/scale
+      instead of string ops
+    - `operator^` must scale the numeric value by `conversionFactor^exponent`, not just relabel
+    - Need a display-unit heuristic (user writes `ft`, expects `ft^4` in output, not auto-jumping
+      to `m^4`) — nontrivial UX design, not just math
+    - `toLatex()`/`toString()` simplification logic is also string-based and would need a
+      parallel rewrite
+    - Must re-verify all existing unit regression fixtures (`kip-in`, `ksi` composite expansion,
+      etc.) still pass — this is a module-level rewrite, not a patch
+  - **Impact:** blocks correct engineering formulas that mix base units with derived/exponent
+    units (very common in real calcs — beam deflection, stress, moment of inertia). Low risk
+    today only if usage stays within same-unit-family expressions without exponents.
+  - Physical constants library (still open, independent of the rewrite above)
 
 - [ ] **Unit Literal Grammar: allow expressions before a unit, not just a bare number**
       (not urgent — deferred; matches engineering notation like `100/(12*100) kip/in`)

@@ -291,8 +291,10 @@ UnitValue UnitValue::operator*(const UnitValue& other) const {
         return UnitValue(value * other.value, unit, displayStyle);
     }
 
-    // Multiply units and simplify
-    std::string resultUnit = unit + "*" + other.unit;
+    // Multiply units and simplify. Operands are parenthesized so a compound
+    // operand (e.g. "kip-in^2" from a prior multiplication) is treated as one
+    // group rather than having its terms bleed into the other operand's scope.
+    std::string resultUnit = "(" + unit + ")*(" + other.unit + ")";
     resultUnit = UnitSystem::getInstance().simplifyUnit(resultUnit);
     return UnitValue(value * other.value, resultUnit);
 }
@@ -311,8 +313,9 @@ UnitValue UnitValue::operator/(const UnitValue& other) const {
         return UnitValue(value / other.value, unit, displayStyle);
     }
 
-    // Divide units and simplify
-    std::string resultUnit = unit + "/" + other.unit;
+    // Divide units and simplify. Operands are parenthesized for the same reason
+    // as operator* above — see comment there.
+    std::string resultUnit = "(" + unit + ")/(" + other.unit + ")";
     resultUnit = UnitSystem::getInstance().simplifyUnit(resultUnit);
     return UnitValue(value / other.value, resultUnit);
 }
@@ -531,8 +534,10 @@ std::string UnitSystem::simplifyUnit(const std::string& unit) const {
             }
             pos++;
             continue;
-        } else if (currentUnit[pos] == '*') {
-            // When we hit * at depth 0 and we were in denominator, don't reset
+        } else if (currentUnit[pos] == '*' || currentUnit[pos] == '-') {
+            // '-' is the engineering-notation multiplication separator emitted by this
+            // same function (e.g. "kip-in"), so it must round-trip as '*' would.
+            // When we hit a separator at depth 0 and we were in denominator, don't reset
             // but when at depth > 0, keep the current state
             if (parenDepth == 0 && !inNumerator) {
                 inNumerator = true; // Reset after finishing denominator terms
@@ -549,6 +554,7 @@ std::string UnitSystem::simplifyUnit(const std::string& unit) const {
         size_t termStart = pos;
         while (pos < currentUnit.length() &&
                currentUnit[pos] != '*' &&
+               currentUnit[pos] != '-' &&
                currentUnit[pos] != '/' &&
                currentUnit[pos] != '(' &&
                currentUnit[pos] != ')') {
