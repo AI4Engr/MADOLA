@@ -112,6 +112,16 @@ std::string UnitValue::toLatex() const {
         // Format compound units properly for LaTeX
         std::string latexUnit = unit;
 
+        // Formats a single unit token (e.g. "in" or "in^4") as LaTeX,
+        // wrapping the base in \text{} and lifting any exponent outside it.
+        auto formatUnitToken = [](const std::string& token) -> std::string {
+            size_t caretPos = token.find('^');
+            if (caretPos != std::string::npos) {
+                return "\\text{" + token.substr(0, caretPos) + "}^" + token.substr(caretPos + 1);
+            }
+            return "\\text{" + token + "}";
+        };
+
         // Handle division (fractions) first - e.g., "m/s" or "kg/m^3"
         size_t divPos = latexUnit.find('/');
         if (divPos != std::string::npos) {
@@ -204,9 +214,8 @@ std::string UnitValue::toLatex() const {
             latexUnit = unitSs.str();
             ss << " " << latexUnit;
         } else {
-            // Simple unit
-            latexUnit = "\\text{ " + latexUnit + "}";
-            ss << " " << latexUnit;
+            // Simple unit (possibly with an exponent, e.g. "in^4")
+            ss << " " << formatUnitToken(" " + latexUnit);
         }
     }
     return ss.str();
