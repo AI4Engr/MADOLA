@@ -42,7 +42,10 @@ MADOLA supports:
   - `A.eigenvectors()` - Matrix eigenvectors (returns matrix with eigenvectors as columns)
 - **Function Calls**: `pi := calcPi(1000);`
 - **Direct Evaluation**: `eval(1 + 2);` or `eval(3 m + 20 cm);`
-- **Mathematical Functions**: `math.sqrt()`, `math.abs()`, `math.sin()`, `math.cos()`, `math.tan()` - standard mathematical and trigonometric functions
+- **Mathematical Functions**: `math.sqrt()`, `math.abs()`, `math.sin()`, `math.cos()`, `math.tan()`, `math.arcsin()`, `math.arccos()`, `math.arctan()` - standard mathematical and trigonometric functions
+- **Logarithmic Functions**: `math.ln()` (natural log), `math.log()` (base-10 or `math.log(value, base)`)
+- **Statistical Functions**: `math.mean()`, `math.variance()`, `math.std()` - operate on arrays (population convention)
+- **Constants**: `math.pi()`, `math.e()`, `math.phi()` - standard mathematical constants
 - **Summation**: `math.summation(expression, variable, lower, upper)` - symbolic summation with LaTeX output
 - **Symbolic Differentiation**: `math.diff(expression, variable)` - computes symbolic derivatives
 - **Symbolic Integration**: `math.intg(expression, variable)` - computes symbolic indefinite integrals
@@ -494,6 +497,87 @@ print(tan_pi_4);  // Output: 1
 x := pi/4;
 identity := math.sin(x)^2 + math.cos(x)^2;
 print(identity);  // Output: 1
+```
+
+#### Inverse Trigonometric Functions
+
+```madola
+pi := 3.14159265358979323846;
+
+// Arcsine (domain: [-1, 1])
+asin_1 := math.arcsin(1);
+print(asin_1);  // Output: 1.571 (pi/2)
+
+// Arccosine (domain: [-1, 1])
+acos_0 := math.arccos(0);
+print(acos_0);  // Output: 1.571 (pi/2)
+
+// Arctangent (domain: all reals)
+atan_1 := math.arctan(1);
+print(atan_1);  // Output: 0.785 (pi/4)
+
+// Round-trip identity: sin(arcsin(x)) = x
+x := 0.5;
+roundtrip := math.sin(math.arcsin(x));
+print(roundtrip);  // Output: 0.5
+
+// Error checking
+// math.arcsin(2);  // Error: math.arcsin argument must be in range [-1, 1]
+```
+
+#### Logarithmic Functions
+
+```madola
+// Natural log (base e)
+ln_e := math.ln(math.e());
+print(ln_e);  // Output: 1
+
+// Base-10 log
+log_100 := math.log(100);
+print(log_100);  // Output: 2
+
+// Log with explicit base: math.log(value, base)
+log2_8 := math.log(8, 2);
+print(log2_8);  // Output: 3
+
+// Error checking
+// math.ln(0);   // Error: math.ln argument must be positive
+// math.log(-1); // Error: math.log argument must be positive
+```
+
+#### Constants
+
+`math.pi()`, `math.e()`, and `math.phi()` return standard mathematical constants. They take no arguments.
+
+```madola
+circumference := 2 * math.pi() * 5;
+print(circumference);  // Output: 31.416
+
+growth := math.e()^2;
+print(growth);  // Output: 7.389
+
+golden_ratio := math.phi();
+print(golden_ratio);  // Output: 1.618
+```
+
+#### Statistical Functions
+
+`math.mean`, `math.variance`, and `math.std` operate on arrays. Variance and standard deviation use the population convention (divide by N, not N-1).
+
+```madola
+data := [2, 4, 4, 4, 5, 5, 7, 9];
+
+avg := math.mean(data);
+print(avg);  // Output: 5
+
+v := math.variance(data);
+print(v);  // Output: 4
+
+sd := math.std(data);
+print(sd);  // Output: 2
+
+// Error checking
+// math.mean([]);  // Error: Function math.mean cannot operate on empty array
 ```
 
 #### Summation

@@ -551,6 +551,30 @@ std::string HtmlFormatter::formatExpressionAsMath(const Expression& expr, Evalua
                     return "\\cos(" + formatExpressionAsMath(*methodCall->arguments[0], evaluator) + ")";
                 } else if (methodCall->method_name == "tan" && methodCall->arguments.size() == 1) {
                     return "\\tan(" + formatExpressionAsMath(*methodCall->arguments[0], evaluator) + ")";
+                } else if (methodCall->method_name == "arcsin" && methodCall->arguments.size() == 1) {
+                    return "\\arcsin(" + formatExpressionAsMath(*methodCall->arguments[0], evaluator) + ")";
+                } else if (methodCall->method_name == "arccos" && methodCall->arguments.size() == 1) {
+                    return "\\arccos(" + formatExpressionAsMath(*methodCall->arguments[0], evaluator) + ")";
+                } else if (methodCall->method_name == "arctan" && methodCall->arguments.size() == 1) {
+                    return "\\arctan(" + formatExpressionAsMath(*methodCall->arguments[0], evaluator) + ")";
+                } else if (methodCall->method_name == "ln" && methodCall->arguments.size() == 1) {
+                    return "\\ln(" + formatExpressionAsMath(*methodCall->arguments[0], evaluator) + ")";
+                } else if (methodCall->method_name == "log" && methodCall->arguments.size() == 1) {
+                    return "\\log(" + formatExpressionAsMath(*methodCall->arguments[0], evaluator) + ")";
+                } else if (methodCall->method_name == "log" && methodCall->arguments.size() == 2) {
+                    return "\\log_{" + formatExpressionAsMath(*methodCall->arguments[1], evaluator) + "}(" + formatExpressionAsMath(*methodCall->arguments[0], evaluator) + ")";
+                } else if (methodCall->method_name == "mean" && methodCall->arguments.size() == 1) {
+                    return "\\bar{" + formatExpressionAsMath(*methodCall->arguments[0], evaluator) + "}";
+                } else if (methodCall->method_name == "variance" && methodCall->arguments.size() == 1) {
+                    return "\\text{Var}(" + formatExpressionAsMath(*methodCall->arguments[0], evaluator) + ")";
+                } else if (methodCall->method_name == "std" && methodCall->arguments.size() == 1) {
+                    return "\\sigma(" + formatExpressionAsMath(*methodCall->arguments[0], evaluator) + ")";
+                } else if (methodCall->method_name == "pi" && methodCall->arguments.empty()) {
+                    return "\\pi";
+                } else if (methodCall->method_name == "e" && methodCall->arguments.empty()) {
+                    return "e";
+                } else if (methodCall->method_name == "phi" && methodCall->arguments.empty()) {
+                    return "\\varphi";
                 } else if (methodCall->method_name == "sum" && methodCall->arguments.size() == 1) {
                     return "\\sum " + formatExpressionAsMath(*methodCall->arguments[0], evaluator);
                 } else if (methodCall->method_name == "max" && methodCall->arguments.size() == 1) {
@@ -1018,6 +1042,30 @@ std::string HtmlFormatter::formatExpressionWithValuesAsMath(const Expression& ex
                     return "\\cos(" + formatExpressionWithValuesAsMath(*methodCall->arguments[0], evaluator) + ")";
                 } else if (methodCall->method_name == "tan" && methodCall->arguments.size() == 1) {
                     return "\\tan(" + formatExpressionWithValuesAsMath(*methodCall->arguments[0], evaluator) + ")";
+                } else if (methodCall->method_name == "arcsin" && methodCall->arguments.size() == 1) {
+                    return "\\arcsin(" + formatExpressionWithValuesAsMath(*methodCall->arguments[0], evaluator) + ")";
+                } else if (methodCall->method_name == "arccos" && methodCall->arguments.size() == 1) {
+                    return "\\arccos(" + formatExpressionWithValuesAsMath(*methodCall->arguments[0], evaluator) + ")";
+                } else if (methodCall->method_name == "arctan" && methodCall->arguments.size() == 1) {
+                    return "\\arctan(" + formatExpressionWithValuesAsMath(*methodCall->arguments[0], evaluator) + ")";
+                } else if (methodCall->method_name == "ln" && methodCall->arguments.size() == 1) {
+                    return "\\ln(" + formatExpressionWithValuesAsMath(*methodCall->arguments[0], evaluator) + ")";
+                } else if (methodCall->method_name == "log" && methodCall->arguments.size() == 1) {
+                    return "\\log(" + formatExpressionWithValuesAsMath(*methodCall->arguments[0], evaluator) + ")";
+                } else if (methodCall->method_name == "log" && methodCall->arguments.size() == 2) {
+                    return "\\log_{" + formatExpressionWithValuesAsMath(*methodCall->arguments[1], evaluator) + "}(" + formatExpressionWithValuesAsMath(*methodCall->arguments[0], evaluator) + ")";
+                } else if (methodCall->method_name == "mean" && methodCall->arguments.size() == 1) {
+                    return "\\bar{" + formatExpressionWithValuesAsMath(*methodCall->arguments[0], evaluator) + "}";
+                } else if (methodCall->method_name == "variance" && methodCall->arguments.size() == 1) {
+                    return "\\text{Var}(" + formatExpressionWithValuesAsMath(*methodCall->arguments[0], evaluator) + ")";
+                } else if (methodCall->method_name == "std" && methodCall->arguments.size() == 1) {
+                    return "\\sigma(" + formatExpressionWithValuesAsMath(*methodCall->arguments[0], evaluator) + ")";
+                } else if (methodCall->method_name == "pi" && methodCall->arguments.empty()) {
+                    return "\\pi";
+                } else if (methodCall->method_name == "e" && methodCall->arguments.empty()) {
+                    return "e";
+                } else if (methodCall->method_name == "phi" && methodCall->arguments.empty()) {
+                    return "\\varphi";
                 } else if (methodCall->method_name == "sum" && methodCall->arguments.size() == 1) {
                     return "\\sum " + formatExpressionWithValuesAsMath(*methodCall->arguments[0], evaluator);
                 } else if (methodCall->method_name == "max" && methodCall->arguments.size() == 1) {

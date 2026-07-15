@@ -105,12 +105,20 @@
   - **Pairs with:** Higher-Order Functions above (pass the integrand as `f`)
   - **Note:** ODE/PDE stepper split out and deferred → see Low Priority
 
-- [ ] **Standard Library** - Comprehensive math library
-  - Trigonometry: sin, cos, tan, arcsin, arccos, arctan
-  - Logarithmic: log, ln, exp
-  - Statistical: mean, std, variance
-  - Linear algebra: det, inv, eigenvalues
-  - Constants: π, e, φ
+- [x] **Standard Library** - Comprehensive math library (Completed 2026-07-15)
+  - [x] Trigonometry: sin, cos, tan (pre-existing) + arcsin, arccos, arctan (new, with domain
+        validation on asin/acos)
+  - [x] Logarithmic: `math.ln` (natural log), `math.log(x)` (base-10), `math.log(x, base)`
+        (new); `math.exp` (pre-existing)
+  - [x] Statistical: `math.mean`, `math.variance`, `math.std` (new, array-only, population
+        convention — divide by N not N-1)
+  - [x] Linear algebra: `A.det()`, `A.inv()`, `A.eigenvalues()` (already implemented in
+        `evaluator_matrix.cpp` via Eigen — no work needed)
+  - [x] Constants: `math.pi()`, `math.e()`, `math.phi()` (new — namespaced as no-arg `math.`
+        calls rather than bare identifiers, so they never shadow user variables)
+  - **See:** `evaluator_functions.cpp` (`evaluateMethodCall`, math.* dispatch), LaTeX output
+    wired in both `formatExpressionAsMath` and `formatExpressionWithValuesAsMath` in
+    `html_formatter_methods.cpp`. Docs updated in `LANGUAGE_GUIDE.md`.
 
 - [ ] **Mathematical Notation** - Expand symbol support
   - Greek letters: α, β, γ, λ, θ, etc.

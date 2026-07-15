@@ -728,6 +728,66 @@ Value Evaluator::evaluateMethodCall(const MethodCall& expr) {
 
                 return std::tan(val);
             }
+            // math.arcsin
+            else if (expr.method_name == "arcsin") {
+                if (expr.arguments.size() != 1) {
+                    throw std::runtime_error("Function math.arcsin expects 1 argument, got " + std::to_string(expr.arguments.size()));
+                }
+
+                Value argVal = evaluateExpression(*expr.arguments[0]);
+                double val;
+                if (std::holds_alternative<double>(argVal)) {
+                    val = std::get<double>(argVal);
+                } else if (std::holds_alternative<UnitValue>(argVal)) {
+                    val = std::get<UnitValue>(argVal).value;
+                } else {
+                    throw std::runtime_error("Function math.arcsin only supports numeric arguments");
+                }
+
+                if (val < -1.0 || val > 1.0) {
+                    throw std::runtime_error("math.arcsin argument must be in range [-1, 1], got " + std::to_string(val));
+                }
+                return std::asin(val);
+            }
+            // math.arccos
+            else if (expr.method_name == "arccos") {
+                if (expr.arguments.size() != 1) {
+                    throw std::runtime_error("Function math.arccos expects 1 argument, got " + std::to_string(expr.arguments.size()));
+                }
+
+                Value argVal = evaluateExpression(*expr.arguments[0]);
+                double val;
+                if (std::holds_alternative<double>(argVal)) {
+                    val = std::get<double>(argVal);
+                } else if (std::holds_alternative<UnitValue>(argVal)) {
+                    val = std::get<UnitValue>(argVal).value;
+                } else {
+                    throw std::runtime_error("Function math.arccos only supports numeric arguments");
+                }
+
+                if (val < -1.0 || val > 1.0) {
+                    throw std::runtime_error("math.arccos argument must be in range [-1, 1], got " + std::to_string(val));
+                }
+                return std::acos(val);
+            }
+            // math.arctan
+            else if (expr.method_name == "arctan") {
+                if (expr.arguments.size() != 1) {
+                    throw std::runtime_error("Function math.arctan expects 1 argument, got " + std::to_string(expr.arguments.size()));
+                }
+
+                Value argVal = evaluateExpression(*expr.arguments[0]);
+                double val;
+                if (std::holds_alternative<double>(argVal)) {
+                    val = std::get<double>(argVal);
+                } else if (std::holds_alternative<UnitValue>(argVal)) {
+                    val = std::get<UnitValue>(argVal).value;
+                } else {
+                    throw std::runtime_error("Function math.arctan only supports numeric arguments");
+                }
+
+                return std::atan(val);
+            }
             // math.sqrt
             else if (expr.method_name == "sqrt") {
                 if (expr.arguments.size() != 1) {
@@ -950,6 +1010,66 @@ Value Evaluator::evaluateMethodCall(const MethodCall& expr) {
 
                 return std::exp(val);
             }
+            // math.ln (natural log)
+            else if (expr.method_name == "ln") {
+                if (expr.arguments.size() != 1) {
+                    throw std::runtime_error("Function math.ln expects 1 argument, got " + std::to_string(expr.arguments.size()));
+                }
+
+                Value argVal = evaluateExpression(*expr.arguments[0]);
+                double val;
+                if (std::holds_alternative<double>(argVal)) {
+                    val = std::get<double>(argVal);
+                } else if (std::holds_alternative<UnitValue>(argVal)) {
+                    val = std::get<UnitValue>(argVal).value;
+                } else {
+                    throw std::runtime_error("Function math.ln only supports numeric arguments");
+                }
+
+                if (val <= 0) {
+                    throw std::runtime_error("math.ln argument must be positive, got " + std::to_string(val));
+                }
+                return std::log(val);
+            }
+            // math.log (base-10 log, or base-N log with a second argument)
+            else if (expr.method_name == "log") {
+                if (expr.arguments.size() != 1 && expr.arguments.size() != 2) {
+                    throw std::runtime_error("Function math.log expects 1 or 2 arguments, got " + std::to_string(expr.arguments.size()));
+                }
+
+                Value argVal = evaluateExpression(*expr.arguments[0]);
+                double val;
+                if (std::holds_alternative<double>(argVal)) {
+                    val = std::get<double>(argVal);
+                } else if (std::holds_alternative<UnitValue>(argVal)) {
+                    val = std::get<UnitValue>(argVal).value;
+                } else {
+                    throw std::runtime_error("Function math.log only supports numeric arguments");
+                }
+
+                if (val <= 0) {
+                    throw std::runtime_error("math.log argument must be positive, got " + std::to_string(val));
+                }
+
+                if (expr.arguments.size() == 1) {
+                    return std::log10(val);
+                }
+
+                Value baseVal = evaluateExpression(*expr.arguments[1]);
+                double base;
+                if (std::holds_alternative<double>(baseVal)) {
+                    base = std::get<double>(baseVal);
+                } else if (std::holds_alternative<UnitValue>(baseVal)) {
+                    base = std::get<UnitValue>(baseVal).value;
+                } else {
+                    throw std::runtime_error("Function math.log base only supports numeric arguments");
+                }
+
+                if (base <= 0 || base == 1.0) {
+                    throw std::runtime_error("math.log base must be positive and not equal to 1, got " + std::to_string(base));
+                }
+                return std::log(val) / std::log(base);
+            }
             // math.sum
             else if (expr.method_name == "sum") {
                 if (expr.arguments.size() != 1) {
@@ -983,6 +1103,107 @@ Value Evaluator::evaluateMethodCall(const MethodCall& expr) {
                 }
 
                 return val;
+            }
+            // math.mean
+            else if (expr.method_name == "mean") {
+                if (expr.arguments.size() != 1) {
+                    throw std::runtime_error("Function math.mean expects 1 argument, got " + std::to_string(expr.arguments.size()));
+                }
+
+                Value argVal = evaluateExpression(*expr.arguments[0]);
+                if (!std::holds_alternative<ArrayValue>(argVal)) {
+                    throw std::runtime_error("Function math.mean only supports array arguments");
+                }
+
+                const auto& arr = std::get<ArrayValue>(argVal);
+                if (arr.elements.empty()) {
+                    throw std::runtime_error("Function math.mean cannot operate on empty array");
+                }
+
+                double sum = 0.0;
+                for (const auto& elem : arr.elements) {
+                    sum += elem;
+                }
+                return sum / static_cast<double>(arr.elements.size());
+            }
+            // math.variance (population variance)
+            else if (expr.method_name == "variance") {
+                if (expr.arguments.size() != 1) {
+                    throw std::runtime_error("Function math.variance expects 1 argument, got " + std::to_string(expr.arguments.size()));
+                }
+
+                Value argVal = evaluateExpression(*expr.arguments[0]);
+                if (!std::holds_alternative<ArrayValue>(argVal)) {
+                    throw std::runtime_error("Function math.variance only supports array arguments");
+                }
+
+                const auto& arr = std::get<ArrayValue>(argVal);
+                if (arr.elements.empty()) {
+                    throw std::runtime_error("Function math.variance cannot operate on empty array");
+                }
+
+                double sum = 0.0;
+                for (const auto& elem : arr.elements) {
+                    sum += elem;
+                }
+                double mean = sum / static_cast<double>(arr.elements.size());
+
+                double sqDiffSum = 0.0;
+                for (const auto& elem : arr.elements) {
+                    double diff = elem - mean;
+                    sqDiffSum += diff * diff;
+                }
+                return sqDiffSum / static_cast<double>(arr.elements.size());
+            }
+            // math.std (population standard deviation)
+            else if (expr.method_name == "std") {
+                if (expr.arguments.size() != 1) {
+                    throw std::runtime_error("Function math.std expects 1 argument, got " + std::to_string(expr.arguments.size()));
+                }
+
+                Value argVal = evaluateExpression(*expr.arguments[0]);
+                if (!std::holds_alternative<ArrayValue>(argVal)) {
+                    throw std::runtime_error("Function math.std only supports array arguments");
+                }
+
+                const auto& arr = std::get<ArrayValue>(argVal);
+                if (arr.elements.empty()) {
+                    throw std::runtime_error("Function math.std cannot operate on empty array");
+                }
+
+                double sum = 0.0;
+                for (const auto& elem : arr.elements) {
+                    sum += elem;
+                }
+                double mean = sum / static_cast<double>(arr.elements.size());
+
+                double sqDiffSum = 0.0;
+                for (const auto& elem : arr.elements) {
+                    double diff = elem - mean;
+                    sqDiffSum += diff * diff;
+                }
+                return std::sqrt(sqDiffSum / static_cast<double>(arr.elements.size()));
+            }
+            // math.pi (constant)
+            else if (expr.method_name == "pi") {
+                if (!expr.arguments.empty()) {
+                    throw std::runtime_error("Constant math.pi takes no arguments, got " + std::to_string(expr.arguments.size()));
+                }
+                return std::acos(-1.0);
+            }
+            // math.e (constant, Euler's number)
+            else if (expr.method_name == "e") {
+                if (!expr.arguments.empty()) {
+                    throw std::runtime_error("Constant math.e takes no arguments, got " + std::to_string(expr.arguments.size()));
+                }
+                return std::exp(1.0);
+            }
+            // math.phi (constant, golden ratio)
+            else if (expr.method_name == "phi") {
+                if (!expr.arguments.empty()) {
+                    throw std::runtime_error("Constant math.phi takes no arguments, got " + std::to_string(expr.arguments.size()));
+                }
+                return (1.0 + std::sqrt(5.0)) / 2.0;
             }
 #ifdef WITH_SYMENGINE
             // math.diff
