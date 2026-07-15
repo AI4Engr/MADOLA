@@ -78,6 +78,16 @@
 ## 📊 Language Features & Extensions
 
 ### High Priority
+
+- [ ] **🔥🔝 Generic SVG Output Primitive (DO FIRST — app differentiator)** - First-class SVG drawing for engineering diagrams
+  - Emit arbitrary line/circle/arrow/text/path (not just xy line plots)
+  - Unblocks: structural free-body diagrams (supports, load arrows), beam deflection
+    shapes, generalizing the hard-coded `graph_3d` brick
+  - Foundation for interactive/animated visuals (drag a load → redraw)
+  - **Impact:** Core differentiator vs Mathcad/BlockPad/EnerCalc — "calculations that move"
+  - **Serves app/:** directly feeds the planned SVG tab; this is the near-term reason it leads
+  - **See:** existing `graph()` is static D3; `graph_3d` is a placeholder brick
+
 - [ ] **🔥 Higher-Order Functions** - Support functions as first-class values
   - Pass functions as parameters: `fn simpson(f, a, b, n)`
   - Store functions in variables: `g := f;`
@@ -89,19 +99,11 @@
   - **Current workaround:** Use `math.summation` for integration methods
   - **See:** Simpson's rule example in LANGUAGE_GUIDE.md line 806-830
 
-- [ ] **🔥 Generic SVG Output Primitive** - First-class SVG drawing for engineering diagrams
-  - Emit arbitrary line/circle/arrow/text/path (not just xy line plots)
-  - Unblocks: structural free-body diagrams (supports, load arrows), beam deflection
-    shapes, generalizing the hard-coded `graph_3d` brick
-  - Foundation for interactive/animated visuals (drag a load → redraw)
-  - **Impact:** Core differentiator vs Mathcad/BlockPad/EnerCalc — "calculations that move"
-  - **See:** existing `graph()` is static D3; `graph_3d` is a placeholder brick
-
-- [ ] **🔥 Numerical Integration / ODE Solver Primitive** - Out-of-the-box, no hand-rolled Simpson
+- [ ] **🔥 Numerical Definite Integration Primitive** - Out-of-the-box, no hand-rolled Simpson
   - Numeric definite integral (handles piecewise/trapezoidal loads where `math.intg` can't)
-  - ODE/difference-equation stepper (e.g. draining-tank demo, dynamic systems)
-  - Unblocks: beam deflection (∫∫ M/EI), education-grade dynamic visualizations
-  - **Pairs with:** Higher-Order Functions above (pass the integrand/derivative as `f`)
+  - Unblocks: beam deflection (∫∫ M/EI), engineering integration without boilerplate
+  - **Pairs with:** Higher-Order Functions above (pass the integrand as `f`)
+  - **Note:** ODE/PDE stepper split out and deferred → see Low Priority
 
 - [ ] **Standard Library** - Comprehensive math library
   - Trigonometry: sin, cos, tan, arcsin, arccos, arctan
@@ -154,6 +156,10 @@
   - Typst → PDF for signable engineering reports (headers/footers/page numbers)
 
 ### Low Priority
+- [ ] **ODE / PDE / difference-equation Solver Primitive** (split from the integration item, deferred)
+  - ODE/difference-equation stepper (e.g. draining-tank demo, dynamic systems), PDE solvers
+  - **Why deferred:** heavy numerical work; `app/` doesn't need it for near-term commercial value.
+    Revisit once the SVG primitive and definite integration are shipped and a real user asks for it.
 - [ ] Macro System - Compile-time code generation
 - [ ] Async/Await - Asynchronous computation support
 - [ ] GPU Computing - CUDA/OpenCL integration
