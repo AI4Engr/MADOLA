@@ -305,13 +305,18 @@
 }
 
 .control-btn {
-  height: 28px;
-  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  padding: 0 14px;
   border: 1px solid var(--border);
   background: var(--bg-panel);
   border-radius: var(--radius);
   font: inherit;
   font-size: 13px;
+  line-height: 1;
+  white-space: nowrap;
   color: var(--text);
   cursor: pointer;
   transition: background 120ms, border-color 120ms;
@@ -324,6 +329,17 @@
   border-color: var(--accent);
 }
 .control-btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+
+/* Output actions: same solid accent as Run */
+.output-controls .control-btn {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+.output-controls .control-btn:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
 
 .clear-btn {
   height: 24px;
@@ -350,33 +366,39 @@
 }
 .refresh-btn:hover { color: var(--text); transform: rotate(90deg); }
 
-/* ── Tabs (right panel) ── */
+/* ── Tabs (right panel) — underline style, distinct from buttons ── */
 .tab-container {
   display: inline-flex;
-  gap: 2px;
-  background: var(--bg-elev);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 3px;
+  gap: 4px;
+  align-self: stretch;
+  align-items: stretch;
 }
 
 .tab-btn {
-  height: 24px;
-  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  padding: 8px 4px 0;
   background: transparent;
   border: none;
-  border-radius: 999px;
+  border-bottom: 2px solid transparent;
   font: inherit;
-  font-size: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
   color: var(--text-muted);
   cursor: pointer;
-  transition: background 120ms, color 120ms;
+  transition: color 120ms, border-color 120ms;
 }
 .tab-btn:hover { color: var(--text); }
 .tab-btn.active {
-  background: var(--accent);
-  color: white;
-  font-weight: 500;
+  color: var(--text);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
 }
 
 .tab-content { display: none; flex: 1; overflow: hidden; }
@@ -386,7 +408,7 @@
 .example-selector { display: flex; align-items: center; }
 
 .example-select {
-  height: 28px;
+  height: 30px;
   padding: 0 8px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
