@@ -131,6 +131,29 @@
   - Dimensional analysis validation
   - Physical constants library
 
+- [ ] **Unit Literal Grammar: allow expressions before a unit, not just a bare number**
+      (not urgent — deferred; matches engineering notation like `100/(12*100) kip/in`)
+  - **Current limitation:** `unit_expression` in `tree-sitter-madola/grammar.js:303` is
+    `number unit_identifier ('^' number)?` — the unit must directly follow a single numeric
+    *token*, not an arbitrary expression. So `100/(12*100) kip/in` fails to parse
+    (`unexpected 'kip'`), even though `100 kip` works fine.
+  - **Workaround that already works today:** insert an explicit `*` —
+    `100/(12*100) * kip/in` parses and evaluates correctly, because `kip`/`in`/etc. are also
+    pre-defined as ordinary global variables (`UnitValue{1.0, unit}`, see
+    `evaluator.cpp:24,41`). Rejected as the long-term answer — doesn't match how engineers
+    naturally write unit expressions (no `*` between a value and its unit).
+  - **Why this isn't a small grammar tweak:** `grammar.js` already carries
+    `conflicts: [$.unit_expression]` for the current bare-number-only form — the grammar author
+    already had to hand-resolve ambiguity for the simplest case. Widening "number" to "any
+    expression" directly ahead of a unit_identifier will conflict much more broadly with
+    `function_call` (`identifier '(' ... ')'`), `unary_expression`, and general juxtaposition —
+    needs real precedence/associativity redesign in `primary_expression`, not just a rule edit.
+    Requires regenerating the parser and re-running the full regression suite to confirm no
+    parsing behavior shifted elsewhere.
+  - **Impact:** quality-of-life / notation-naturalness only — the math is already correct via
+    the `*` workaround, so this is purely syntactic sugar. Low priority, revisit if it keeps
+    coming up in real usage.
+
 - [~] **🔥 Parse Error Diagnostics** - Replace bare "Parse error detected in source"
   - **Root cause:** `ast_builder_statements.cpp:58` only calls `ts_node_has_error(root)`
     (boolean) then throws a generic string — discards all location info
