@@ -281,7 +281,7 @@ class MadolaApp {
         document.getElementById('btn-about').addEventListener('click', () => this.showAbout());
 
         // Editor controls
-        const btnThemeToggle = document.getElementById('btn-theme-toggle');
+        const btnThemeToggle = document.getElementById('theme-toggle-btn');
         if (btnThemeToggle) {
             btnThemeToggle.addEventListener('click', () => this.toggleTheme());
         }
@@ -350,30 +350,24 @@ class MadolaApp {
 
     toggleTheme() {
         this.isDarkTheme = !this.isDarkTheme;
-        const themeBtn = document.getElementById('btn-theme-toggle');
+        const btn = document.getElementById('theme-toggle-btn');
 
         if (this.isDarkTheme) {
             document.body.classList.add('dark-theme');
-            if (themeBtn) {
-                themeBtn.textContent = '☀️ Light';
+            if (btn) {
+                btn.querySelector('.icon-moon').style.display = 'none';
+                btn.querySelector('.icon-sun').style.display = '';
             }
-            if (this.mainEditor) {
-                this.mainEditor.updateOptions({ theme: 'madola-dark' });
-            }
-            if (this.cppEditor) {
-                this.cppEditor.updateOptions({ theme: 'vs-dark' });
-            }
+            if (this.mainEditor) this.mainEditor.updateOptions({ theme: 'madola-dark' });
+            if (this.cppEditor)  this.cppEditor.updateOptions({ theme: 'vs-dark' });
         } else {
             document.body.classList.remove('dark-theme');
-            if (themeBtn) {
-                themeBtn.textContent = '🌙 Dark';
+            if (btn) {
+                btn.querySelector('.icon-moon').style.display = '';
+                btn.querySelector('.icon-sun').style.display = 'none';
             }
-            if (this.mainEditor) {
-                this.mainEditor.updateOptions({ theme: 'madola-light' });
-            }
-            if (this.cppEditor) {
-                this.cppEditor.updateOptions({ theme: 'vs' });
-            }
+            if (this.mainEditor) this.mainEditor.updateOptions({ theme: 'madola-light' });
+            if (this.cppEditor)  this.cppEditor.updateOptions({ theme: 'vs' });
         }
 
         // Update theme select in settings if it exists

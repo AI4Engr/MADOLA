@@ -250,28 +250,26 @@
     }
 
     function applyTheme(theme) {
-        const themeToggleIcon = document.querySelector('.theme-toggle-icon');
+        const btn = document.getElementById('theme-toggle-btn');
+        const moon = btn && btn.querySelector('.icon-moon');
+        const sun  = btn && btn.querySelector('.icon-sun');
 
         if (theme === 'dark') {
             document.body.classList.add('dark-theme');
-            if (themeToggleIcon) {
-                themeToggleIcon.textContent = '🌙';
-            }
-            // Update Monaco editor theme if app exists
+            if (moon) moon.style.display = 'none';
+            if (sun)  sun.style.display  = '';
             if (window.madolaApp && window.madolaApp.mainEditor) {
-                window.madolaApp.mainEditor.updateOptions({ theme: 'vs-dark' });
+                window.madolaApp.mainEditor.updateOptions({ theme: 'madola-dark' });
             }
             if (window.madolaApp && window.madolaApp.cppEditor) {
                 window.madolaApp.cppEditor.updateOptions({ theme: 'vs-dark' });
             }
         } else {
             document.body.classList.remove('dark-theme');
-            if (themeToggleIcon) {
-                themeToggleIcon.textContent = '☀️';
-            }
-            // Update Monaco editor theme if app exists
+            if (moon) moon.style.display = '';
+            if (sun)  sun.style.display  = 'none';
             if (window.madolaApp && window.madolaApp.mainEditor) {
-                window.madolaApp.mainEditor.updateOptions({ theme: 'vs' });
+                window.madolaApp.mainEditor.updateOptions({ theme: 'madola-light' });
             }
             if (window.madolaApp && window.madolaApp.cppEditor) {
                 window.madolaApp.cppEditor.updateOptions({ theme: 'vs' });
