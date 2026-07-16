@@ -2,6 +2,8 @@
 #include "../ast/ast.h"
 #include "../evaluator/evaluator.h"
 #include <string>
+#include <set>
+#include <vector>
 
 namespace madola {
 
@@ -63,9 +65,20 @@ private:
     std::string parseMarkdownFormatting(const std::string& text);
     std::string convertToMathJax(const std::string& text);
 
+    // Collect every name the user introduces (assignment targets, array names,
+    // loop variables, function names/parameters, imports) so the math formatter
+    // can tell a genuine variable from a bare unit identifier that merely shares
+    // a unit's name. Populated once per program.
+    void collectUserDefinedNames(const Program& program);
+    void collectNamesInStatements(const std::vector<StatementPtr>& statements);
+    bool isUnitIdentifier(const std::string& name) const;
+
     // Context for @eval statement formatting
     const Program* currentProgram = nullptr;
     const Statement* currentStatement = nullptr;
+
+    // Names the user defined anywhere in the current program (see above).
+    std::set<std::string> userDefinedNames;
 };
 
 using HtmlFormatterPtr = std::unique_ptr<HtmlFormatter>;

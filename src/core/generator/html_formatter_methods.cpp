@@ -158,6 +158,65 @@ static std::string formatUnitForLatex(const std::string& unit) {
     return "\\text{ " + unit + "}";
 }
 
+// Format a bare identifier that is acting as a unit (e.g. "in" in "kip/in") as an
+// upright \text{} unit, matching how a UnitExpression's unit is rendered but without
+// the leading space formatUnitForLatex adds for the "<number> <unit>" case.
+static std::string formatBareUnitIdentifier(const std::string& name) {
+    std::string unitLatex = formatUnitForLatex(name);
+    size_t spacePos = unitLatex.find("\\text{ ");
+    if (spacePos != std::string::npos) {
+        unitLatex.erase(spacePos + 6, 1);  // drop the space after "\text{"
+    }
+    return unitLatex;
+}
+
+void HtmlFormatter::collectNamesInStatements(const std::vector<StatementPtr>& statements) {
+    for (const auto& stmtPtr : statements) {
+        const Statement* stmt = stmtPtr.get();
+        if (const auto* s = dynamic_cast<const DecoratedStatement*>(stmt)) {
+            stmt = s->statement.get();  // unwrap decorator to reach the real statement
+        }
+        if (const auto* a = dynamic_cast<const AssignmentStatement*>(stmt)) {
+            userDefinedNames.insert(a->variable);
+        } else if (const auto* aa = dynamic_cast<const ArrayAssignmentStatement*>(stmt)) {
+            userDefinedNames.insert(aa->arrayName);
+        } else if (const auto* f = dynamic_cast<const FunctionDeclaration*>(stmt)) {
+            userDefinedNames.insert(f->name);
+            for (const auto& p : f->parameters) userDefinedNames.insert(p);
+            collectNamesInStatements(f->body);
+        } else if (const auto* pf = dynamic_cast<const PiecewiseFunctionDeclaration*>(stmt)) {
+            userDefinedNames.insert(pf->name);
+            for (const auto& p : pf->parameters) userDefinedNames.insert(p);
+        } else if (const auto* fr = dynamic_cast<const ForStatement*>(stmt)) {
+            userDefinedNames.insert(fr->variable);
+            collectNamesInStatements(fr->body);
+        } else if (const auto* w = dynamic_cast<const WhileStatement*>(stmt)) {
+            collectNamesInStatements(w->body);
+        } else if (const auto* iff = dynamic_cast<const IfStatement*>(stmt)) {
+            collectNamesInStatements(iff->then_body);
+            collectNamesInStatements(iff->else_body);
+        } else if (const auto* imp = dynamic_cast<const ImportStatement*>(stmt)) {
+            for (const auto& item : imp->importItems) {
+                userDefinedNames.insert(item->getEffectiveName());
+            }
+        }
+    }
+}
+
+void HtmlFormatter::collectUserDefinedNames(const Program& program) {
+    userDefinedNames.clear();
+    collectNamesInStatements(program.statements);
+}
+
+// A name is a unit only if it's a registered unit AND the user never introduced a
+// variable/function/parameter by that name anywhere in the program. This lets a
+// user variable named e.g. "m" or "F" (as in the bolt_ecc fixture) still render as
+// an italic variable, while a never-declared "m"/"s" in "25 * m/s" reads as a unit.
+bool HtmlFormatter::isUnitIdentifier(const std::string& name) const {
+    return UnitSystem::getInstance().isValidUnit(name) &&
+           userDefinedNames.find(name) == userDefinedNames.end();
+}
+
 std::string HtmlFormatter::formatStatementAsMathInFunction(const Statement& stmt, Evaluator& evaluator, int depth) {
     if (const auto* assignment = dynamic_cast<const AssignmentStatement*>(&stmt)) {
         // Format assignment statements inside functions/loops
@@ -344,6 +403,11 @@ std::string HtmlFormatter::formatStatementAsMathInFunction(const Statement& stmt
 
 std::string HtmlFormatter::formatExpressionAsMath(const Expression& expr, Evaluator& evaluator) {
     if (const auto* identifier = dynamic_cast<const Identifier*>(&expr)) {
+        // A bare unit identifier the user never redefined (e.g. the "m" and "s" in
+        // "25 * m/s") should render as an upright \text{} unit, not an italic variable.
+        if (isUnitIdentifier(identifier->name)) {
+            return formatBareUnitIdentifier(identifier->name);
+        }
         return convertToMathJax(identifier->name);
     } else if (const auto* number = dynamic_cast<const Number*>(&expr)) {
         return formatDouble(number->value);
@@ -402,9 +466,16 @@ std::string HtmlFormatter::formatExpressionAsMath(const Expression& expr, Evalua
             std::vector<std::string> denominators;
             std::string coefficient;  // Numeric coefficient to extract
 
-            // Check if left side is also a division (nested fraction)
+            // If the left side is a unit literal (e.g. "0.008 kip" in "0.008 kip/in"),
+            // pull the number out as a coefficient so it renders as 0.008·(kip/in) —
+            // a compact unit fraction — rather than folding the number into the
+            // fraction's numerator (\frac{0.008 kip}{in}).
             const BinaryExpression* leftBinary = dynamic_cast<const BinaryExpression*>(binary->left.get());
-            if (leftBinary && leftBinary->operator_str == "/") {
+            const auto* leftUnitExpr = dynamic_cast<const UnitExpression*>(binary->left.get());
+            if (leftUnitExpr) {
+                coefficient = formatExpressionAsMath(*leftUnitExpr->value, evaluator);
+                numerator = formatBareUnitIdentifier(leftUnitExpr->unit);
+            } else if (leftBinary && leftBinary->operator_str == "/") {
                 // Extract numerator from nested division
                 numerator = formatExpressionAsMath(*leftBinary->left, evaluator);
                 // Add first denominator
@@ -436,10 +507,25 @@ std::string HtmlFormatter::formatExpressionAsMath(const Expression& expr, Evalua
                 }
             }
 
-            // Add the current denominator
-            std::string currentDenom = formatExpressionAsMath(*binary->right, evaluator);
-            if (needsParentheses(binary->right.get(), "/", true)) {
-                currentDenom = "\\left(" + currentDenom + "\\right)";
+            // Add the current denominator. A bare unit identifier in the denominator
+            // (e.g. the "in" in "kip/in", or "s" in "m/s^2" — optionally raised to a
+            // power) is rendered as an upright \text{} unit with no surrounding parens.
+            std::string currentDenom;
+            const auto* denomIdent = dynamic_cast<const Identifier*>(binary->right.get());
+            const auto* denomPow = dynamic_cast<const BinaryExpression*>(binary->right.get());
+            const Identifier* powBase = (denomPow && denomPow->operator_str == "^")
+                ? dynamic_cast<const Identifier*>(denomPow->left.get()) : nullptr;
+
+            if (denomIdent && isUnitIdentifier(denomIdent->name)) {
+                currentDenom = formatBareUnitIdentifier(denomIdent->name);
+            } else if (powBase && isUnitIdentifier(powBase->name)) {
+                currentDenom = formatBareUnitIdentifier(powBase->name) + "^{" +
+                               formatExpressionAsMath(*denomPow->right, evaluator) + "}";
+            } else {
+                // The denominator sits inside \frac{...}{...}, so its outermost grouping
+                // parentheses are redundant — e.g. "(384 * E * I)" renders as
+                // \frac{...}{384 \cdot E \cdot I}, not \frac{...}{\left(...\right)}.
+                currentDenom = formatExpressionAsMath(*binary->right, evaluator);
             }
             denominators.push_back(currentDenom);
 

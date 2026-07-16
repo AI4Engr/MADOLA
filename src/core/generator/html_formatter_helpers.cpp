@@ -221,6 +221,10 @@ std::string HtmlFormatter::generateOrderedContent(const Program& program, Evalua
     // Store program reference for @eval statement handling
     currentProgram = &program;
 
+    // Collect user-defined names so the math formatter can distinguish variables
+    // from bare unit identifiers (e.g. "m"/"s" in "25 * m/s").
+    collectUserDefinedNames(program);
+
     // Track @skip decorator to skip the next statement
     bool skipNextStatement = false;
 

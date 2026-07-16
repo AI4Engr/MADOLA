@@ -448,6 +448,8 @@ std::string HtmlFormatter::generateSingleTableHtml(const TableData& table, size_
 std::string HtmlFormatter::generateMathContent(const Program& program, Evaluator& evaluator) {
     std::stringstream html;
 
+    collectUserDefinedNames(program);
+
     // Format each statement as mathematical content
     for (const auto& stmt : program.statements) {
         std::string mathExpr = formatStatementAsMath(*stmt, evaluator);
