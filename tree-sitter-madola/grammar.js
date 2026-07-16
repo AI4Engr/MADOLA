@@ -2,8 +2,7 @@ module.exports = grammar({
   name: 'madola',
 
   conflicts: $ => [
-    [$.parameter_list, $.primary_expression],
-    [$.unit_expression]
+    [$.parameter_list, $.primary_expression]
   ],
 
   extras: $ => [
@@ -248,6 +247,7 @@ module.exports = grammar({
 
     multiplicative_expression: $ => choice(
       $.power_expression,
+      $.unit_expression,
       prec.left(2, seq($.multiplicative_expression, choice('*', '/', '%'), $.power_expression))
     ),
 
@@ -279,7 +279,6 @@ module.exports = grammar({
       $.number,
       $.string_literal,
       $.architectural_length,
-      $.unit_expression,
       $.piecewise_expression,
       $.array_expression,
       $.array_access,
@@ -300,8 +299,13 @@ module.exports = grammar({
       /\d+"/
     )),
 
-    unit_expression: $ => prec(10, seq(
-      $.number,
+    // A value directly followed by a unit, e.g. "100 kip" or "100/(12*1000) kip".
+    // The value is a multiplicative-level expression so that natural engineering
+    // notation (a product/quotient followed by a unit, no explicit '*') parses
+    // and binds the whole value to the unit. Higher precedence than '*'/'/' so
+    // the unit attaches before an outer unit-divisor like "... kip / in".
+    unit_expression: $ => prec.left(10, seq(
+      $.multiplicative_expression,
       $.unit_identifier,
       optional(prec(11, seq('^', $.number)))
     )),

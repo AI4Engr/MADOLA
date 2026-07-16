@@ -634,6 +634,10 @@
         {
           "type": "power_expression",
           "named": true
+        },
+        {
+          "type": "unit_expression",
+          "named": true
         }
       ]
     }
@@ -827,10 +831,6 @@
         },
         {
           "type": "string_literal",
-          "named": true
-        },
-        {
-          "type": "unit_expression",
           "named": true
         }
       ]
@@ -1062,6 +1062,10 @@
       "multiple": true,
       "required": true,
       "types": [
+        {
+          "type": "multiplicative_expression",
+          "named": true
+        },
         {
           "type": "number",
           "named": true

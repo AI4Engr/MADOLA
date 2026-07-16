@@ -206,11 +206,14 @@ ExpressionPtr ASTBuilder::buildComplexNumber(TSNode node, const std::string& sou
 }
 
 ExpressionPtr ASTBuilder::buildUnitExpression(TSNode node, const std::string& source) {
-    // unit_expression: number unit_identifier optional(^ number)
-    TSNode numberNode = ts_node_child(node, 0);
+    // unit_expression: <multiplicative_expression> unit_identifier optional(^ number)
+    // The value is now an arbitrary multiplicative-level expression (a bare
+    // number, a parenthesized expression, or a product/quotient), so build it
+    // via the general expression dispatcher rather than assuming a bare number.
+    TSNode valueNode = ts_node_child(node, 0);
     TSNode unitNode = ts_node_child(node, 1);
 
-    auto valueExpr = buildNumber(numberNode, source);
+    auto valueExpr = buildExpression(valueNode, source);
     std::string unitStr = getNodeText(unitNode, source);
 
     // Check if there's an exponent (^2, ^3, etc.)

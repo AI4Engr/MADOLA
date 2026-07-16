@@ -1132,6 +1132,10 @@
           "name": "power_expression"
         },
         {
+          "type": "SYMBOL",
+          "name": "unit_expression"
+        },
+        {
           "type": "PREC_LEFT",
           "value": 2,
           "content": {
@@ -1344,10 +1348,6 @@
         },
         {
           "type": "SYMBOL",
-          "name": "unit_expression"
-        },
-        {
-          "type": "SYMBOL",
           "name": "piecewise_expression"
         },
         {
@@ -1423,14 +1423,14 @@
       }
     },
     "unit_expression": {
-      "type": "PREC",
+      "type": "PREC_LEFT",
       "value": 10,
       "content": {
         "type": "SEQ",
         "members": [
           {
             "type": "SYMBOL",
-            "name": "number"
+            "name": "multiplicative_expression"
           },
           {
             "type": "SYMBOL",
@@ -2807,9 +2807,6 @@
     [
       "parameter_list",
       "primary_expression"
-    ],
-    [
-      "unit_expression"
     ]
   ],
   "precedences": [],

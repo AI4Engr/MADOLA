@@ -155,28 +155,21 @@
     today only if usage stays within same-unit-family expressions without exponents.
   - Physical constants library (still open, independent of the rewrite above)
 
-- [ ] **Unit Literal Grammar: allow expressions before a unit, not just a bare number**
-      (not urgent — deferred; matches engineering notation like `100/(12*100) kip/in`)
-  - **Current limitation:** `unit_expression` in `tree-sitter-madola/grammar.js:303` is
-    `number unit_identifier ('^' number)?` — the unit must directly follow a single numeric
-    *token*, not an arbitrary expression. So `100/(12*100) kip/in` fails to parse
-    (`unexpected 'kip'`), even though `100 kip` works fine.
-  - **Workaround that already works today:** insert an explicit `*` —
-    `100/(12*100) * kip/in` parses and evaluates correctly, because `kip`/`in`/etc. are also
-    pre-defined as ordinary global variables (`UnitValue{1.0, unit}`, see
-    `evaluator.cpp:24,41`). Rejected as the long-term answer — doesn't match how engineers
-    naturally write unit expressions (no `*` between a value and its unit).
-  - **Why this isn't a small grammar tweak:** `grammar.js` already carries
-    `conflicts: [$.unit_expression]` for the current bare-number-only form — the grammar author
-    already had to hand-resolve ambiguity for the simplest case. Widening "number" to "any
-    expression" directly ahead of a unit_identifier will conflict much more broadly with
-    `function_call` (`identifier '(' ... ')'`), `unary_expression`, and general juxtaposition —
-    needs real precedence/associativity redesign in `primary_expression`, not just a rule edit.
-    Requires regenerating the parser and re-running the full regression suite to confirm no
-    parsing behavior shifted elsewhere.
-  - **Impact:** quality-of-life / notation-naturalness only — the math is already correct via
-    the `*` workaround, so this is purely syntactic sugar. Low priority, revisit if it keeps
-    coming up in real usage.
+- [x] **Unit Literal Grammar: allow expressions before a unit, not just a bare number** — DONE
+      (natural engineering notation like `100/(12*1000) kip/in` now parses and evaluates)
+  - **Fix:** `unit_expression` in `tree-sitter-madola/grammar.js` now takes a
+    `multiplicative_expression` (not just `$.number`) before the unit, and was moved out of
+    `primary_expression` into `multiplicative_expression` itself (so the unit binds the *whole*
+    preceding product/quotient, not just its innermost primary). The old hand-resolved
+    `conflicts: [$.unit_expression]` entry is gone — the wider rule generates cleanly with no
+    unresolved conflicts against `function_call`/`unary_expression`/juxtaposition.
+  - `ast_builder_expressions.cpp::buildUnitExpression` now builds the value via the general
+    `buildExpression` dispatcher instead of assuming a bare `buildNumber`.
+  - Verified: `100/(12*1000) kip/in` → `0.008 kip/in` (matches the old `* kip/in` workaround's
+    result exactly); `100 kip`, `5 m^2`, `(3+2) kip`, `2*3 kip` all still parse/evaluate
+    correctly. Full native + WASM regression suites show no new failures (remaining failures —
+    `equ_layout.html` on native, and CSS/formatting drift in `expected_wasm/` — are pre-existing
+    baseline staleness unrelated to this change).
 
 - [~] **🔥 Parse Error Diagnostics** - Replace bare "Parse error detected in source"
   - **Root cause:** `ast_builder_statements.cpp:58` only calls `ts_node_has_error(root)`
