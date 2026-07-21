@@ -14,6 +14,26 @@ static std::unique_ptr<MarkdownFormatter> g_markdown_formatter;
 static std::unique_ptr<HtmlFormatter> g_html_formatter;
 static std::unique_ptr<ASTBuilder> g_ast_builder;
 
+// Escape a string for embedding inside a JSON string literal. Needed anywhere
+// user-controlled text (a curve id from .mda source, an exception message) is
+// interpolated into a hand-built JSON response - without this, a value containing
+// a quote or backslash produces malformed/injectable JSON.
+static std::string escapeJsonString(const std::string& input) {
+    std::string result;
+    result.reserve(input.size());
+    for (char c : input) {
+        switch (c) {
+            case '\\': result += "\\\\"; break;
+            case '"':  result += "\\\""; break;
+            case '\n': result += "\\n"; break;
+            case '\r': result += "\\r"; break;
+            case '\t': result += "\\t"; break;
+            default:   result += c; break;
+        }
+    }
+    return result;
+}
+
 extern "C" {
 
 // Initialize MADOLA WASM module
@@ -311,15 +331,15 @@ char* svg_eval_curve(const char* source, const char* curve_id,
                                                  std::string(curve_id),
                                                  std::string(param_name), param_value);
             if (d) {
-                json = "{\"success\":true,\"curveId\":\"" + std::string(curve_id) +
-                       "\",\"d\":\"" + *d + "\"}";
+                json = "{\"success\":true,\"curveId\":\"" + escapeJsonString(curve_id) +
+                       "\",\"d\":\"" + escapeJsonString(*d) + "\"}";
             } else {
                 json = "{\"success\":false,\"error\":\"curve not found: " +
-                       std::string(curve_id) + "\"}";
+                       escapeJsonString(curve_id) + "\"}";
             }
         }
     } catch (const std::exception& e) {
-        json = "{\"success\":false,\"error\":\"" + std::string(e.what()) + "\"}";
+        json = "{\"success\":false,\"error\":\"" + escapeJsonString(e.what()) + "\"}";
     } catch (...) {
         json = "{\"success\":false,\"error\":\"unknown error\"}";
     }

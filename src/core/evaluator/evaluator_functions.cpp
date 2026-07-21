@@ -1299,7 +1299,14 @@ double requireNumber(Evaluator& evaluator, const Expression& expr, const char* c
     if (!std::holds_alternative<double>(v)) {
         throw std::runtime_error(std::string(context) + " expects a number argument");
     }
-    return std::get<double>(v);
+    double value = std::get<double>(v);
+    // Reject inf/nan here rather than letting them leak into SVG attributes (produces
+    // invalid markup like cx="inf") or data-* attrs (breaks JS parseFloat on recompute).
+    // Callers that sample a curve expression already catch this and treat it as a gap.
+    if (!std::isfinite(value)) {
+        throw std::runtime_error(std::string(context) + " produced a non-finite value (inf/nan)");
+    }
+    return value;
 }
 
 std::string requireStringLiteral(const Expression& expr, const char* context) {
