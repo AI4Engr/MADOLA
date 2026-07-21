@@ -118,6 +118,10 @@
             {
               "type": "SYMBOL",
               "name": "comment_statement"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "image_statement"
             }
           ]
         }

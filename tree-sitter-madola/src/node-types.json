@@ -238,6 +238,10 @@
           "named": true
         },
         {
+          "type": "image_statement",
+          "named": true
+        },
+        {
           "type": "print_statement",
           "named": true
         }

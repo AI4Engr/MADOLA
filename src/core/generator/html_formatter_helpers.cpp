@@ -38,6 +38,19 @@ static std::string normalizeImageSource(const std::string& raw) {
     return "data:" + mime + ";base64," + src;
 }
 
+// Unwrap a DecoratedStatement to find an ImageStatement underneath (an @image{} cell
+// may itself carry no decorators, but could in principle be wrapped like any other
+// decorated statement). Returns nullptr if stmt is not (or does not wrap) an image.
+static const ImageStatement* asImageStatement(const Statement* stmt) {
+    if (const auto* img = dynamic_cast<const ImageStatement*>(stmt)) {
+        return img;
+    }
+    if (const auto* decorated = dynamic_cast<const DecoratedStatement*>(stmt)) {
+        return dynamic_cast<const ImageStatement*>(decorated->statement.get());
+    }
+    return nullptr;
+}
+
 // Map an @image/@p-style [style] attribute onto an inline CSS style string for the
 // wrapping element. Recognizes center/left/right shorthands; any other value is passed
 // through verbatim so styles like "width:50%" or "max-width:400px" work directly.
@@ -538,6 +551,50 @@ std::string HtmlFormatter::generateOrderedContent(const Program& program, Evalua
                         int totalElements = rows * cols;
 
                         if (i + totalElements - 1 < program.statements.size()) {
+                            // A grid containing any @image{} cell can't be a pure LaTeX
+                            // \begin{array}, since MathJax can't render an <img> inside math
+                            // mode. Render those grids as an HTML <table> instead, with each
+                            // cell holding either inline $$...$$ math or an <img>. Grids with
+                            // no image cells keep the original LaTeX array rendering untouched.
+                            bool gridHasImage = false;
+                            for (int elementIndex = 0; elementIndex < totalElements; ++elementIndex) {
+                                if (asImageStatement(program.statements[i + elementIndex].get())) {
+                                    gridHasImage = true;
+                                    break;
+                                }
+                            }
+
+                            if (gridHasImage) {
+                                html << "<table class=\"madola-layout-grid\">\n";
+                                for (int row = 0; row < rows; ++row) {
+                                    html << "<tr>\n";
+                                    for (int col = 0; col < cols; ++col) {
+                                        int elementIndex = row * cols + col;
+                                        html << "<td>";
+                                        if (i + elementIndex < program.statements.size()) {
+                                            const auto& cellStmt = program.statements[i + elementIndex];
+                                            if (const auto* imageStmt = asImageStatement(cellStmt.get())) {
+                                                std::string imgSrc = normalizeImageSource(imageStmt->source);
+                                                if (!imgSrc.empty()) {
+                                                    html << "<img src=\"" << imgSrc << "\" style=\"max-width:100%\" alt=\"\">";
+                                                }
+                                            } else {
+                                                std::string cellMath = formatStatementAsMath(*cellStmt, evaluator);
+                                                if (!cellMath.empty()) {
+                                                    html << "$$" << cellMath << "$$";
+                                                }
+                                            }
+                                        }
+                                        html << "</td>\n";
+                                    }
+                                    html << "</tr>\n";
+                                }
+                                html << "</table>\n";
+
+                                i += totalElements - 1;
+                                break; // Exit the decorator loop
+                            }
+
                             // Handle layout decorator
                             html << "<div class=\"math-expression align-expression\">\n";
                             html << "$$\n\\begin{array}{";

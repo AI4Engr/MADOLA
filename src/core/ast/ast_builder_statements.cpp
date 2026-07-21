@@ -752,7 +752,8 @@ StatementPtr ASTBuilder::buildDecoratedStatement(TSNode node, const std::string&
         } else if (strcmp(childType, "assignment_statement") == 0 ||
                    strcmp(childType, "expression_statement") == 0 ||
                    strcmp(childType, "print_statement") == 0 ||
-                   strcmp(childType, "comment_statement") == 0) {
+                   strcmp(childType, "comment_statement") == 0 ||
+                   strcmp(childType, "image_statement") == 0) {
             statementNode = child;
         }
     }

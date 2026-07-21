@@ -40,7 +40,8 @@ module.exports = grammar({
         $.assignment_statement,
         $.expression_statement,
         $.print_statement,
-        $.comment_statement
+        $.comment_statement,
+        $.image_statement
       )
     ),
 
