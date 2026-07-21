@@ -286,6 +286,51 @@ char* format_madola_html(const char* source, int with_execution) {
     }
 }
 
+// Recompute a single interactive svg() curve after rebinding one variable (e.g. a
+// dragged @input value), without re-running/re-rendering the whole program. Re-parses
+// source (fresh AST for this call only), evaluates once to populate bindings and
+// collect svg data, then resamples just the named curve. Returns a small JSON object;
+// caller must free_result() it.
+EMSCRIPTEN_KEEPALIVE
+char* svg_eval_curve(const char* source, const char* curve_id,
+                     const char* param_name, double param_value) {
+    std::string json;
+    try {
+        if (!g_ast_builder) {
+            init_madola();
+        }
+
+        auto program = g_ast_builder->buildProgram(std::string(source));
+        if (!program) {
+            json = "{\"success\":false,\"error\":\"Failed to parse source code\"}";
+        } else {
+            Evaluator evaluator;
+            auto result = evaluator.evaluate(*program);
+
+            auto d = evaluator.resampleSvgCurve(*program, result.svgs,
+                                                 std::string(curve_id),
+                                                 std::string(param_name), param_value);
+            if (d) {
+                json = "{\"success\":true,\"curveId\":\"" + std::string(curve_id) +
+                       "\",\"d\":\"" + *d + "\"}";
+            } else {
+                json = "{\"success\":false,\"error\":\"curve not found: " +
+                       std::string(curve_id) + "\"}";
+            }
+        }
+    } catch (const std::exception& e) {
+        json = "{\"success\":false,\"error\":\"" + std::string(e.what()) + "\"}";
+    } catch (...) {
+        json = "{\"success\":false,\"error\":\"unknown error\"}";
+    }
+
+    size_t len = json.length();
+    char* output = new char[len + 1];
+    memcpy(output, json.c_str(), len);
+    output[len] = '\0';
+    return output;
+}
+
 // Free memory allocated by WASM functions
 EMSCRIPTEN_KEEPALIVE
 void free_result(char* ptr) {

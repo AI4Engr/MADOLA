@@ -1458,4 +1458,165 @@ Value Evaluator::generateTable(const std::vector<std::string>& headers, const st
                       std::to_string(maxRows) + " rows");
 }
 
+namespace {
+
+// Find the FunctionCall AST node for a top-level svg(...) statement, unwrapping the
+// handful of statement shapes that can carry an expression (mirrors the isSvgCall
+// detection in html_formatter_helpers.cpp::generateOrderedContent).
+const FunctionCall* asTopLevelCall(const Statement* stmt, const char* name) {
+    const FunctionCall* func = dynamic_cast<const FunctionCall*>(stmt);
+    if (!func) {
+        if (const auto* exprStmt = dynamic_cast<const ExpressionStatement*>(stmt)) {
+            func = dynamic_cast<const FunctionCall*>(exprStmt->expression.get());
+        } else if (const auto* printStmt = dynamic_cast<const PrintStatement*>(stmt)) {
+            func = dynamic_cast<const FunctionCall*>(printStmt->expression.get());
+        }
+    }
+    if (func && func->function_name == name) {
+        return func;
+    }
+    return nullptr;
+}
+
+// Recompute the exact same data-space bounds generateSvgHtml derives from an SvgData's
+// curves, so the pixel transform used on recompute matches the initial render exactly.
+void computeCurveBounds(const SvgData& svg, double& xmin, double& xmax, double& ymin, double& ymax) {
+    bool have = false;
+    xmin = xmax = ymin = ymax = 0.0;
+    for (const auto& shape : svg.shapes) {
+        if (shape.kind != SvgShape::Kind::Curve) continue;
+        for (size_t j = 0; j < shape.xs.size(); ++j) {
+            double x = shape.xs[j];
+            double y = shape.ys[j];
+            if (std::isnan(x) || std::isnan(y)) continue;
+            if (!have) {
+                xmin = xmax = x;
+                ymin = ymax = y;
+                have = true;
+            } else {
+                xmin = std::min(xmin, x);
+                xmax = std::max(xmax, x);
+                ymin = std::min(ymin, y);
+                ymax = std::max(ymax, y);
+            }
+        }
+    }
+    if (!have || xmax == xmin) { xmin = 0.0; xmax = 1.0; }
+    if (!have || ymax == ymin) { ymin = -1.0; ymax = 1.0; }
+}
+
+} // namespace
+
+std::optional<std::string> Evaluator::resampleSvgCurve(const Program& program,
+                                                         const std::vector<SvgData>& svgs,
+                                                         const std::string& curveId,
+                                                         const std::string& paramName,
+                                                         double paramValue) {
+    // Locate the curve's SvgData (for width/height and the fixed pixel transform) and
+    // the matching AST curve() call (for its still-unevaluated expression), walking both
+    // in the same declaration order collectSvg used originally.
+    const SvgData* ownerSvg = nullptr;
+    const SvgShape* ownerShape = nullptr;
+    const FunctionCall* curveCall = nullptr;
+
+    size_t svgIndex = 0;
+    for (const auto& stmt : program.statements) {
+        const FunctionCall* svgFunc = asTopLevelCall(stmt.get(), "svg");
+        if (!svgFunc) continue;
+        if (svgIndex >= svgs.size()) break;
+        const SvgData& svgData = svgs[svgIndex];
+
+        for (const auto& shape : svgData.shapes) {
+            if (shape.kind == SvgShape::Kind::Curve && shape.curveId == curveId) {
+                ownerSvg = &svgData;
+                ownerShape = &shape;
+                break;
+            }
+        }
+
+        if (ownerShape) {
+            // Re-locate the matching curve(...) argument in the fresh AST by position:
+            // shapes and svg() arguments (after width/height) are in the same order.
+            size_t shapeIdx = static_cast<size_t>(ownerShape - svgData.shapes.data());
+            size_t argIdx = 2 + shapeIdx;
+            if (argIdx < svgFunc->arguments.size()) {
+                curveCall = dynamic_cast<const FunctionCall*>(svgFunc->arguments[argIdx].get());
+            }
+            break;
+        }
+
+        svgIndex++;
+    }
+
+    if (!ownerSvg || !ownerShape || !curveCall || curveCall->arguments.empty()) {
+        return std::nullopt;
+    }
+
+    // Rebind the dragged parameter, resample over the curve's original domain.
+    bool paramExisted = env.exists(paramName);
+    Value oldParamValue;
+    if (paramExisted) {
+        oldParamValue = env.get(paramName);
+    }
+    env.define(paramName, paramValue);
+
+    bool varExisted = env.exists(ownerShape->sampleVar);
+    Value oldVarValue;
+    if (varExisted) {
+        oldVarValue = env.get(ownerShape->sampleVar);
+    }
+
+    std::vector<double> xs, ys;
+    xs.reserve(ownerShape->samples);
+    ys.reserve(ownerShape->samples);
+    for (int s = 0; s < ownerShape->samples; ++s) {
+        double t = (ownerShape->samples == 1)
+            ? ownerShape->start
+            : ownerShape->start + (ownerShape->end - ownerShape->start) * s / (ownerShape->samples - 1);
+        env.define(ownerShape->sampleVar, t);
+        double yv;
+        try {
+            yv = requireNumber(*this, *curveCall->arguments[0], "curve() expression");
+        } catch (const std::exception&) {
+            yv = std::nan("");
+        }
+        xs.push_back(t);
+        ys.push_back(yv);
+    }
+
+    if (varExisted) {
+        env.define(ownerShape->sampleVar, oldVarValue);
+    } else {
+        env.remove(ownerShape->sampleVar);
+    }
+    if (paramExisted) {
+        env.define(paramName, oldParamValue);
+    } else {
+        env.remove(paramName);
+    }
+
+    // Reproduce generateSvgHtml's exact transform (fixed to the *original* svg's bounds,
+    // not the resampled points, so axes don't rescale mid-drag).
+    double xmin, xmax, ymin, ymax;
+    computeCurveBounds(*ownerSvg, xmin, xmax, ymin, ymax);
+    const double margin = 10.0;
+    double plotW = ownerSvg->width - 2 * margin;
+    double plotH = ownerSvg->height - 2 * margin;
+
+    std::stringstream d;
+    bool started = false;
+    for (size_t j = 0; j < xs.size(); ++j) {
+        if (std::isnan(xs[j]) || std::isnan(ys[j])) {
+            started = false;
+            continue;
+        }
+        double px = margin + (xs[j] - xmin) / (xmax - xmin) * plotW;
+        double py = margin + (ymax - ys[j]) / (ymax - ymin) * plotH;
+        d << (started ? " L " : "M ") << px << " " << py;
+        started = true;
+    }
+
+    return d.str();
+}
+
 } // namespace madola

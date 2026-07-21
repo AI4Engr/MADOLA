@@ -9,6 +9,7 @@
 #include <variant>
 #include <memory>
 #include <stdexcept>
+#include <optional>
 
 namespace madola {
 
@@ -194,6 +195,20 @@ public:
     Value getVariableValue(const std::string& name) const;
     void executeStatement(const Statement& stmt, std::vector<std::string>& outputs);
     std::string valueToString(const Value& value);
+
+    // Interactive SVG curve recompute (Phase 2): after `evaluate(program)` has already
+    // populated `env` and returned `svgs` (the collected SvgData, needed for the width/
+    // height/extents that fix the pixel transform), rebind a single variable (e.g. a
+    // dragged load) and re-sample the named curve's expression over its original domain.
+    // Re-walks `program` (the same AST evaluate() was called with) to find the curve's
+    // still-unevaluated expression by declaration order, so no Expression pointer needs
+    // to survive across calls. Returns the new SVG <path> "d" string, or std::nullopt if
+    // the curve id isn't found.
+    std::optional<std::string> resampleSvgCurve(const Program& program,
+                                                 const std::vector<SvgData>& svgs,
+                                                 const std::string& curveId,
+                                                 const std::string& paramName,
+                                                 double paramValue);
 
 #ifdef WITH_SYMENGINE
     // Public symbolic computation functions

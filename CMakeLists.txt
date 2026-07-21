@@ -417,7 +417,7 @@ if(EMSCRIPTEN)
             -s NODEJS_CATCH_REJECTION=0 \
             -s MODULARIZE=1 \
             -s EXPORT_NAME=MADOLA \
-            -s EXPORTED_FUNCTIONS=[_parse_madola,_evaluate_madola,_format_madola,_format_madola_html,_free_result] \
+            -s EXPORTED_FUNCTIONS=[_parse_madola,_evaluate_madola,_format_madola,_format_madola_html,_svg_eval_curve,_free_result] \
             -s EXPORTED_RUNTIME_METHODS=[ccall,UTF8ToString] \
             -s ALLOW_MEMORY_GROWTH=1 \
             -s INITIAL_MEMORY=67108864 \
