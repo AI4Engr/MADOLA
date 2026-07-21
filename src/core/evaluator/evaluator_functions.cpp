@@ -206,6 +206,11 @@ Value Evaluator::evaluateFunctionCall(const FunctionCall& expr) {
         return generateTable(headers, columns);
     }
 
+    // Special handling for svg function
+    if (expr.function_name == "svg") {
+        return collectSvg(expr);
+    }
+
 
     // Regular function call - evaluate arguments
     std::vector<Value> arguments;
@@ -1285,6 +1290,149 @@ Value Evaluator::evaluateMethodCall(const MethodCall& expr) {
     }
 
     throw std::runtime_error("Method calls are only supported on matrices/arrays");
+}
+
+namespace {
+
+double requireNumber(Evaluator& evaluator, const Expression& expr, const char* context) {
+    Value v = evaluator.evaluateExpression(expr);
+    if (!std::holds_alternative<double>(v)) {
+        throw std::runtime_error(std::string(context) + " expects a number argument");
+    }
+    return std::get<double>(v);
+}
+
+std::string requireStringLiteral(const Expression& expr, const char* context) {
+    const auto* strLit = dynamic_cast<const StringLiteral*>(&expr);
+    if (!strLit) {
+        throw std::runtime_error(std::string(context) + " expects a string literal argument");
+    }
+    return strLit->value;
+}
+
+} // namespace
+
+Value Evaluator::collectSvg(const FunctionCall& expr) {
+    if (expr.arguments.size() < 2) {
+        throw std::runtime_error("Function svg expects at least 2 arguments (width, height, [shapes...]), got " +
+                                  std::to_string(expr.arguments.size()));
+    }
+
+    SvgData svgData;
+    svgData.width = requireNumber(*this, *expr.arguments[0], "svg() width");
+    svgData.height = requireNumber(*this, *expr.arguments[1], "svg() height");
+
+    for (size_t i = 2; i < expr.arguments.size(); ++i) {
+        const auto* shapeCall = dynamic_cast<const FunctionCall*>(expr.arguments[i].get());
+        if (!shapeCall) {
+            throw std::runtime_error("svg() arguments after width/height must be shape calls "
+                                      "(line/circle/arrow/text/rect/curve)");
+        }
+
+        const std::string& shapeName = shapeCall->function_name;
+        const auto& args = shapeCall->arguments;
+        SvgShape shape;
+
+        if (shapeName == "line" || shapeName == "arrow") {
+            if (args.size() != 4) {
+                throw std::runtime_error(shapeName + "() expects 4 arguments (x1,y1,x2,y2), got " +
+                                          std::to_string(args.size()));
+            }
+            shape.kind = (shapeName == "line") ? SvgShape::Kind::Line : SvgShape::Kind::Arrow;
+            for (const auto& arg : args) {
+                shape.nums.push_back(requireNumber(*this, *arg, shapeName.c_str()));
+            }
+        } else if (shapeName == "circle") {
+            if (args.size() != 3) {
+                throw std::runtime_error("circle() expects 3 arguments (cx,cy,r), got " +
+                                          std::to_string(args.size()));
+            }
+            shape.kind = SvgShape::Kind::Circle;
+            for (const auto& arg : args) {
+                shape.nums.push_back(requireNumber(*this, *arg, "circle()"));
+            }
+        } else if (shapeName == "rect") {
+            if (args.size() != 4) {
+                throw std::runtime_error("rect() expects 4 arguments (x,y,w,h), got " +
+                                          std::to_string(args.size()));
+            }
+            shape.kind = SvgShape::Kind::Rect;
+            for (const auto& arg : args) {
+                shape.nums.push_back(requireNumber(*this, *arg, "rect()"));
+            }
+        } else if (shapeName == "text") {
+            if (args.size() != 3) {
+                throw std::runtime_error("text() expects 3 arguments (x,y,\"label\"), got " +
+                                          std::to_string(args.size()));
+            }
+            shape.kind = SvgShape::Kind::Text;
+            shape.nums.push_back(requireNumber(*this, *args[0], "text()"));
+            shape.nums.push_back(requireNumber(*this, *args[1], "text()"));
+            shape.text = requireStringLiteral(*args[2], "text()");
+        } else if (shapeName == "curve") {
+            if (args.size() < 5 || args.size() > 6) {
+                throw std::runtime_error("curve() expects 5-6 arguments (expr, sampleVar, start, end, samples, "
+                                          "[\"curveId\"]), got " + std::to_string(args.size()));
+            }
+            shape.kind = SvgShape::Kind::Curve;
+
+            const auto* sampleVarIdent = dynamic_cast<const Identifier*>(args[1].get());
+            if (!sampleVarIdent) {
+                throw std::runtime_error("curve() second argument must be an identifier naming the sample variable");
+            }
+            shape.sampleVar = sampleVarIdent->name;
+            shape.start = requireNumber(*this, *args[2], "curve()");
+            shape.end = requireNumber(*this, *args[3], "curve()");
+            double samplesVal = requireNumber(*this, *args[4], "curve()");
+            if (samplesVal < 2 || std::floor(samplesVal) != samplesVal) {
+                throw std::runtime_error("curve() samples argument must be an integer >= 2");
+            }
+            shape.samples = static_cast<int>(samplesVal);
+            shape.curveId = (args.size() == 6)
+                ? requireStringLiteral(*args[5], "curve()")
+                : ("curve" + std::to_string(svgData.shapes.size()));
+
+            // Sample the curve by rebinding sampleVar over [start,end], reusing the same
+            // save/rebind/restore idiom as executeFor's loop-variable rebinding.
+            bool varExisted = env.exists(shape.sampleVar);
+            Value oldValue;
+            if (varExisted) {
+                oldValue = env.get(shape.sampleVar);
+            }
+
+            shape.xs.reserve(shape.samples);
+            shape.ys.reserve(shape.samples);
+            for (int s = 0; s < shape.samples; ++s) {
+                double t = (shape.samples == 1)
+                    ? shape.start
+                    : shape.start + (shape.end - shape.start) * s / (shape.samples - 1);
+                env.define(shape.sampleVar, t);
+                double yv;
+                try {
+                    yv = requireNumber(*this, *args[0], "curve() expression");
+                } catch (const std::exception&) {
+                    yv = std::nan("");
+                }
+                shape.xs.push_back(t);
+                shape.ys.push_back(yv);
+            }
+
+            if (varExisted) {
+                env.define(shape.sampleVar, oldValue);
+            } else {
+                env.remove(shape.sampleVar);
+            }
+        } else {
+            throw std::runtime_error("Unknown svg shape '" + shapeName +
+                                      "' - expected line/circle/arrow/text/rect/curve");
+        }
+
+        svgData.shapes.push_back(std::move(shape));
+    }
+
+    collectedSvgs.push_back(std::move(svgData));
+    return std::string("SVG " + std::to_string(collectedSvgs.size()) + " created with " +
+                        std::to_string(collectedSvgs.back().shapes.size()) + " shapes");
 }
 
 Value Evaluator::generateTable(const std::vector<std::string>& headers, const std::vector<TableData::ColumnData>& columns) {

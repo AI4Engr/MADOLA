@@ -281,6 +281,7 @@ std::string HtmlFormatter::generateOrderedContent(const Program& program, Evalua
     size_t graphIndex = 0;
     size_t graph3DIndex = 0;
     size_t tableIndex = 0;
+    size_t svgIndex = 0;
 
     // Store program reference for @eval statement handling
     currentProgram = &program;
@@ -708,6 +709,7 @@ std::string HtmlFormatter::generateOrderedContent(const Program& program, Evalua
         bool isGraphCall = false;
         bool is3DGraphCall = false;
         bool isTableCall = false;
+        bool isSvgCall = false;
 
         // Check direct function call statements
         if (const auto* func = dynamic_cast<const FunctionCall*>(stmt.get())) {
@@ -717,6 +719,8 @@ std::string HtmlFormatter::generateOrderedContent(const Program& program, Evalua
                 is3DGraphCall = true;
             } else if (func->function_name == "table") {
                 isTableCall = true;
+            } else if (func->function_name == "svg") {
+                isSvgCall = true;
             }
         }
 
@@ -729,6 +733,8 @@ std::string HtmlFormatter::generateOrderedContent(const Program& program, Evalua
                     is3DGraphCall = true;
                 } else if (func->function_name == "table") {
                     isTableCall = true;
+                } else if (func->function_name == "svg") {
+                    isSvgCall = true;
                 }
             }
         }
@@ -742,6 +748,8 @@ std::string HtmlFormatter::generateOrderedContent(const Program& program, Evalua
                     is3DGraphCall = true;
                 } else if (func->function_name == "table") {
                     isTableCall = true;
+                } else if (func->function_name == "svg") {
+                    isSvgCall = true;
                 }
             }
         }
@@ -762,6 +770,12 @@ std::string HtmlFormatter::generateOrderedContent(const Program& program, Evalua
             // Generate table HTML directly
             html << generateSingleTableHtml(evalResult.tables[tableIndex], tableIndex);
             tableIndex++;
+        }
+
+        if (isSvgCall && svgIndex < evalResult.svgs.size()) {
+            // Generate SVG HTML directly
+            html << generateSvgHtml(evalResult.svgs[svgIndex], svgIndex);
+            svgIndex++;
         }
     }
 

@@ -108,6 +108,33 @@ struct TableData {
     }
 };
 
+// A single shape inside an svg(...) call. Value-only (no AST pointers) so SvgData can
+// be safely std::move'd into EvaluationResult exactly like GraphData/TableData.
+struct SvgShape {
+    enum class Kind { Line, Circle, Arrow, Text, Rect, Curve };
+
+    Kind kind;
+    std::vector<double> nums;  // evaluated numeric args (x1,y1,x2,y2 / cx,cy,r / x,y,w,h ...)
+    std::string text;          // Text label; Curve id/label
+
+    // Curve-only fields: sampled once at collect time via the executeFor rebind idiom
+    // (save sampleVar binding -> env.define(sampleVar, x) -> evaluateExpression -> restore).
+    std::string sampleVar;
+    double start = 0.0;
+    double end = 0.0;
+    int samples = 0;
+    std::vector<double> xs;
+    std::vector<double> ys;
+    std::string curveId;
+};
+
+struct SvgData {
+    double width = 0.0;
+    double height = 0.0;
+    std::vector<SvgShape> shapes;  // in declaration order
+    std::string title;
+};
+
 // Forward declarations
 class FunctionDeclaration;
 
@@ -157,6 +184,7 @@ public:
         std::vector<GraphData> graphs;
         std::vector<Graph3DData> graphs3d;
         std::vector<TableData> tables;
+        std::vector<SvgData> svgs;
         bool success;
         std::string error;
     };
@@ -180,6 +208,7 @@ private:
     std::vector<GraphData> collectedGraphs;
     std::vector<Graph3DData> collected3DGraphs;
     std::vector<TableData> collectedTables;
+    std::vector<SvgData> collectedSvgs;
     std::vector<ProgramPtr> importedPrograms;  // Keep imported programs alive
 
     void executeAssignment(const AssignmentStatement& stmt);
@@ -224,6 +253,7 @@ private:
     Value generateGraph(const ArrayValue& xArray, const ArrayValue& yArray, const std::string& title = "");
     Value generate3DGraph(const std::string& title, const std::vector<double>& dimensions);
     Value generateTable(const std::vector<std::string>& headers, const std::vector<TableData::ColumnData>& columns);
+    Value collectSvg(const FunctionCall& expr);
 
     // For function call execution
     Value callFunction(const std::string& name, const std::vector<Value>& arguments);

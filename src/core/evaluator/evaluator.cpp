@@ -122,6 +122,7 @@ Evaluator::EvaluationResult Evaluator::evaluate(const Program& program, const st
         result.graphs = std::move(collectedGraphs);
         result.graphs3d = std::move(collected3DGraphs);
         result.tables = std::move(collectedTables);
+        result.svgs = std::move(collectedSvgs);
 
     } catch (const std::exception& e) {
         result.success = false;

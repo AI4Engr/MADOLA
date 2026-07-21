@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MADOLA Output</title>
+    <script>
+        window.MathJax = {
+            tex: {
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                processEscapes: true,
+                processEnvironments: true,
+                packages: {'[+]': ['ams', 'newcommand', 'configmacros']}
+            },
+            chtml: {
+                scale: 1.0,
+                displayAlign: 'left'
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <style>
+/* MADOLA Output Styles - Shared between HTML export and web app */
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 20px;
+    background-color: #f8f9fa;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+h1, h2, h3 {
+    color: #2c3e50;
+    padding-bottom: 10px;
+}
+
+.madola-code {
+    background: #f1f2f6;
+    border-left: 4px solid #3498db;
+    padding: 15px;
+    margin: 20px 0;
+    font-family: 'Courier New', monospace;
+    border-radius: 4px;
+}
+
+.execution-result {
+    background: #e8f5e8;
+    border-left: 4px solid #27ae60;
+    padding: 15px;
+    margin: 20px 0;
+    border-radius: 4px;
+}
+
+.math-expression {
+    margin: 0 0;
+    text-align: center;
+    font-size: 1.1em;
+}
+
+.math-expression.align-expression {
+    margin-left: 0.25in;
+}
+
+/* Indent two-column tables to line up with aligned equations */
+.madola-pair-table {
+    /* Align with .math-expression.align-expression (0.25in) minus 10px cell padding */
+    margin-left: calc(0.25in - 10px);
+}
+
+.graph-container {
+    margin: 30px 0;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fafafa;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+/* Ensure legacy graph renderers (graph0, graph1, etc.) shrink with the panel */
+.graph-container > div[id^="graph"] {
+    width: 100%;
+}
+
+.graph-container > div[id^="graph"] svg {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+}
+
+.graph-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    color: #2c3e50;
+    text-align: center;
+}
+
+.web-graph {
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.web-graph svg {
+    width: 100%;
+    height: auto;
+    display: block;
+    max-width: 100%;
+}
+
+.axis { stroke: #333; }
+.grid line { stroke: #ddd; stroke-dasharray: 2,2; }
+.line { fill: none; stroke: #3498db; stroke-width: 2px; }
+.dot { fill: #3498db; }
+
+.variable-assignment {
+    background: #fff3cd;
+    border-left: 4px solid #ffc107;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 4px;
+}
+
+.function-definition {
+    background: #d4edda;
+    border-left: 4px solid #28a745;
+    padding: 15px;
+    margin: 20px 0;
+    border-radius: 4px;
+}
+
+.output-line {
+    background: #f8f9fa;
+    border-left: 4px solid #6c757d;
+    padding: 10px;
+    margin: 10px 0;
+    font-family: 'Courier New', monospace;
+    border-radius: 4px;
+}
+
+/* MathJax Styling */
+mjx-math {
+    font-weight: normal !important;
+    font-size: 95% !important;
+}
+
+mjx-container {
+    font-weight: normal !important;
+    font-size: 95% !important;
+}
+
+mjx-container[display="true"] {
+    text-align: left !important;
+}
+
+.MathJax_Display {
+    text-align: left !important;
+}
+
+/*
+   Tighten spacing for display math placed inside table cells.
+   MathJax's display containers add vertical margins by default (~0.75em).
+   This creates large row heights when we render two-column layouts using
+   tables. Limit the override strictly to tables to keep block equations
+   elsewhere unaffected.
+*/
+table mjx-container[display="true"] {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+/* Ensure the display container doesn't expand the row vertically */
+table td mjx-container[display="true"] {
+    display: inline-block !important; /* behave like inline equation inside cells */
+    vertical-align: middle;
+}
+
+/* Reduce any extra padding that MathJax might inject within the math box */
+table td mjx-container[display="true"] mjx-math {
+    line-height: 1.1; /* slightly compact but readable */
+}
+
+/* Ensure any HTML text we render in the right column (
+   headings or paragraphs injected by @h1-@h4/@p) lines up
+   with the math baseline by removing default margins/padding
+   and aligning them vertically to middle. */
+table td > h1,
+table td > h2,
+table td > h3,
+table td > h4,
+table td > p {
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1.1; /* match math line-height above */
+    vertical-align: middle;
+    display: inline-block; /* allow vertical-align to take effect */
+}
+
+/* Keep right-column paragraph styling (white-space: pre-wrap) intact */
+table td > p[style] {
+    white-space: pre-wrap !important;
+}
+
+/* Data table styles for table() function output */
+.table-container {
+    margin: 20px 0;
+    overflow-x: auto;
+}
+
+.data-table {
+    border-collapse: collapse;
+    width: auto;
+    min-width: 300px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+    margin-left: 0.25in;
+}
+
+.data-table thead {
+    background: #3498db;
+    color: white;
+}
+
+.data-table th {
+    padding: 8px 12px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid #2980b9;
+}
+
+.data-table tbody tr {
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.data-table tbody tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+.data-table tbody tr:hover {
+    background-color: #e8f4fc;
+}
+
+.data-table td {
+    padding: 6px 12px;
+    text-align: right;
+}
+
+/* Print styles for PDF output */
+@media print {
+    body {
+        padding: 0;
+        margin: 0;
+        background-color: white;
+    }
+    
+    .container {
+        max-width: 100%;
+        padding: 15px;
+        margin: 0;
+        box-shadow: none;
+        border-radius: 0;
+    }
+    
+    /* Hide source code blocks */
+    .madola-code {
+        display: none !important;
+    }
+    
+    /* Hide graph container borders and backgrounds for cleaner print */
+    .graph-container {
+        border: none;
+        background: white;
+        box-shadow: none;
+        page-break-inside: avoid;
+    }
+    
+    /* Ensure graphs print well */
+    .graph-container svg {
+        max-width: 100%;
+        height: auto;
+    }
+    
+    @page {
+        margin: 0.5in;
+        size: A4;
+    }
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+<h1>SVG Beam Deflection Diagram</h1>
+<div class="math-expression align-expression">
+$$P = 12$$
+</div>
+<div class="math-expression align-expression">
+$$L = 10$$
+</div>
+<div class="math-expression align-expression">
+$$E = 29000$$
+</div>
+<div class="math-expression align-expression">
+$$I = 800$$
+</div>
+<div class="math-expression align-expression">
+$$svg(400, 200, line(10, 100, 390, 100), circle(200, 100, 5), arrow(200, 20, 200, 95), text(200, 15, \text{"P"}), rect(5, 95, 10, 10), curve(\frac{-P \cdot x^{2} \cdot \left(3 \cdot L - x\right)}{6 \cdot E \cdot I}, x, 0, L, 20, \text{"deflection"}))$$
+</div>
+<div class="svg-container" data-svg-index="0">
+<svg width="400" height="200" viewBox="0 0 400 200">
+<line x1="10" y1="100" x2="390" y2="100" stroke="black" stroke-width="1.5"/>
+<circle cx="200" cy="100" r="5" stroke="black" fill="none"/>
+<line x1="200" y1="20" x2="200" y2="95" stroke="black" stroke-width="1.5" marker-end="url(#madola-arrowhead)"/>
+<text x="200" y="15">P</text>
+<rect x="5" y="95" width="10" height="10" stroke="black" fill="none"/>
+<path d="M 10 10 L 30 10.7348 L 50 12.8867 L 70 16.377 L 90 21.127 L 110 27.0579 L 130 34.091 L 150 42.1475 L 170 51.1489 L 190 61.0162 L 210 71.6708 L 230 83.034 L 250 95.027 L 270 107.571 L 290 120.588 L 310 133.998 L 330 147.723 L 350 161.684 L 370 175.803 L 390 190" fill="none" stroke="steelblue" stroke-width="2" class="svg-curve" data-curve-id="deflection" data-sample-var="x" data-start="0" data-end="10" data-samples="20"/>
+<defs><marker id="madola-arrowhead" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z"/></marker></defs>
+</svg>
+</div>
+<div class="math-expression align-expression">
+$$x = 5$$
+</div>
+<div class="execution-result">
+SVG 1 created with 6 shapes
+5
+</div>
+    </div>
+</body>
+</html>

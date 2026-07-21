@@ -53,6 +53,7 @@ private:
     std::string generate3DGraphHtml(const Graph3DData& graph, size_t index);
     std::string generateTableHtml(const std::vector<TableData>& tables);
     std::string generateSingleTableHtml(const TableData& table, size_t index);
+    std::string generateSvgHtml(const SvgData& svg, size_t index);
     std::string generateOrderedContent(const Program& program, Evaluator& evaluator, const Evaluator::EvaluationResult& evalResult);
     std::string generateMathContent(const Program& program, Evaluator& evaluator);
     std::string formatStatementAsMath(const Statement& stmt, Evaluator& evaluator);

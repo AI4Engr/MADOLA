@@ -1,0 +1,20 @@
+@version 0.01
+
+@h1{SVG Beam Deflection Diagram}
+
+P := 12;
+L := 10;
+E := 29000;
+I := 800;
+
+svg(400, 200,
+    line(10,100, 390,100),
+    circle(200,100, 5),
+    arrow(200,20, 200,95),
+    text(200,15, "P"),
+    rect(5,95, 10,10),
+    curve(-P*x^2*(3*L-x)/(6*E*I), x, 0, L, 20, "deflection")
+);
+
+x := 5;
+print(x);

@@ -86,6 +86,112 @@ std::string HtmlFormatter::generateGraphHtml(const std::vector<GraphData>& graph
     return html.str();
 }
 
+std::string HtmlFormatter::generateSvgHtml(const SvgData& svg, size_t index) {
+    std::stringstream html;
+
+    // Data-space bounds across every curve, used to build a single affine map from
+    // data (x,y) to SVG pixel coordinates (with a y-flip: SVG y grows downward,
+    // engineering plots grow upward). Fixed once here so drag-driven recompute
+    // (svg_eval_curve, added in a later phase) can reproduce the identical transform
+    // instead of deriving it from possibly-shifted extents.
+    double xmin = 0.0, xmax = 0.0, ymin = 0.0, ymax = 0.0;
+    bool haveCurveBounds = false;
+    for (const auto& shape : svg.shapes) {
+        if (shape.kind != SvgShape::Kind::Curve) continue;
+        for (size_t j = 0; j < shape.xs.size(); ++j) {
+            double x = shape.xs[j];
+            double y = shape.ys[j];
+            if (std::isnan(x) || std::isnan(y)) continue;
+            if (!haveCurveBounds) {
+                xmin = xmax = x;
+                ymin = ymax = y;
+                haveCurveBounds = true;
+            } else {
+                xmin = std::min(xmin, x);
+                xmax = std::max(xmax, x);
+                ymin = std::min(ymin, y);
+                ymax = std::max(ymax, y);
+            }
+        }
+    }
+    if (!haveCurveBounds || xmax == xmin) { xmin = 0.0; xmax = 1.0; }
+    if (!haveCurveBounds || ymax == ymin) { ymin = -1.0; ymax = 1.0; }
+
+    const double margin = 10.0;
+    double plotW = svg.width - 2 * margin;
+    double plotH = svg.height - 2 * margin;
+    auto toPx = [&](double x, double y) -> std::pair<double, double> {
+        double px = margin + (x - xmin) / (xmax - xmin) * plotW;
+        double py = margin + (ymax - y) / (ymax - ymin) * plotH;  // y-flip
+        return {px, py};
+    };
+
+    html << "<div class=\"svg-container\" data-svg-index=\"" << index << "\">\n";
+    if (!svg.title.empty()) {
+        html << "<div class=\"svg-title\">" << escapeHtml(svg.title) << "</div>\n";
+    }
+    html << "<svg width=\"" << svg.width << "\" height=\"" << svg.height
+         << "\" viewBox=\"0 0 " << svg.width << " " << svg.height << "\">\n";
+
+    for (const auto& shape : svg.shapes) {
+        switch (shape.kind) {
+            case SvgShape::Kind::Line:
+            case SvgShape::Kind::Arrow: {
+                double x1 = shape.nums[0], y1 = shape.nums[1];
+                double x2 = shape.nums[2], y2 = shape.nums[3];
+                html << "<line x1=\"" << x1 << "\" y1=\"" << y1
+                     << "\" x2=\"" << x2 << "\" y2=\"" << y2
+                     << "\" stroke=\"black\" stroke-width=\"1.5\""
+                     << (shape.kind == SvgShape::Kind::Arrow ? " marker-end=\"url(#madola-arrowhead)\"" : "")
+                     << "/>\n";
+                break;
+            }
+            case SvgShape::Kind::Circle: {
+                html << "<circle cx=\"" << shape.nums[0] << "\" cy=\"" << shape.nums[1]
+                     << "\" r=\"" << shape.nums[2] << "\" stroke=\"black\" fill=\"none\"/>\n";
+                break;
+            }
+            case SvgShape::Kind::Rect: {
+                html << "<rect x=\"" << shape.nums[0] << "\" y=\"" << shape.nums[1]
+                     << "\" width=\"" << shape.nums[2] << "\" height=\"" << shape.nums[3]
+                     << "\" stroke=\"black\" fill=\"none\"/>\n";
+                break;
+            }
+            case SvgShape::Kind::Text: {
+                html << "<text x=\"" << shape.nums[0] << "\" y=\"" << shape.nums[1]
+                     << "\">" << escapeHtml(shape.text) << "</text>\n";
+                break;
+            }
+            case SvgShape::Kind::Curve: {
+                std::stringstream d;
+                bool started = false;
+                for (size_t j = 0; j < shape.xs.size(); ++j) {
+                    if (std::isnan(shape.xs[j]) || std::isnan(shape.ys[j])) {
+                        started = false;  // gap: lift the pen on bad samples
+                        continue;
+                    }
+                    auto [px, py] = toPx(shape.xs[j], shape.ys[j]);
+                    d << (started ? " L " : "M ") << px << " " << py;
+                    started = true;
+                }
+                html << "<path d=\"" << d.str() << "\" fill=\"none\" stroke=\"steelblue\" stroke-width=\"2\""
+                     << " class=\"svg-curve\" data-curve-id=\"" << escapeHtml(shape.curveId) << "\""
+                     << " data-sample-var=\"" << escapeHtml(shape.sampleVar) << "\""
+                     << " data-start=\"" << shape.start << "\" data-end=\"" << shape.end
+                     << "\" data-samples=\"" << shape.samples << "\"/>\n";
+                break;
+            }
+        }
+    }
+
+    html << "<defs><marker id=\"madola-arrowhead\" markerWidth=\"8\" markerHeight=\"8\" "
+            "refX=\"6\" refY=\"3\" orient=\"auto\"><path d=\"M0,0 L6,3 L0,6 Z\"/></marker></defs>\n";
+    html << "</svg>\n";
+    html << "</div>\n";
+
+    return html.str();
+}
+
 std::string HtmlFormatter::generate3DGraphHtml(const Graph3DData& graph, size_t index) {
     std::stringstream html;
 
