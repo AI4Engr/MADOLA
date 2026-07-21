@@ -450,6 +450,30 @@
     }
   },
   {
+    "type": "image_content",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "image_statement",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "image_content",
+          "named": true
+        },
+        {
+          "type": "image_style",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "import_item",
     "named": true,
     "fields": {},
@@ -961,6 +985,10 @@
           "named": true
         },
         {
+          "type": "image_statement",
+          "named": true
+        },
+        {
           "type": "import_statement",
           "named": true
         },
@@ -1230,6 +1258,10 @@
   },
   {
     "type": "@h4",
+    "named": false
+  },
+  {
+    "type": "@image",
     "named": false
   },
   {
@@ -1679,6 +1711,10 @@
   {
     "type": "if",
     "named": false
+  },
+  {
+    "type": "image_style",
+    "named": true
   },
   {
     "type": "import",

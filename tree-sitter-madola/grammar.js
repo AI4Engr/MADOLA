@@ -30,7 +30,8 @@ module.exports = grammar({
       $.break_statement,
       $.heading_statement,
       $.version_statement,
-      $.paragraph_statement
+      $.paragraph_statement,
+      $.image_statement
     ),
 
     decorated_statement: $ => seq(
@@ -130,6 +131,22 @@ module.exports = grammar({
     paragraph_style: $ => /[a-zA-Z][a-zA-Z0-9_-]*/,
 
     paragraph_content: $ => token(prec(-1, /[^}]+/)),
+
+    // Inline image: @image{<base64 or data URI>} with optional @image[style]{...}.
+    // Mirrors paragraph_statement — a declarative document-content statement, not a
+    // decorator. The style attribute is wider than paragraph_style so it can carry
+    // CSS like "width:50%" or "max-width:400px" in addition to center/left/right.
+    image_statement: $ => seq(
+      '@image',
+      optional(seq('[', $.image_style, ']')),
+      '{',
+      $.image_content,
+      '}'
+    ),
+
+    image_style: $ => /[a-zA-Z][a-zA-Z0-9_:%.\- ]*/,
+
+    image_content: $ => token(prec(-1, /[^}]+/)),
 
     decorated_function_declaration: $ => seq(
       repeat1($.decorator),

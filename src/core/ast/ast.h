@@ -846,6 +846,27 @@ public:
     }
 };
 
+// Inline image statement: @image{<base64 or data URI>}, optional @image[style]{...}.
+// Declarative document content, mirroring ParagraphStatement. `source` holds the raw
+// image source string (base64 or a full data URI) exactly as written in the braces.
+class ImageStatement : public Statement {
+public:
+    std::string style;
+    std::string source;
+
+    explicit ImageStatement(std::string imageSource, std::string imageStyle = "")
+        : style(std::move(imageStyle)), source(std::move(imageSource)) {}
+
+    std::string toString() const override {
+        std::string result = "@image";
+        if (!style.empty()) {
+            result += "[" + style + "]";
+        }
+        result += "{" + source + "}";
+        return result;
+    }
+};
+
 class Program : public ASTNode {
 public:
     std::vector<StatementPtr> statements;

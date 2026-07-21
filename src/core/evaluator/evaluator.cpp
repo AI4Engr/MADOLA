@@ -155,6 +155,9 @@ void Evaluator::executeStatement(const Statement& stmt, std::vector<std::string>
     } else if (dynamic_cast<const ParagraphStatement*>(&stmt)) {
         // Paragraph statements don't generate output or modify state in the evaluator
         // They are purely for HTML report formatting
+    } else if (dynamic_cast<const ImageStatement*>(&stmt)) {
+        // Image statements don't generate output or modify state in the evaluator
+        // They are purely for HTML report formatting
     } else if (const auto* functionDecl = dynamic_cast<const FunctionDeclaration*>(&stmt)) {
         executeFunction(*functionDecl);
     } else if (const auto* piecewiseFuncDecl = dynamic_cast<const PiecewiseFunctionDeclaration*>(&stmt)) {

@@ -83,6 +83,10 @@
         {
           "type": "SYMBOL",
           "name": "paragraph_statement"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "image_statement"
         }
       ]
     },
@@ -567,6 +571,67 @@
       "value": "[a-zA-Z][a-zA-Z0-9_-]*"
     },
     "paragraph_content": {
+      "type": "TOKEN",
+      "content": {
+        "type": "PREC",
+        "value": -1,
+        "content": {
+          "type": "PATTERN",
+          "value": "[^}]+"
+        }
+      }
+    },
+    "image_statement": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "@image"
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SEQ",
+              "members": [
+                {
+                  "type": "STRING",
+                  "value": "["
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "image_style"
+                },
+                {
+                  "type": "STRING",
+                  "value": "]"
+                }
+              ]
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
+          "type": "STRING",
+          "value": "{"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "image_content"
+        },
+        {
+          "type": "STRING",
+          "value": "}"
+        }
+      ]
+    },
+    "image_style": {
+      "type": "PATTERN",
+      "value": "[a-zA-Z][a-zA-Z0-9_:%.\\- ]*"
+    },
+    "image_content": {
       "type": "TOKEN",
       "content": {
         "type": "PREC",

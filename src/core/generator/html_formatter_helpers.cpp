@@ -6,6 +6,57 @@
 
 namespace madola {
 
+// Normalize a raw @image source into a browser-usable image URL.
+// - If it already looks like a data URI or an http(s) URL, pass it through untouched.
+// - Otherwise treat it as bare base64 and wrap it in a data URI, sniffing PNG vs JPEG
+//   from the decoded magic bytes so the MIME type is correct (defaults to png).
+static std::string normalizeImageSource(const std::string& raw) {
+    // Trim surrounding whitespace/newlines that may sit inside the braces.
+    size_t start = raw.find_first_not_of(" \t\r\n");
+    size_t end = raw.find_last_not_of(" \t\r\n");
+    if (start == std::string::npos) {
+        return "";
+    }
+    std::string src = raw.substr(start, end - start + 1);
+
+    // Already a usable URL/URI — leave it alone.
+    if (src.rfind("data:", 0) == 0 ||
+        src.rfind("http://", 0) == 0 ||
+        src.rfind("https://", 0) == 0) {
+        return src;
+    }
+
+    // Bare base64: sniff the format from the leading base64 chars. A base64 payload
+    // beginning "iVBOR" decodes to the PNG magic (0x89 'P' 'N' 'G'); "/9j/" decodes to
+    // the JPEG magic (0xFF 0xD8 0xFF). Default to png when unsure.
+    std::string mime = "image/png";
+    if (src.rfind("/9j/", 0) == 0) {
+        mime = "image/jpeg";
+    } else if (src.rfind("iVBOR", 0) == 0) {
+        mime = "image/png";
+    }
+    return "data:" + mime + ";base64," + src;
+}
+
+// Map an @image/@p-style [style] attribute onto an inline CSS style string for the
+// wrapping element. Recognizes center/left/right shorthands; any other value is passed
+// through verbatim so styles like "width:50%" or "max-width:400px" work directly.
+static std::string imageAlignStyle(const std::string& style) {
+    if (style.empty()) {
+        return "";
+    }
+    if (style == "center") {
+        return "text-align:center";
+    }
+    if (style == "left") {
+        return "text-align:left";
+    }
+    if (style == "right") {
+        return "text-align:right";
+    }
+    return style;
+}
+
 HtmlFormatter::HtmlFormatter() = default;
 
 std::string HtmlFormatter::loadCssFile() {
@@ -315,6 +366,32 @@ std::string HtmlFormatter::generateOrderedContent(const Program& program, Evalua
                 }
                 html << "<p" << styleAttr << ">" << parseMarkdownFormatting(processedLine) << "</p>\n";
             }
+            continue;
+        }
+
+        // Handle inline image statements (@image{...}) - render as an <img> in a wrapper div
+        if (const auto* imageStmt = dynamic_cast<const ImageStatement*>(stmt.get())) {
+            std::string imgSrc = normalizeImageSource(imageStmt->source);
+            if (imgSrc.empty()) {
+                html << "<div class=\"madola-image madola-image-error\">[image: empty source]</div>\n";
+                continue;
+            }
+
+            // center/left/right align the wrapper div; any other style (e.g. "width:50%")
+            // applies to the <img> so it can size/position the image directly.
+            std::string style = imageStmt->style;
+            bool isAlign = (style == "center" || style == "left" || style == "right");
+            std::string divStyle = isAlign ? imageAlignStyle(style) : "";
+            std::string imgStyle = "max-width:100%";
+            if (!style.empty() && !isAlign) {
+                imgStyle += ";" + style;
+            }
+
+            html << "<div class=\"madola-image\"";
+            if (!divStyle.empty()) {
+                html << " style=\"" << divStyle << "\"";
+            }
+            html << "><img src=\"" << imgSrc << "\" style=\"" << imgStyle << "\" alt=\"\"></div>\n";
             continue;
         }
 

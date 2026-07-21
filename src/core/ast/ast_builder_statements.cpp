@@ -195,6 +195,8 @@ StatementPtr ASTBuilder::buildStatement(TSNode node, const std::string& source) 
         return buildVersionStatement(node, source);
     } else if (strcmp(node_type, "paragraph_statement") == 0) {
         return buildParagraphStatement(node, source);
+    } else if (strcmp(node_type, "image_statement") == 0) {
+        return buildImageStatement(node, source);
     } else if (strcmp(node_type, "statement") == 0) {
         // If we get a generic "statement" node, look at its first child
         if (ts_node_child_count(node) > 0) {
@@ -927,6 +929,27 @@ StatementPtr ASTBuilder::buildParagraphStatement(TSNode node, const std::string&
     }
 
     return std::make_unique<ParagraphStatement>(std::move(lines), style);
+}
+
+StatementPtr ASTBuilder::buildImageStatement(TSNode node, const std::string& source) {
+    // image_statement: '@image' optional('[' image_style ']') '{' image_content '}'
+    uint32_t childCount = ts_node_child_count(node);
+
+    std::string style = "";
+    std::string imageSource = "";
+
+    for (uint32_t i = 0; i < childCount; i++) {
+        TSNode child = ts_node_child(node, i);
+        const char* childType = ts_node_type(child);
+
+        if (strcmp(childType, "image_style") == 0) {
+            style = getNodeText(child, source);
+        } else if (strcmp(childType, "image_content") == 0) {
+            imageSource = getNodeText(child, source);
+        }
+    }
+
+    return std::make_unique<ImageStatement>(std::move(imageSource), style);
 }
 
 } // namespace madola

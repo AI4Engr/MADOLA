@@ -7,6 +7,32 @@ namespace madola {
 
 static int globalGraphCounter = 0;
 
+// Normalize a raw @image source into a browser-usable image URL: pass through data:
+// and http(s) URLs, otherwise wrap bare base64 in a data URI (sniffing PNG vs JPEG,
+// defaulting to png). Mirrors the helper of the same name in html_formatter_helpers.cpp.
+static std::string normalizeImageSource(const std::string& raw) {
+    size_t start = raw.find_first_not_of(" \t\r\n");
+    size_t end = raw.find_last_not_of(" \t\r\n");
+    if (start == std::string::npos) {
+        return "";
+    }
+    std::string src = raw.substr(start, end - start + 1);
+
+    if (src.rfind("data:", 0) == 0 ||
+        src.rfind("http://", 0) == 0 ||
+        src.rfind("https://", 0) == 0) {
+        return src;
+    }
+
+    std::string mime = "image/png";
+    if (src.rfind("/9j/", 0) == 0) {
+        mime = "image/jpeg";
+    } else if (src.rfind("iVBOR", 0) == 0) {
+        mime = "image/png";
+    }
+    return "data:" + mime + ";base64," + src;
+}
+
 MarkdownFormatter::MarkdownFormatter() = default;
 
 MarkdownFormatter::FormatResult MarkdownFormatter::formatProgram(const Program& program) {
@@ -262,6 +288,24 @@ MarkdownFormatter::FormatResult MarkdownFormatter::formatProgramWithExecution(co
                 ss << "<p" << styleAttr << ">" << processedLine << "</p>\n";
             }
             ss << "\n";
+        } else if (const auto* imageStmt = dynamic_cast<const ImageStatement*>(stmt.get())) {
+            // Inline image: emit an <img> wrapped in a div (works in Markdown-with-HTML).
+            std::string imgSrc = normalizeImageSource(imageStmt->source);
+            if (imgSrc.empty()) {
+                ss << "<div class=\"madola-image madola-image-error\">[image: empty source]</div>\n\n";
+            } else {
+                const std::string& style = imageStmt->style;
+                bool isAlign = (style == "center" || style == "left" || style == "right");
+                std::string imgStyle = "max-width:100%";
+                if (!style.empty() && !isAlign) {
+                    imgStyle += ";" + style;
+                }
+                ss << "<div class=\"madola-image\"";
+                if (isAlign) {
+                    ss << " style=\"text-align:" << style << "\"";
+                }
+                ss << "><img src=\"" << imgSrc << "\" style=\"" << imgStyle << "\" alt=\"\"></div>\n\n";
+            }
         } else if (const auto* forStmt = dynamic_cast<const ForStatement*>(stmt.get())) {
             // Format for loop in LaTeX
             ss << "$$\n";
