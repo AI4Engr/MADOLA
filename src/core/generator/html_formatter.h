@@ -20,6 +20,12 @@ public:
     FormatResult formatProgram(const Program& program);
     FormatResult formatProgramWithExecution(const Program& program);
 
+    // Format a value as inline LaTeX, identical to how @result / assignment blocks
+    // render it initially. Exposed so the interactive slider path (wasm_interface's
+    // svg_eval_curve) can produce a live-updated value in the SAME format as the
+    // first render — avoiding a display mismatch between load and drag.
+    static std::string formatValueAsMathPublic(const Value& value);
+
 private:
     std::string loadCssFile();
     std::string generateHtmlHeader(const std::string& title = "MADOLA Output");

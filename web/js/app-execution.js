@@ -238,13 +238,15 @@ Object.assign(MadolaApp.prototype, {
                 // Execute embedded scripts (innerHTML doesn't execute scripts automatically)
                 this.executeEmbeddedScripts(document.getElementById('output'));
 
-                // Render MathJax for the HTML content
-                await this.renderMathJax(document.getElementById('output'));
-
                 // Wire up any interactive svg() curve sliders (// @input slider ... target="curveId")
+                // before MathJax typesets the output — mount() needs to read each
+                // @result block's raw $$...$$ text, which MathJax replaces in place.
                 if (window.SvgInput && this.madolaWrapper) {
                     window.SvgInput.mount(document.getElementById('output'), code, this.madolaWrapper);
                 }
+
+                // Render MathJax for the HTML content
+                await this.renderMathJax(document.getElementById('output'));
 
                 this.addMessage('success', 'Code executed and formatted successfully');
 

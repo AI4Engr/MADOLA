@@ -700,7 +700,18 @@ std::string HtmlFormatter::generateOrderedContent(const Program& program, Evalua
         if (!mathExpr.empty()) {
             // All math expressions should have align-expression class
             std::string cssClass = "math-expression align-expression";
-            html << "<div class=\"" << cssClass << "\">\n";
+            html << "<div class=\"" << cssClass << "\"";
+            // Tag @result blocks with the variable name so the web slider handler
+            // (svg-input.js) can find and live-update this specific value without
+            // parsing the rendered LaTeX.
+            if (const auto* decoratedStmt = dynamic_cast<const DecoratedStatement*>(stmt.get())) {
+                if (decoratedStmt->hasDecorator("result")) {
+                    if (const auto* assignment = dynamic_cast<const AssignmentStatement*>(decoratedStmt->statement.get())) {
+                        html << " data-result-var=\"" << assignment->variable << "\"";
+                    }
+                }
+            }
+            html << ">\n";
             html << "$$" << mathExpr << "$$\n";
             html << "</div>\n";
         }

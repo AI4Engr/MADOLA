@@ -153,6 +153,20 @@
   - **Impact:** blocks correct engineering formulas that mix base units with derived/exponent
     units (very common in real calcs — beam deflection, stress, moment of inertia). Low risk
     today only if usage stays within same-unit-family expressions without exponents.
+  - **Additional confirmed gaps (found 2026-07-22, building the `beam_deflection.mda` web
+    example):**
+    1. A `UnitValue` variable (e.g. `P := 12 kip;`) cannot be passed into a user-defined
+       `fn`/`f(x) := expr;` that does arithmetic on it — fails with `Unary operations only
+       supported on numbers and arrays`. There is no "unwrap to base-unit number for
+       computation, reattach unit to the result" path, so any callable formula must currently
+       be written in plain numbers with units only documented in comments (see
+       `web/examples/beam_deflection.mda` for the workaround). Any real fix should make
+       unit-valued arguments usable inside function bodies, not just at top-level expressions.
+    2. The interactive SVG slider (`svg_eval_curve`/`resampleSvgCurve`) rebinds the dragged
+       `@input` variable via a raw `double` (`env.define(paramName, paramValue)` in
+       `evaluator_functions.cpp`) — this only works if that variable is a plain number. A
+       unit-valued slider target has not been tested and is expected to hit the same problem
+       as (1) once it flows into the curve's expression.
   - Physical constants library (still open, independent of the rewrite above)
 
 - [x] **Unit Literal Grammar: allow expressions before a unit, not just a bare number** — DONE

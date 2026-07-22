@@ -281,6 +281,11 @@ void Evaluator::executeExpressionStatement(const ExpressionStatement& stmt, std:
             outputs.push_back(valueToString(value));
             return;
         }
+        // svg(...) already presents itself as a rendered diagram; its return value is
+        // just an internal "created N shapes" confirmation, not reader-facing content.
+        if (functionCall->function_name == "svg") {
+            return;
+        }
     }
 
     // For other expression statements, only add to output if they return a meaningful string.

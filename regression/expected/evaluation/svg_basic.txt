@@ -1,4 +1,3 @@
 Execution completed successfully
 Output:
-  SVG 1 created with 6 shapes
   5

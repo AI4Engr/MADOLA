@@ -889,6 +889,20 @@ std::string HtmlFormatter::formatStatementAsMath(const Statement& stmt, Evaluato
         return ss.str();
     } else if (const auto* decoratedStmt = dynamic_cast<const DecoratedStatement*>(&stmt)) {
         // Handle decorated statements with various decorators
+        if (decoratedStmt->hasDecorator("hidden")) {
+            // @hidden suppresses rendering for any decorated statement (not just
+            // function declarations) — e.g. a helper assignment computed only to
+            // feed another call, not meant to be restated as a formula.
+            return "";
+        }
+        if (decoratedStmt->hasDecorator("result")) {
+            // @result shows just "name = value" — the final number, with none of the
+            // call/expression structure @eval and @resolve restate alongside it.
+            if (const auto* assignment = dynamic_cast<const AssignmentStatement*>(decoratedStmt->statement.get())) {
+                Value result = evaluator.evaluateExpression(*assignment->expression);
+                return convertToMathJax(assignment->variable) + " = " + formatValueAsMath(result);
+            }
+        }
         if (decoratedStmt->hasDecorator("resolve")) {
             if (const auto* assignment = dynamic_cast<const AssignmentStatement*>(decoratedStmt->statement.get())) {
                 std::stringstream ss;

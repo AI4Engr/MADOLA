@@ -1216,6 +1216,12 @@ std::string HtmlFormatter::formatExpressionWithValuesAsMath(const Expression& ex
 }
 
 std::string HtmlFormatter::formatValueAsMath(const Value& value) {
+    // Instance entry point kept for existing call sites; delegates to the static
+    // implementation so the interactive slider path renders values identically.
+    return formatValueAsMathPublic(value);
+}
+
+std::string HtmlFormatter::formatValueAsMathPublic(const Value& value) {
     if (std::holds_alternative<double>(value)) {
         return formatDouble(std::get<double>(value));
     } else if (std::holds_alternative<UnitValue>(value)) {

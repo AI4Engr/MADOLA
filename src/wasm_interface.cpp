@@ -311,9 +311,17 @@ char* format_madola_html(const char* source, int with_execution) {
 // source (fresh AST for this call only), evaluates once to populate bindings and
 // collect svg data, then resamples just the named curve. Returns a small JSON object;
 // caller must free_result() it.
+//
+// result_var (optional, may be empty): a displayed variable name whose fresh value
+// should be returned alongside the curve. Because the caller has already rebound the
+// dragged @input's literal in `source`, the single evaluate() pass above already holds
+// that variable's updated value — so we read it from the SAME evaluator instead of
+// re-parsing/re-evaluating the source a second time. The value is formatted with the
+// same LaTeX routine the initial render uses, so a dragged value matches the loaded one.
 EMSCRIPTEN_KEEPALIVE
 char* svg_eval_curve(const char* source, const char* curve_id,
-                     const char* param_name, double param_value) {
+                     const char* param_name, double param_value,
+                     const char* result_var) {
     std::string json;
     try {
         if (!g_ast_builder) {
@@ -332,11 +340,67 @@ char* svg_eval_curve(const char* source, const char* curve_id,
                                                  std::string(param_name), param_value);
             if (d) {
                 json = "{\"success\":true,\"curveId\":\"" + escapeJsonString(curve_id) +
-                       "\",\"d\":\"" + escapeJsonString(*d) + "\"}";
+                       "\",\"d\":\"" + escapeJsonString(*d) + "\"";
+
+                // Optionally include a displayed variable's fresh value, formatted the
+                // same way the initial render does, from this same evaluate() pass.
+                std::string resultVarName = result_var ? std::string(result_var) : std::string();
+                if (!resultVarName.empty()) {
+                    try {
+                        Value v = evaluator.getVariableValue(resultVarName);
+                        std::string latex = HtmlFormatter::formatValueAsMathPublic(v);
+                        json += ",\"resultVar\":\"" + escapeJsonString(resultVarName) +
+                                "\",\"resultValue\":\"" + escapeJsonString(latex) + "\"";
+                    } catch (const std::exception&) {
+                        // Variable missing/uncomputable: omit it, curve update still succeeds.
+                    }
+                }
+
+                json += "}";
             } else {
                 json = "{\"success\":false,\"error\":\"curve not found: " +
                        escapeJsonString(curve_id) + "\"}";
             }
+        }
+    } catch (const std::exception& e) {
+        json = "{\"success\":false,\"error\":\"" + escapeJsonString(e.what()) + "\"}";
+    } catch (...) {
+        json = "{\"success\":false,\"error\":\"unknown error\"}";
+    }
+
+    size_t len = json.length();
+    char* output = new char[len + 1];
+    memcpy(output, json.c_str(), len);
+    output[len] = '\0';
+    return output;
+}
+
+// Recompute a single named variable's final value after a full evaluate() pass over
+// source (the caller is expected to have already rebound the dragged @input's literal
+// in that source string, e.g. via a simple text replace). Used to keep a `@result`
+// block (or any other displayed value) in sync with a slider drag without re-rendering
+// the whole HTML document. Returns a small JSON object; caller must free_result() it.
+EMSCRIPTEN_KEEPALIVE
+char* eval_named_value(const char* source, const char* var_name) {
+    std::string json;
+    try {
+        if (!g_ast_builder) {
+            init_madola();
+        }
+
+        auto program = g_ast_builder->buildProgram(std::string(source));
+        if (!program) {
+            json = "{\"success\":false,\"error\":\"Failed to parse source code\"}";
+        } else {
+            Evaluator evaluator;
+            evaluator.evaluate(*program);
+
+            Value value = evaluator.getVariableValue(std::string(var_name));
+            // Format as LaTeX identical to the initial render, so a value swapped in
+            // during a slider drag matches how it first appeared.
+            std::string valueStr = HtmlFormatter::formatValueAsMathPublic(value);
+            json = "{\"success\":true,\"name\":\"" + escapeJsonString(var_name) +
+                   "\",\"value\":\"" + escapeJsonString(valueStr) + "\"}";
         }
     } catch (const std::exception& e) {
         json = "{\"success\":false,\"error\":\"" + escapeJsonString(e.what()) + "\"}";

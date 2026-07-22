@@ -120,7 +120,7 @@ class MadolaBrowserWrapper {
      * { success, curveId, d } or { success: false, error }. Mirrors the Electron app's
      * runtime-bridge.js::evalSvgCurve — same ccall signature, shared WASM export.
      */
-    async evalSvgCurve(source, curveId, paramName, paramValue) {
+    async evalSvgCurve(source, curveId, paramName, paramValue, resultVar = '') {
         if (!this.module) {
             throw new Error('Module not loaded');
         }
@@ -128,10 +128,36 @@ class MadolaBrowserWrapper {
         const resultPtr = this.module.ccall(
             'svg_eval_curve',
             'number',
-            ['string', 'string', 'string', 'number'],
-            [source, curveId, paramName, paramValue]
+            ['string', 'string', 'string', 'number', 'string'],
+            [source, curveId, paramName, paramValue, resultVar || '']
         );
         if (!resultPtr) return { success: false, error: 'svg_eval_curve returned null' };
+        try {
+            return JSON.parse(this.module.UTF8ToString(resultPtr));
+        } finally {
+            this.module.ccall('free_result', null, ['number'], [resultPtr]);
+        }
+    }
+
+    /**
+     * Recompute a single named variable's final value after a full evaluate() pass
+     * (the caller has already rebound the dragged @input's literal in `source`).
+     * Returns { success, name, value } or { success: false, error }. Used to keep a
+     * displayed @result value in sync with a slider drag without re-rendering the
+     * whole HTML document.
+     */
+    async evalNamedValue(source, varName) {
+        if (!this.module) {
+            throw new Error('Module not loaded');
+        }
+
+        const resultPtr = this.module.ccall(
+            'eval_named_value',
+            'number',
+            ['string', 'string'],
+            [source, varName]
+        );
+        if (!resultPtr) return { success: false, error: 'eval_named_value returned null' };
         try {
             return JSON.parse(this.module.UTF8ToString(resultPtr));
         } finally {
