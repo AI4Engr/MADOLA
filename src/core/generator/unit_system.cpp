@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <regex>
 #include <cmath>
+#include <cctype>
 #include <algorithm>
 #include <vector>
 
@@ -112,12 +113,28 @@ std::string UnitValue::toLatex() const {
         // Format compound units properly for LaTeX
         std::string latexUnit = unit;
 
-        // Formats a single unit token (e.g. "in" or "in^4") as LaTeX,
-        // wrapping the base in \text{} and lifting any exponent outside it.
+        // Formats a single unit token (e.g. "in", "in^4", or "in4") as LaTeX,
+        // wrapping the base in \text{} and lifting any exponent outside it. The
+        // exponent may be written with an explicit caret ("in^4") or as a bare
+        // trailing digit run ("in4") — units are commonly stored in the latter
+        // form after evaluation.
         auto formatUnitToken = [](const std::string& token) -> std::string {
             size_t caretPos = token.find('^');
             if (caretPos != std::string::npos) {
-                return "\\text{" + token.substr(0, caretPos) + "}^" + token.substr(caretPos + 1);
+                return "\\text{" + token.substr(0, caretPos) + "}^{" + token.substr(caretPos + 1) + "}";
+            }
+            // Bare trailing-digit exponent, e.g. "in3".
+            if (token.length() > 1 &&
+                std::isdigit(static_cast<unsigned char>(token.back()))) {
+                size_t numStart = token.length();
+                while (numStart > 0 &&
+                       std::isdigit(static_cast<unsigned char>(token[numStart - 1]))) {
+                    numStart--;
+                }
+                if (numStart > 0) {
+                    return "\\text{" + token.substr(0, numStart) + "}^{" +
+                           token.substr(numStart) + "}";
+                }
             }
             return "\\text{" + token + "}";
         };

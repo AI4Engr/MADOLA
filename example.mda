@@ -16,10 +16,10 @@ L := 10;
 E := 29000;
 I := 800;
 
-@hidden
-fn deflection(x) {
-    return -P*x^2*(3*L-x)/(6*E*I);
-}
+// The deflection formula, written once. P is a parameter so the same formula
+// serves both the live curve (at the current P) and the fixed vertical scale
+// (evaluated at P_max, below), with no duplicated math.
+deflection(P, x) := -P*x^2*(3*L-x)/(6*E*I);
 
 svg(400, 175,
     line(10,55, 10,125),
@@ -32,8 +32,10 @@ svg(400, 175,
 
     arrow(390,15, 390,85),
     text(385,10, "P"),
-    curve(deflection(x), x, 0, L, 40, "deflection", P_max*L^2*(3*L-L)/(6*E*I))
+    curve(deflection(P, x), x, 0, L, 40, "deflection", deflection(P_max, L))
 );
+// curve()'s 7th arg fixes the vertical scale to the worst-case deflection (at
+// P_max) so the curve visibly grows as P is dragged up, not auto-rescaled.
 
-def_{max} := deflection(L);
+def_{max} := deflection(P, L);
 eval(def_{max});

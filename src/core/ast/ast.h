@@ -593,6 +593,10 @@ public:
     std::vector<std::string> parameters;
     std::vector<StatementPtr> body;
     std::vector<std::string> decorators;  // Added support for decorators
+    // Set when the function was declared via the concise `f(x) := expr;` form.
+    // Such functions render in HTML as just their expression body (no
+    // "function f(x) { return ... }" wrapper) while remaining fully callable.
+    bool renderAsBareExpr = false;
 
     FunctionDeclaration(const std::string& func_name,
                        std::vector<std::string> params,

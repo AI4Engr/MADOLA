@@ -753,6 +753,10 @@
       "required": true,
       "types": [
         {
+          "type": "expression",
+          "named": true
+        },
+        {
           "type": "identifier",
           "named": true
         },

@@ -744,6 +744,14 @@ std::string HtmlFormatter::formatStatementAsMath(const Statement& stmt, Evaluato
             // curve()), not restated as a formula for the reader.
             return "";
         }
+        // Functions declared with the concise `f(x) := expr;` form render as just their
+        // expression body (the formula the reader cares about), not the full
+        // "function f(x) { return ... }" wrapper. The body is always a single return.
+        if (funcDecl->renderAsBareExpr && funcDecl->body.size() == 1) {
+            if (const auto* retStmt = dynamic_cast<const ReturnStatement*>(funcDecl->body[0].get())) {
+                return formatExpressionAsMath(*retStmt->expression, evaluator);
+            }
+        }
         // Format function declaration with full structure like for loops
         std::stringstream ss;
         ss << "\\begin{array}{l}\n";

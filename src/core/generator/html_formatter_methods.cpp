@@ -138,8 +138,9 @@ static std::string formatDouble(double val) {
 }
 
 static std::string formatUnitForLatex(const std::string& unit) {
-    // Handle units with numeric suffixes (like in3, mm2, ft3)
-    // Convert "in3" -> "\text{ in}^3", "mm2" -> "\text{ mm}^2"
+    // Handle units with numeric exponents, written either bare ("in3", "mm2")
+    // or with an explicit caret ("in^3", "kg^2"). Convert to a proper LaTeX
+    // exponent: "in3" / "in^3" -> "\text{ in}^{3}".
 
     // Check if unit ends with a digit
     if (unit.length() > 1 && std::isdigit(static_cast<unsigned char>(unit[unit.length() - 1]))) {
@@ -149,8 +150,13 @@ static std::string formatUnitForLatex(const std::string& unit) {
             numStart--;
         }
 
-        std::string baseUnit = unit.substr(0, numStart);
         std::string exponent = unit.substr(numStart);
+        // Drop a caret separating the base from the exponent, e.g. "in^3" -> base "in".
+        size_t baseEnd = numStart;
+        if (baseEnd > 0 && unit[baseEnd - 1] == '^') {
+            baseEnd--;
+        }
+        std::string baseUnit = unit.substr(0, baseEnd);
         return "\\text{ " + baseUnit + "}^{" + exponent + "}";
     }
 

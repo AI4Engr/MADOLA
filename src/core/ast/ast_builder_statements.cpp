@@ -831,13 +831,28 @@ StatementPtr ASTBuilder::buildPiecewiseFunctionDeclaration(TSNode node, const st
         }
     }
 
-    // Get piecewise expression (fifth child - after identifier, '(', params, ')', ':=')
-    TSNode piecewiseNode = ts_node_child(node, 5);
-    auto piecewiseExpr = std::unique_ptr<PiecewiseExpression>(
-        dynamic_cast<PiecewiseExpression*>(buildPiecewiseExpression(piecewiseNode, source).release())
-    );
+    // Get the body (sixth child - after identifier, '(', params, ')', ':=').
+    // It is either a piecewise_expression (the classic form) or a plain
+    // expression (the concise `f(x) := expr;` formula form).
+    TSNode bodyNode = ts_node_child(node, 5);
+    const char* bodyType = ts_node_type(bodyNode);
 
-    return std::make_unique<PiecewiseFunctionDeclaration>(funcName, std::move(parameters), std::move(piecewiseExpr));
+    if (strcmp(bodyType, "piecewise_expression") == 0) {
+        auto piecewiseExpr = std::unique_ptr<PiecewiseExpression>(
+            dynamic_cast<PiecewiseExpression*>(buildPiecewiseExpression(bodyNode, source).release())
+        );
+        return std::make_unique<PiecewiseFunctionDeclaration>(funcName, std::move(parameters), std::move(piecewiseExpr));
+    }
+
+    // Concise formula form: `f(x) := expr;` desugars to `fn f(x) { return expr; }`
+    // so it reuses all existing call machinery, but is flagged to render in HTML
+    // as just its expression body (no function wrapper).
+    auto bodyExpr = buildExpression(bodyNode, source);
+    std::vector<StatementPtr> body;
+    body.push_back(std::make_unique<ReturnStatement>(std::move(bodyExpr)));
+    auto funcDecl = std::make_unique<FunctionDeclaration>(funcName, std::move(parameters), std::move(body));
+    funcDecl->renderAsBareExpr = true;
+    return funcDecl;
 }
 
 StatementPtr ASTBuilder::buildHeadingStatement(TSNode node, const std::string& source) {

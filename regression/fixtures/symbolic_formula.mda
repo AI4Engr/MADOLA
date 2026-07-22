@@ -1,0 +1,24 @@
+@version 0.01
+
+@h1{Concise formula syntax: f(x) := expr;}
+
+// A named formula defined with the concise `f(params) := expr;` form.
+// It is fully callable (like fn f(params) { return expr; }) but renders in
+// HTML as just its expression body, with no function wrapper.
+L := 10;
+E := 29000;
+I := 800;
+
+deflection(P, x) := -P*x^2*(3*L-x)/(6*E*I);
+
+// Callable from other expressions, including with different arguments.
+tip := deflection(12, L);
+eval(tip);
+
+worst := deflection(40, L);
+eval(worst);
+
+// The classic `f(x) := piecewise { ... };` form must still parse and render
+// unchanged alongside the new plain-expression form.
+sign(x) := piecewise { (1, x > 0), (-1, x < 0), (0, otherwise) };
+eval(sign(-5));

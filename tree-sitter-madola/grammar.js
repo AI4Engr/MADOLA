@@ -457,15 +457,15 @@ module.exports = grammar({
       '}'
     ),
 
-    piecewise_function_declaration: $ => seq(
+    piecewise_function_declaration: $ => prec(1, seq(
       $.identifier,
       '(',
       optional($.parameter_list),
       ')',
       ':=',
-      $.piecewise_expression,
+      choice($.piecewise_expression, $.expression),
       ';'
-    ),
+    )),
 
     piecewise_expression: $ => seq(
       'piecewise',
