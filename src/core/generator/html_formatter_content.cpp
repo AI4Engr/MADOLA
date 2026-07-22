@@ -94,35 +94,73 @@ std::string HtmlFormatter::generateSvgHtml(const SvgData& svg, size_t index) {
     // engineering plots grow upward). Fixed once here so drag-driven recompute
     // (svg_eval_curve, added in a later phase) can reproduce the identical transform
     // instead of deriving it from possibly-shifted extents.
-    double xmin = 0.0, xmax = 0.0, ymin = 0.0, ymax = 0.0;
+    double xmin = 0.0, xmax = 0.0;
+    double maxAbsY = 0.0;
     bool haveCurveBounds = false;
     for (const auto& shape : svg.shapes) {
         if (shape.kind != SvgShape::Kind::Curve) continue;
+        // A declared maxAbsY hint fixes the render scale to a value independent of the
+        // curve's current sample values, so dragging a slider changes how much the curve
+        // bends instead of always re-filling the same pixel envelope.
+        if (shape.maxAbsYHint > 0.0) {
+            maxAbsY = std::max(maxAbsY, shape.maxAbsYHint);
+        }
         for (size_t j = 0; j < shape.xs.size(); ++j) {
             double x = shape.xs[j];
             double y = shape.ys[j];
             if (std::isnan(x) || std::isnan(y)) continue;
             if (!haveCurveBounds) {
                 xmin = xmax = x;
-                ymin = ymax = y;
                 haveCurveBounds = true;
             } else {
                 xmin = std::min(xmin, x);
                 xmax = std::max(xmax, x);
-                ymin = std::min(ymin, y);
-                ymax = std::max(ymax, y);
+            }
+            if (shape.maxAbsYHint <= 0.0) {
+                maxAbsY = std::max(maxAbsY, std::abs(y));
             }
         }
     }
     if (!haveCurveBounds || xmax == xmin) { xmin = 0.0; xmax = 1.0; }
-    if (!haveCurveBounds || ymax == ymin) { ymin = -1.0; ymax = 1.0; }
+    if (maxAbsY == 0.0) { maxAbsY = 1.0; }
 
     const double margin = 10.0;
-    double plotW = svg.width - 2 * margin;
-    double plotH = svg.height - 2 * margin;
+
+    // Anchor a curve's zero-deflection point to the beam's own axis line, instead of
+    // auto-fitting the curve's y-extent to the full canvas height (which would visually
+    // detach a cantilever's zero-deflection end from the fixed support it's drawn at).
+    // The beam axis is inferred as the longest horizontal line() in this svg() call;
+    // its pixel span also becomes the curve's x range, so the curve starts/ends exactly
+    // on the beam instead of at the canvas margins.
+    double baselinePy = margin + (svg.height - 2 * margin) / 2.0;
+    double beamPxStart = margin, beamPxEnd = svg.width - margin;
+    {
+        double bestLen = -1.0;
+        for (const auto& shape : svg.shapes) {
+            if (shape.kind != SvgShape::Kind::Line) continue;
+            double x1 = shape.nums[0], y1 = shape.nums[1];
+            double x2 = shape.nums[2], y2 = shape.nums[3];
+            if (std::abs(y1 - y2) > 0.5) continue;  // not horizontal
+            double len = std::abs(x2 - x1);
+            if (len > bestLen) {
+                bestLen = len;
+                baselinePy = y1;
+                beamPxStart = std::min(x1, x2);
+                beamPxEnd = std::max(x1, x2);
+            }
+        }
+    }
+
+    // Vertical amplitude scale: fit the curve's largest |deflection| into whichever is
+    // tighter, the space above or below the beam axis, so it never overflows the canvas.
+    double availAbove = baselinePy - margin;
+    double availBelow = (svg.height - margin) - baselinePy;
+    double ampPx = std::max(1.0, std::min(availAbove, availBelow));
+    double yScale = ampPx / maxAbsY;
+
     auto toPx = [&](double x, double y) -> std::pair<double, double> {
-        double px = margin + (x - xmin) / (xmax - xmin) * plotW;
-        double py = margin + (ymax - y) / (ymax - ymin) * plotH;  // y-flip
+        double px = beamPxStart + (x - xmin) / (xmax - xmin) * (beamPxEnd - beamPxStart);
+        double py = baselinePy - y * yScale;  // y-flip, anchored at the beam axis
         return {px, py};
     };
 
@@ -701,6 +739,11 @@ std::string HtmlFormatter::formatStatementAsMath(const Statement& stmt, Evaluato
         ss << "\\end{array}";
         return ss.str();
     } else if (const auto* funcDecl = dynamic_cast<const FunctionDeclaration*>(&stmt)) {
+        if (funcDecl->hasDecorator("hidden")) {
+            // @hidden functions are helper/mapping math meant to be called (e.g. from
+            // curve()), not restated as a formula for the reader.
+            return "";
+        }
         // Format function declaration with full structure like for loops
         std::stringstream ss;
         ss << "\\begin{array}{l}\n";
@@ -1077,8 +1120,8 @@ std::string HtmlFormatter::formatStatementAsMath(const Statement& stmt, Evaluato
             }
         }
     } else if (const auto* func = dynamic_cast<const FunctionCall*>(&stmt)) {
-        // Skip graph() and graph_3d() and table() calls as they're handled separately
-        if (func->function_name == "graph" || func->function_name == "graph_3d" || func->function_name == "table") {
+        // Skip graph() and graph_3d() and table() and svg() calls as they're handled separately
+        if (func->function_name == "graph" || func->function_name == "graph_3d" || func->function_name == "table" || func->function_name == "svg") {
             return "";
         }
     } else if (dynamic_cast<const CommentStatement*>(&stmt)) {
@@ -1089,8 +1132,9 @@ std::string HtmlFormatter::formatStatementAsMath(const Statement& stmt, Evaluato
         return "";
     } else if (const auto* exprStmt = dynamic_cast<const ExpressionStatement*>(&stmt)) {
         // Like print(...), eval(...) is shown through execution results only.
+        // svg(...) is rendered as an actual diagram, not restated as a LaTeX call.
         if (const auto* functionCall = dynamic_cast<const FunctionCall*>(exprStmt->expression.get())) {
-            if (functionCall->function_name == "eval") {
+            if (functionCall->function_name == "eval" || functionCall->function_name == "svg") {
                 return "";
             }
         }

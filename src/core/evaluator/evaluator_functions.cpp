@@ -1377,9 +1377,9 @@ Value Evaluator::collectSvg(const FunctionCall& expr) {
             shape.nums.push_back(requireNumber(*this, *args[1], "text()"));
             shape.text = requireStringLiteral(*args[2], "text()");
         } else if (shapeName == "curve") {
-            if (args.size() < 5 || args.size() > 6) {
-                throw std::runtime_error("curve() expects 5-6 arguments (expr, sampleVar, start, end, samples, "
-                                          "[\"curveId\"]), got " + std::to_string(args.size()));
+            if (args.size() < 5 || args.size() > 7) {
+                throw std::runtime_error("curve() expects 5-7 arguments (expr, sampleVar, start, end, samples, "
+                                          "[\"curveId\"], [maxAbsY]), got " + std::to_string(args.size()));
             }
             shape.kind = SvgShape::Kind::Curve;
 
@@ -1395,9 +1395,12 @@ Value Evaluator::collectSvg(const FunctionCall& expr) {
                 throw std::runtime_error("curve() samples argument must be an integer >= 2");
             }
             shape.samples = static_cast<int>(samplesVal);
-            shape.curveId = (args.size() == 6)
+            shape.curveId = (args.size() >= 6)
                 ? requireStringLiteral(*args[5], "curve()")
                 : ("curve" + std::to_string(svgData.shapes.size()));
+            if (args.size() == 7) {
+                shape.maxAbsYHint = std::abs(requireNumber(*this, *args[6], "curve() maxAbsY"));
+            }
 
             // Sample the curve by rebinding sampleVar over [start,end], reusing the same
             // save/rebind/restore idiom as executeFor's loop-variable rebinding.
@@ -1485,31 +1488,59 @@ const FunctionCall* asTopLevelCall(const Statement* stmt, const char* name) {
     return nullptr;
 }
 
-// Recompute the exact same data-space bounds generateSvgHtml derives from an SvgData's
-// curves, so the pixel transform used on recompute matches the initial render exactly.
-void computeCurveBounds(const SvgData& svg, double& xmin, double& xmax, double& ymin, double& ymax) {
+// Recompute the exact same data-space bounds and beam-axis pixel anchor generateSvgHtml
+// derives from an SvgData's curves and line() shapes, so the pixel transform used on
+// recompute matches the initial render exactly.
+void computeCurveBounds(const SvgData& svg, double& xmin, double& xmax, double& maxAbsY) {
     bool have = false;
-    xmin = xmax = ymin = ymax = 0.0;
+    xmin = xmax = 0.0;
+    maxAbsY = 0.0;
     for (const auto& shape : svg.shapes) {
         if (shape.kind != SvgShape::Kind::Curve) continue;
+        if (shape.maxAbsYHint > 0.0) {
+            maxAbsY = std::max(maxAbsY, shape.maxAbsYHint);
+        }
         for (size_t j = 0; j < shape.xs.size(); ++j) {
             double x = shape.xs[j];
             double y = shape.ys[j];
             if (std::isnan(x) || std::isnan(y)) continue;
             if (!have) {
                 xmin = xmax = x;
-                ymin = ymax = y;
                 have = true;
             } else {
                 xmin = std::min(xmin, x);
                 xmax = std::max(xmax, x);
-                ymin = std::min(ymin, y);
-                ymax = std::max(ymax, y);
+            }
+            if (shape.maxAbsYHint <= 0.0) {
+                maxAbsY = std::max(maxAbsY, std::abs(y));
             }
         }
     }
     if (!have || xmax == xmin) { xmin = 0.0; xmax = 1.0; }
-    if (!have || ymax == ymin) { ymin = -1.0; ymax = 1.0; }
+    if (maxAbsY == 0.0) { maxAbsY = 1.0; }
+}
+
+// Find the beam axis (longest horizontal line() in this svg()) and its pixel span, the
+// same way generateSvgHtml anchors a curve's zero-deflection point to the drawn support.
+void computeBeamAxis(const SvgData& svg, double margin, double& baselinePy,
+                      double& beamPxStart, double& beamPxEnd) {
+    baselinePy = margin + (svg.height - 2 * margin) / 2.0;
+    beamPxStart = margin;
+    beamPxEnd = svg.width - margin;
+    double bestLen = -1.0;
+    for (const auto& shape : svg.shapes) {
+        if (shape.kind != SvgShape::Kind::Line) continue;
+        double x1 = shape.nums[0], y1 = shape.nums[1];
+        double x2 = shape.nums[2], y2 = shape.nums[3];
+        if (std::abs(y1 - y2) > 0.5) continue;  // not horizontal
+        double len = std::abs(x2 - x1);
+        if (len > bestLen) {
+            bestLen = len;
+            baselinePy = y1;
+            beamPxStart = std::min(x1, x2);
+            beamPxEnd = std::max(x1, x2);
+        }
+    }
 }
 
 } // namespace
@@ -1602,13 +1633,17 @@ std::optional<std::string> Evaluator::resampleSvgCurve(const Program& program,
         env.remove(paramName);
     }
 
-    // Reproduce generateSvgHtml's exact transform (fixed to the *original* svg's bounds,
-    // not the resampled points, so axes don't rescale mid-drag).
-    double xmin, xmax, ymin, ymax;
-    computeCurveBounds(*ownerSvg, xmin, xmax, ymin, ymax);
+    // Reproduce generateSvgHtml's exact transform (fixed to the *original* svg's bounds
+    // and beam axis, not the resampled points, so the axis/scale don't shift mid-drag).
+    double xmin, xmax, maxAbsY;
+    computeCurveBounds(*ownerSvg, xmin, xmax, maxAbsY);
     const double margin = 10.0;
-    double plotW = ownerSvg->width - 2 * margin;
-    double plotH = ownerSvg->height - 2 * margin;
+    double baselinePy, beamPxStart, beamPxEnd;
+    computeBeamAxis(*ownerSvg, margin, baselinePy, beamPxStart, beamPxEnd);
+    double availAbove = baselinePy - margin;
+    double availBelow = (ownerSvg->height - margin) - baselinePy;
+    double ampPx = std::max(1.0, std::min(availAbove, availBelow));
+    double yScale = ampPx / maxAbsY;
 
     std::stringstream d;
     bool started = false;
@@ -1617,8 +1652,8 @@ std::optional<std::string> Evaluator::resampleSvgCurve(const Program& program,
             started = false;
             continue;
         }
-        double px = margin + (xs[j] - xmin) / (xmax - xmin) * plotW;
-        double py = margin + (ymax - ys[j]) / (ymax - ymin) * plotH;
+        double px = beamPxStart + (xs[j] - xmin) / (xmax - xmin) * (beamPxEnd - beamPxStart);
+        double py = baselinePy - ys[j] * yScale;
         d << (started ? " L " : "M ") << px << " " << py;
         started = true;
     }

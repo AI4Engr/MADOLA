@@ -127,6 +127,7 @@ struct SvgShape {
     std::vector<double> xs;
     std::vector<double> ys;
     std::string curveId;
+    double maxAbsYHint = 0.0;  // optional declared max |y|, for a fixed (non-autoscaling) render scale
 };
 
 struct SvgData {

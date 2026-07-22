@@ -241,6 +241,11 @@ Object.assign(MadolaApp.prototype, {
                 // Render MathJax for the HTML content
                 await this.renderMathJax(document.getElementById('output'));
 
+                // Wire up any interactive svg() curve sliders (// @input slider ... target="curveId")
+                if (window.SvgInput && this.madolaWrapper) {
+                    window.SvgInput.mount(document.getElementById('output'), code, this.madolaWrapper);
+                }
+
                 this.addMessage('success', 'Code executed and formatted successfully');
 
                 // Also evaluate to get C++ files and graphs

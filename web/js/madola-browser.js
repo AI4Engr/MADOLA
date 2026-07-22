@@ -114,6 +114,31 @@ class MadolaBrowserWrapper {
         return null;
     }
 
+    /**
+     * Recompute a single interactive svg() curve after rebinding one variable (e.g. a
+     * dragged @input value), without re-running/re-rendering the whole program. Returns
+     * { success, curveId, d } or { success: false, error }. Mirrors the Electron app's
+     * runtime-bridge.js::evalSvgCurve — same ccall signature, shared WASM export.
+     */
+    async evalSvgCurve(source, curveId, paramName, paramValue) {
+        if (!this.module) {
+            throw new Error('Module not loaded');
+        }
+
+        const resultPtr = this.module.ccall(
+            'svg_eval_curve',
+            'number',
+            ['string', 'string', 'string', 'number'],
+            [source, curveId, paramName, paramValue]
+        );
+        if (!resultPtr) return { success: false, error: 'svg_eval_curve returned null' };
+        try {
+            return JSON.parse(this.module.UTF8ToString(resultPtr));
+        } finally {
+            this.module.ccall('free_result', null, ['number'], [resultPtr]);
+        }
+    }
+
     isReady() {
         return this.module !== null;
     }

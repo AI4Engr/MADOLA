@@ -1,2 +1,39 @@
-﻿
-a := 1;
+﻿@version 0.01
+
+@h1{Interactive Beam Deflection Diagram}
+
+@p{
+This is a cantilever beam, fixed at the wall on the left and free at the
+right end. The point load P acts at the free end. The deflection curve
+is drawn as SVG and stays live: drag the load slider below (in the app
+UI, via // @input target="deflection") to resample just this curve
+without re-running the whole program.
+}
+
+P := 12;     // @input slider min=1 max=40 step=1 target="deflection"
+P_max := 40; // slider's max value, used only to fix the plot's vertical scale
+L := 10;
+E := 29000;
+I := 800;
+
+@hidden
+fn deflection(x) {
+    return -P*x^2*(3*L-x)/(6*E*I);
+}
+
+svg(400, 175,
+    line(10,55, 10,125),
+    line(10,55, 0,65),
+    line(10,71, 0,81),
+    line(10,87, 0,97),
+    line(10,103, 0,113),
+    line(10,119, 0,129),
+    line(10,90, 390,90),
+
+    arrow(390,15, 390,85),
+    text(385,10, "P"),
+    curve(deflection(x), x, 0, L, 40, "deflection", P_max*L^2*(3*L-L)/(6*E*I))
+);
+
+def_{max} := deflection(L);
+eval(def_{max});
