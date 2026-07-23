@@ -72,97 +72,26 @@ class MadolaBrowserWrapper {
         });
     }
 
+    // All WASM ccalls delegate to the shared MadolaCalls definitions (shared/js/wasm-calls.js),
+    // so every ccall signature lives in exactly one place across web/ and app/.
     async evaluate(code) {
-        if (!this.module) {
-            throw new Error('Module not loaded');
-        }
-
-        const resultPtr = this.module.ccall('evaluate_madola', 'number', ['string'], [code]);
-        if (resultPtr !== 0) {
-            const result = this.module.UTF8ToString(resultPtr);
-            this.module.ccall('free_result', null, ['number'], [resultPtr]);
-            return result;
-        }
-        return null;
+        return window.MadolaCalls.evaluate(this.module, code);
     }
 
     async format(code, mode = 1) {
-        if (!this.module) {
-            throw new Error('Module not loaded');
-        }
-
-        const resultPtr = this.module.ccall('format_madola', 'number', ['string', 'number'], [code, mode]);
-        if (resultPtr !== 0) {
-            const result = this.module.UTF8ToString(resultPtr);
-            this.module.ccall('free_result', null, ['number'], [resultPtr]);
-            return result;
-        }
-        return null;
+        return window.MadolaCalls.format(this.module, code, mode);
     }
 
     async formatHtml(code, mode = 1) {
-        if (!this.module) {
-            throw new Error('Module not loaded');
-        }
-
-        const resultPtr = this.module.ccall('format_madola_html', 'number', ['string', 'number'], [code, mode]);
-        if (resultPtr !== 0) {
-            const result = this.module.UTF8ToString(resultPtr);
-            this.module.ccall('free_result', null, ['number'], [resultPtr]);
-            return result;
-        }
-        return null;
+        return window.MadolaCalls.formatHtml(this.module, code, mode);
     }
 
-    /**
-     * Recompute a single interactive svg() curve after rebinding one variable (e.g. a
-     * dragged @input value), without re-running/re-rendering the whole program. Returns
-     * { success, curveId, d } or { success: false, error }. Mirrors the Electron app's
-     * runtime-bridge.js::evalSvgCurve — same ccall signature, shared WASM export.
-     */
     async evalSvgCurve(source, curveId, paramName, paramValue, resultVar = '') {
-        if (!this.module) {
-            throw new Error('Module not loaded');
-        }
-
-        const resultPtr = this.module.ccall(
-            'svg_eval_curve',
-            'number',
-            ['string', 'string', 'string', 'number', 'string'],
-            [source, curveId, paramName, paramValue, resultVar || '']
-        );
-        if (!resultPtr) return { success: false, error: 'svg_eval_curve returned null' };
-        try {
-            return JSON.parse(this.module.UTF8ToString(resultPtr));
-        } finally {
-            this.module.ccall('free_result', null, ['number'], [resultPtr]);
-        }
+        return window.MadolaCalls.evalSvgCurve(this.module, source, curveId, paramName, paramValue, resultVar);
     }
 
-    /**
-     * Recompute a single named variable's final value after a full evaluate() pass
-     * (the caller has already rebound the dragged @input's literal in `source`).
-     * Returns { success, name, value } or { success: false, error }. Used to keep a
-     * displayed @result value in sync with a slider drag without re-rendering the
-     * whole HTML document.
-     */
     async evalNamedValue(source, varName) {
-        if (!this.module) {
-            throw new Error('Module not loaded');
-        }
-
-        const resultPtr = this.module.ccall(
-            'eval_named_value',
-            'number',
-            ['string', 'string'],
-            [source, varName]
-        );
-        if (!resultPtr) return { success: false, error: 'eval_named_value returned null' };
-        try {
-            return JSON.parse(this.module.UTF8ToString(resultPtr));
-        } finally {
-            this.module.ccall('free_result', null, ['number'], [resultPtr]);
-        }
+        return window.MadolaCalls.evalNamedValue(this.module, source, varName);
     }
 
     isReady() {

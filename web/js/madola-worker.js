@@ -1,6 +1,11 @@
 // MADOLA Web Worker - Handles code execution in background thread
 // This prevents UI blocking during long-running calculations
 
+// Shared WASM ccall wrappers (attaches self.MadolaCalls). Same definitions used by
+// the main-thread wrapper and the Electron app. Copied into js/shared/ (relative to
+// this worker) by scripts/sync-shared.js.
+importScripts('shared/wasm-calls.js');
+
 let madolaModule = null;
 let isInitialized = false;
 
@@ -45,47 +50,17 @@ async function initialize() {
     }
 }
 
-// WASM wrapper functions
+// WASM wrapper functions — delegate to the shared MadolaCalls ccall definitions.
 async function evaluate(code) {
-    if (!madolaModule) {
-        throw new Error('Module not loaded');
-    }
-
-    const resultPtr = madolaModule.ccall('evaluate_madola', 'number', ['string'], [code]);
-    if (resultPtr !== 0) {
-        const result = madolaModule.UTF8ToString(resultPtr);
-        madolaModule.ccall('free_result', null, ['number'], [resultPtr]);
-        return result;
-    }
-    return null;
+    return self.MadolaCalls.evaluate(madolaModule, code);
 }
 
 async function format(code, mode = 1) {
-    if (!madolaModule) {
-        throw new Error('Module not loaded');
-    }
-
-    const resultPtr = madolaModule.ccall('format_madola', 'number', ['string', 'number'], [code, mode]);
-    if (resultPtr !== 0) {
-        const result = madolaModule.UTF8ToString(resultPtr);
-        madolaModule.ccall('free_result', null, ['number'], [resultPtr]);
-        return result;
-    }
-    return null;
+    return self.MadolaCalls.format(madolaModule, code, mode);
 }
 
 async function formatHtml(code, mode = 1) {
-    if (!madolaModule) {
-        throw new Error('Module not loaded');
-    }
-
-    const resultPtr = madolaModule.ccall('format_madola_html', 'number', ['string', 'number'], [code, mode]);
-    if (resultPtr !== 0) {
-        const result = madolaModule.UTF8ToString(resultPtr);
-        madolaModule.ccall('free_result', null, ['number'], [resultPtr]);
-        return result;
-    }
-    return null;
+    return self.MadolaCalls.formatHtml(madolaModule, code, mode);
 }
 
 // Handle messages from main thread

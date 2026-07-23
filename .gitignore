@@ -1,6 +1,9 @@
 # Claude Code settings (local)
 .claude/settings.local.json
 
+# Generated copies of shared/js/ (source of truth is shared/js/; run npm run sync-shared)
+web/js/shared/
+
 # Dependencies
 node_modules/
 **/node_modules/

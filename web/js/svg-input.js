@@ -11,94 +11,29 @@
 (function () {
   'use strict';
 
-  const ATTR_RE = /(\w+)\s*=\s*("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|true|false|[-+]?\d+(?:\.\d+)?|\w+)/g;
+  // @input parsing / literal rewriting come from the shared MdaInputs module
+  // (shared/js/mda-inputs.js) — the same parser the app's low-code UI uses.
+  const replaceLiteral = window.MdaInputs.replaceLiteral;
+  const formatNumber = window.MdaInputs.formatNumber;
 
-  function parseAttrs(rest) {
-    const out = {};
-    let m;
-    ATTR_RE.lastIndex = 0;
-    while ((m = ATTR_RE.exec(rest))) {
-      let val = m[2];
-      if ((val[0] === '"' && val.endsWith('"')) || (val[0] === "'" && val.endsWith("'"))) {
-        val = val.slice(1, -1).replace(/\\(.)/g, '$1');
-      } else if (val === 'true') val = true;
-      else if (val === 'false') val = false;
-      else if (/^[-+]?\d/.test(val)) val = parseFloat(val);
-      out[m[1]] = val;
-    }
-    return out;
-  }
-
-  // Extract only slider @inputs that carry a target="<curveId>" attribute — everything
-  // else (matrix/vector/select/plain number, or sliders with no target) is out of scope here.
+  // Extract only slider @inputs that carry a target="<curveId>" attribute — a thin filter
+  // over the shared full parser. Everything else (matrix/vector/select/plain number, or
+  // sliders with no target) is out of scope for the SVG slider UI.
   function extractSvgSliders(source) {
-    const lines = source.split('\n');
-    const inputs = [];
-    let offset = 0;
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const lineStart = offset;
-      offset += line.length + 1;
-
-      const annIdx = line.search(/\/\/\s*@input\b/);
-      if (annIdx < 0) continue;
-
-      const codePart = line.slice(0, annIdx);
-      const assignIdx = codePart.indexOf(':=');
-      if (assignIdx < 0) continue;
-
-      const nameMatch = codePart.slice(0, assignIdx).match(/([A-Za-z_]\w*)\s*$/);
-      if (!nameMatch) continue;
-      const name = nameMatch[1];
-
-      const afterAssign = codePart.slice(assignIdx + 2);
-      const semiIdx = afterAssign.lastIndexOf(';');
-      const literalEndInAfter = semiIdx >= 0 ? semiIdx : afterAssign.length;
-      const literalRaw = afterAssign.slice(0, literalEndInAfter);
-      const literalTrimmed = literalRaw.trim();
-      if (!literalTrimmed) continue;
-
-      const literalStartInLine = assignIdx + 2 + literalRaw.indexOf(literalTrimmed);
-      const literalStart = lineStart + literalStartInLine;
-      const literalEnd = literalStart + literalTrimmed.length;
-
-      const annRest = line.slice(annIdx).replace(/^\/\/\s*@input\s*/, '');
-      const firstToken = (annRest.match(/^\w+/) || [''])[0];
-      const attrs = parseAttrs(annRest);
-
-      const isSlider = firstToken === 'slider' || attrs.slider;
-      if (!isSlider || !attrs.target) continue;
-
-      const value = parseFloat(literalTrimmed);
-      if (Number.isNaN(value)) continue;
-
-      // target is a comma-separated list: each entry is either a curve id (matched
-      // against data-curve-id) or a displayed result variable name (matched against
-      // data-result-var) — resolved against the DOM in mount(), not here.
-      const targets = String(attrs.target).split(',').map((t) => t.trim()).filter(Boolean);
-
-      inputs.push({
-        name,
-        value,
-        attrs,
-        targets,
-        literalStart,
-        literalEnd,
-      });
-    }
-    return inputs;
-  }
-
-  function replaceLiteral(source, desc, newValue) {
-    const before = source.slice(0, desc.literalStart);
-    const after = source.slice(desc.literalEnd);
-    return before + formatNumber(newValue) + after;
-  }
-
-  function formatNumber(n) {
-    if (Number.isInteger(n)) return String(n);
-    return parseFloat(n.toFixed(6)).toString();
+    return window.MdaInputs.extractInputs(source)
+      .filter((d) => (d.type === 'slider' || d.attrs.slider) && d.attrs.target)
+      .map((d) => ({
+        name: d.name,
+        type: d.type,
+        value: d.value,
+        attrs: d.attrs,
+        literalStart: d.literalStart,
+        literalEnd: d.literalEnd,
+        // target is a comma-separated list: each entry is either a curve id (matched
+        // against data-curve-id) or a displayed result variable name (matched against
+        // data-result-var) — resolved against the DOM in mount(), not here.
+        targets: String(d.attrs.target).split(',').map((t) => t.trim()).filter(Boolean),
+      }));
   }
 
   function findSvgContainer(outputEl, idx) {
@@ -157,85 +92,30 @@
     const descriptors = extractSvgSliders(source);
     if (descriptors.length === 0) return;
 
-    // Resolve each descriptor's targets against the rendered DOM once: curve targets
-    // attach the slider row after their SVG container; result-variable targets are
-    // tracked for live text updates but don't host the slider themselves.
+    // Resolve targets, mount the slider row, and wire the drag handler. Target
+    // resolution and the recompute algorithm are shared (SvgCurveSync); web only owns
+    // the slider-injection UI (where the range input is placed).
     descriptors.forEach((desc) => {
-      let mountedAfter = null;
-      const curveIds = [];
-      const resultVars = []; // { name, el, prefix, suffix }
-
-      desc.targets.forEach((target) => {
-        const pathEl = outputEl.querySelector('[data-curve-id="' + CSS.escape(target) + '"]');
-        if (pathEl) {
-          const svgContainer = pathEl.closest('.svg-container') || pathEl.closest('svg');
-          if (svgContainer && !mountedAfter) mountedAfter = svgContainer;
-          curveIds.push(target);
-          return;
-        }
-        const resultEl = outputEl.querySelector('[data-result-var="' + CSS.escape(target) + '"]');
-        if (resultEl) {
-          // Cache the raw "$$name = value$$" template now, before MathJax replaces
-          // this element's text content with rendered <mjx-container> markup.
-          const rawText = resultEl.textContent;
-          const match = rawText.match(/^([\s\S]*=\s*)([^=]+?)(\$\$\s*)$/);
-          if (match) {
-            resultVars.push({ name: target, el: resultEl, prefix: match[1], suffix: match[3] });
-          }
-        }
-        // Unmatched target: silently ignored (curve/result not present in this render).
-      });
-
-      if (!mountedAfter || curveIds.length === 0) return;
+      const resolved = window.SvgCurveSync.resolveTargets(outputEl, desc);
+      if (!resolved.mountedAfter || resolved.curveIds.length === 0) return;
 
       const { row, range, valueLabel } = buildSliderRow(desc);
-      mountedAfter.insertAdjacentElement('afterend', row);
+      resolved.mountedAfter.insertAdjacentElement('afterend', row);
 
-      // Apply a fresh result value to its cached $$...$$ template, then re-typeset it.
-      const applyResult = (rv, latexValue) => {
-        rv.el.textContent = rv.prefix + latexValue + rv.suffix;
-        retypeset(rv.el);
-      };
-
-      let seq = 0;
-      range.addEventListener('input', async () => {
+      const seqRef = { value: 0 };
+      range.addEventListener('input', () => {
         const newValue = parseFloat(range.value);
         valueLabel.textContent = formatNumber(newValue);
-
-        const mySeq = ++seq;
-        const workingSource = replaceLiteral(source, desc, newValue);
-
-        // The primary curve is recomputed together with the first result variable in a
-        // SINGLE evaluate() pass (svg_eval_curve returns both), so a drag never parses/
-        // evaluates the same source twice. Any extra curves/results (rare) are handled
-        // by follow-up calls to keep behavior correct without complicating the common case.
-        const primaryCurve = curveIds[0];
-        const primaryResult = resultVars[0];
-
-        const first = await wrapper
-          .evalSvgCurve(workingSource, primaryCurve, desc.name, newValue,
-                        primaryResult ? primaryResult.name : '')
-          .catch(() => null);
-        if (mySeq !== seq || !first || !first.success) return;
-
-        const livePath = outputEl.querySelector('[data-curve-id="' + CSS.escape(primaryCurve) + '"]');
-        if (livePath) livePath.setAttribute('d', first.d);
-        if (primaryResult && first.resultValue != null) applyResult(primaryResult, first.resultValue);
-
-        // Extra curves (beyond the first) — each its own single-pass recompute.
-        for (let c = 1; c < curveIds.length; c++) {
-          const r = await wrapper.evalSvgCurve(workingSource, curveIds[c], desc.name, newValue).catch(() => null);
-          if (mySeq !== seq || !r || !r.success) return;
-          const p = outputEl.querySelector('[data-curve-id="' + CSS.escape(curveIds[c]) + '"]');
-          if (p) p.setAttribute('d', r.d);
-        }
-
-        // Extra result variables (beyond the first) — evaluated by name.
-        for (let k = 1; k < resultVars.length; k++) {
-          const r = await wrapper.evalNamedValue(workingSource, resultVars[k].name).catch(() => null);
-          if (mySeq !== seq || !r || !r.success) return;
-          applyResult(resultVars[k], r.value);
-        }
+        window.SvgCurveSync.recompute({
+          wrapper,
+          outputEl,
+          source: replaceLiteral(source, desc, newValue),
+          desc,
+          newValue,
+          resolved,
+          seqRef,
+          retypeset,
+        });
       });
     });
   }

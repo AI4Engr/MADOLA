@@ -79,14 +79,24 @@
 
 ### High Priority
 
-- [ ] **🔥🔝 Generic SVG Output Primitive (DO FIRST — app differentiator)** - First-class SVG drawing for engineering diagrams
-  - Emit arbitrary line/circle/arrow/text/path (not just xy line plots)
-  - Unblocks: structural free-body diagrams (supports, load arrows), beam deflection
-    shapes, generalizing the hard-coded `graph_3d` brick
-  - Foundation for interactive/animated visuals (drag a load → redraw)
-  - **Impact:** Core differentiator vs Mathcad/BlockPad/EnerCalc — "calculations that move"
-  - **Serves app/:** directly feeds the planned SVG tab; this is the near-term reason it leads
-  - **See:** existing `graph()` is static D3; `graph_3d` is a placeholder brick
+- [x] **Generic SVG Output Primitive** — DONE (2026-07)
+  - `svg()`/`line()`/`circle()`/`arrow()`/`text()`/`rect()`/`curve()` shapes implemented
+    (`evaluator_functions.cpp::collectSvg`), plus `data-curve-id`/`data-sample-var` output
+    for drag interactivity.
+  - Interactive drag support shipped: `svg_eval_curve` WASM export (single-pass recompute
+    of a curve + an optional `@result` value, `resampleSvgCurve` in evaluator), driven from
+    `// @input slider ... target="curveId[,resultVar]"` annotations.
+  - `@hidden` decorator suppresses a helper `fn`/assignment's LaTeX rendering (formula math
+    lives in the .mda source but isn't restated to the reader); `@result` shows a bare
+    `name = value` without the call-expression noise.
+  - Concise `f(x) := expr;` formula syntax (desugars to `fn f(x){ return expr; }`, renders
+    as just the expression body) — see `example.mda` / `web/examples/beam_deflection.mda`.
+  - The web/app slider-drag JS logic (parsing, WASM bridge, curve+result recompute) was
+    unified into `shared/js/` (`wasm-calls.js`, `mda-inputs.js`, `svg-curve-sync.js`),
+    copy-distributed via `npm run sync-shared` to stay Electron-`file://`-safe.
+  - **Not done / follow-up:** the `maxAbsYHint` vertical-scale argument only works with
+    plain numbers — see the Engineering Unit System Rewrite entry below for why a
+    unit-valued slider target doesn't yet work end-to-end.
 
 - [ ] **🔥 Higher-Order Functions** - Support functions as first-class values
   - Pass functions as parameters: `fn simpson(f, a, b, n)`
