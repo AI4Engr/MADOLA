@@ -16,6 +16,7 @@
 //                                     -> { success, curveId, d, [resultVar, resultValue] }
 //   evalNamedValue(module, source, varName)
 //                                     -> { success, name, value } | { success:false, error }
+//   typstPayload(module, source)     -> { success, records:[...] } | { success:false, error }
 
 (function () {
   'use strict';
@@ -75,5 +76,15 @@
     return JSON.parse(json);
   }
 
-  root.MadolaCalls = { evaluate, format, formatHtml, evalSvgCurve, evalNamedValue };
+  // Neutral structured payload (heading/paragraph/formula/svg records) for report
+  // generators (currently the private app-side Typst converter) to consume. Contains
+  // no layout/style decisions - see HtmlFormatter::generateTypstPayload for the contract.
+  function typstPayload(module, source) {
+    if (!module) throw new Error('Module not loaded');
+    const json = callString(module, 'format_madola_typst_payload', ['string'], [source]);
+    if (json === null) return { success: false, error: 'format_madola_typst_payload returned null' };
+    return JSON.parse(json);
+  }
+
+  root.MadolaCalls = { evaluate, format, formatHtml, evalSvgCurve, evalNamedValue, typstPayload };
 })();

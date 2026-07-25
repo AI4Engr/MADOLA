@@ -4,6 +4,7 @@
 #include <string>
 #include <set>
 #include <vector>
+#include <sstream>
 
 namespace madola {
 
@@ -19,6 +20,14 @@ public:
 
     FormatResult formatProgram(const Program& program);
     FormatResult formatProgramWithExecution(const Program& program);
+
+    // Neutral structured export for the private Typst report generator (app/js/typst).
+    // Evaluates the program and walks statements in source order, emitting one JSON
+    // record per heading/paragraph/formula/svg() call. Contains no layout/style
+    // decisions (no fonts, colors, page setup) - that know-how lives in the private
+    // mda-to-typ.js converter. Returns a JSON array as a string; on parse/eval failure
+    // returns a JSON object {"success":false,"error":"..."}.
+    std::string generateTypstPayload(const Program& program);
 
     // Format a value as inline LaTeX, identical to how @result / assignment blocks
     // render it initially. Exposed so the interactive slider path (wasm_interface's
@@ -63,6 +72,17 @@ private:
     std::string generateOrderedContent(const Program& program, Evaluator& evaluator, const Evaluator::EvaluationResult& evalResult);
     std::string generateMathContent(const Program& program, Evaluator& evaluator);
     std::string formatStatementAsMath(const Statement& stmt, Evaluator& evaluator);
+    // Builds one {"type":"formula",...} JSON record for `assignment`, using `renderStmt`
+    // (the statement passed to formatStatementAsMath - may be a still-decorated wrapper
+    // so @hidden/@result/@eval/@resolve render correctly) for the latex. Returns an
+    // empty string if the rendered latex is empty (the convention formatStatementAsMath
+    // uses to signal "@hidden, suppress this record") - callers must check for empty
+    // before writing a preceding comma, since a suppressed record contributes nothing
+    // to the JSON array. `groupSuffix` is an optional already-escaped JSON tail (e.g.
+    // `,"group":{...}`) spliced in before the closing brace, used to tag
+    // @table2/@layout-grouped formulas.
+    std::string buildTypstFormulaRecord(const Statement& renderStmt, const AssignmentStatement& assignment,
+                                         Evaluator& evaluator, const std::string& groupSuffix = "");
     std::string formatStatementAsMathInFunction(const Statement& stmt, Evaluator& evaluator, int depth = 0);
     std::string formatExpressionAsMath(const Expression& expr, Evaluator& evaluator);
     std::string formatExpressionWithValuesAsMath(const Expression& expr, Evaluator& evaluator);

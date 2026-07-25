@@ -306,6 +306,37 @@ char* format_madola_html(const char* source, int with_execution) {
     }
 }
 
+// Export a neutral structured JSON payload (heading/paragraph/formula/svg records) for
+// the private app-side Typst report generator to consume. Contains no page/report
+// layout decisions - see HtmlFormatter::generateTypstPayload for the exact contract.
+EMSCRIPTEN_KEEPALIVE
+char* format_madola_typst_payload(const char* source) {
+    try {
+        if (!g_html_formatter || !g_ast_builder) {
+            init_madola();
+        }
+
+        auto program = g_ast_builder->buildProgram(std::string(source));
+        if (!program) {
+            std::string error_json = "{\"success\":false,\"error\":\"Failed to parse source code\"}";
+            size_t len = error_json.length();
+            char* output = new char[len + 1];
+            memcpy(output, error_json.c_str(), len);
+            output[len] = '\0';
+            return output;
+        }
+
+        std::string json = g_html_formatter->generateTypstPayload(*program);
+        size_t len = json.length();
+        char* output = new char[len + 1];
+        memcpy(output, json.c_str(), len);
+        output[len] = '\0';
+        return output;
+    } catch (...) {
+        return nullptr;
+    }
+}
+
 // Recompute a single interactive svg() curve after rebinding one variable (e.g. a
 // dragged @input value), without re-running/re-rendering the whole program. Re-parses
 // source (fresh AST for this call only), evaluates once to populate bindings and
