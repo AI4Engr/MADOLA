@@ -1,4 +1,0 @@
-Execution completed successfully
-Output:
-  3
-  2

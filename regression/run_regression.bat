@@ -32,8 +32,10 @@ if "%1"=="update" (
     if "%2"=="update" set UPDATE=true
 )
 
-REM Use separate expected baselines for WASM mode
-if /I "%MODE%"=="wasm" set EXPECTED_DIR=%SCRIPT_DIR%expected_wasm
+REM native and WASM share ONE baseline directory: both backends must produce
+REM identical computation results. The only lines that legitimately differ are
+REM diagnostic logs (import chatter, codegen paths), which :normalize strips
+REM before comparison - see the :normalize label below.
 
 echo Running regression tests in %MODE% mode (parallel execution)...
 if "%UPDATE%"=="true" echo Will update expected results after running tests
@@ -116,8 +118,11 @@ if !completed! lss %test_count% (
 
 echo Ran %test_count% test cases
 
-REM Clean up temp directory
+REM Clean up temp directory (flags from the parallel run, plus any normalized
+REM comparison files left over from a previous run)
 del /Q "%TEMP_DIR%\*.flag" 2>nul
+del /Q "%TEMP_DIR%\exp_*" 2>nul
+del /Q "%TEMP_DIR%\out_*" 2>nul
 
 REM Update expected results if requested
 if "%UPDATE%"=="true" (
@@ -138,9 +143,11 @@ for %%f in ("%OUTPUT_DIR%\evaluation\*.txt") do (
     set base_name=%%~nxf
     set output_file=%%f
     set expected_file=%EXPECTED_DIR%\evaluation\!base_name!
-    
+
     if exist "!expected_file!" (
-        fc "!expected_file!" "!output_file!" >nul 2>&1
+        call :normalize "!expected_file!" "%TEMP_DIR%\exp_!base_name!"
+        call :normalize "!output_file!" "%TEMP_DIR%\out_!base_name!"
+        fc "%TEMP_DIR%\exp_!base_name!" "%TEMP_DIR%\out_!base_name!" >nul 2>&1
         if errorlevel 1 (
             echo [FAIL] !base_name! (evaluation^)
             set /a diff_count+=1
@@ -159,7 +166,9 @@ for %%f in ("%OUTPUT_DIR%\html\*.html") do (
     set expected_file=%EXPECTED_DIR%\html\!base_name!
     
     if exist "!expected_file!" (
-        fc "!expected_file!" "!output_file!" >nul 2>&1
+        call :normalize "!expected_file!" "%TEMP_DIR%\exp_!base_name!"
+        call :normalize "!output_file!" "%TEMP_DIR%\out_!base_name!"
+        fc "%TEMP_DIR%\exp_!base_name!" "%TEMP_DIR%\out_!base_name!" >nul 2>&1
         if errorlevel 1 (
             echo [FAIL] !base_name! (html^)
             set /a diff_count+=1
@@ -182,4 +191,21 @@ if %diff_count% gtr 0 (
 )
 
 echo All tests passed!
+exit /b 0
+
+REM ---------------------------------------------------------------------------
+REM :normalize <src> <dst>
+REM Strips host- and backend-specific DIAGNOSTIC LOG lines so native and WASM can
+REM share ONE set of baselines. These lines are progress chatter, not program
+REM output, and legitimately differ between backends:
+REM   - import logging: native reads .mda files off disk ("Imported function: f
+REM     from lib.mda") while WASM has no filesystem and uses the WASM function
+REM     bridge ("Imported WASM function: f from lib").
+REM   - codegen logging is native-CLI-only AND embeds absolute paths
+REM     (C:\Users\<name>\.madola\...), which would make baselines machine-specific.
+REM Keep this filter in sync with normalize_file() in run_regression.sh.
+REM ---------------------------------------------------------------------------
+:normalize
+findstr /V /B /C:"Imported function: " /C:"Imported WASM function: " /C:"Generated C++ file: " /C:"Generated WASM addon: " /C:"Generated JS wrapper: " "%~1" > "%~2" 2>nul
+if not exist "%~2" type nul > "%~2"
 exit /b 0

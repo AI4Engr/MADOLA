@@ -71,10 +71,9 @@ elif [ "$2" = "update" ]; then
     UPDATE=true
 fi
 
-# Use separate expected baselines for WASM mode
-if [ "$MODE" = "wasm" ]; then
-    EXPECTED_DIR="$SCRIPT_DIR/expected_wasm"
-fi
+# native and WASM share ONE baseline directory (see normalize_file above): both
+# backends must produce identical computation results, and the only lines that
+# legitimately differ are diagnostic logs, which normalization strips.
 
 # Validate mode
 if [ "$MODE" != "native" ] && [ "$MODE" != "wasm" ]; then
@@ -122,12 +121,27 @@ else
     exit 1
 fi
 
-# Function to normalize line endings and whitespace for cross-platform comparison
+# Function to normalize a file for comparison.
+#
+# Besides line endings/trailing whitespace, this strips host- and backend-specific
+# DIAGNOSTIC LOG lines so native and WASM can share ONE set of baselines. These
+# lines are std::cout progress chatter, not program output, and legitimately differ:
+#   - import logging differs by backend: native reads .mda files off disk
+#     ("Imported function: f from lib.mda") while WASM has no filesystem and goes
+#     through the WASM function bridge ("Imported WASM function: f from lib").
+#   - codegen logging (main.cpp) is native-CLI-only AND embeds absolute paths
+#     (C:\Users\<name>\.madola\...), which would otherwise make baselines
+#     machine-specific and break for anyone else running the suite.
+#
+# Filtering them here means the regression suite compares only real computation
+# results, so ANY native-vs-WASM divergence in actual output is a genuine bug
+# rather than something a second baseline quietly absorbs.
 normalize_file() {
     local file="$1"
     if [ -f "$file" ]; then
         # Convert Windows line endings to Unix and remove trailing whitespace
-        sed -e 's/\r$//' -e 's/[[:space:]]*$//' "$file"
+        sed -e 's/\r$//' -e 's/[[:space:]]*$//' "$file" \
+            | grep -v -E '^(Imported (WASM )?function: |Generated (C\+\+ file|WASM addon|JS wrapper): )'
     fi
 }
 

@@ -1,8 +1,0 @@
-Imported WASM function: testSquare from testWasm
-Imported WASM function: testDouble from testWasm
-Execution completed successfully
-Output:
-  25
-  14
-  17
-  10000

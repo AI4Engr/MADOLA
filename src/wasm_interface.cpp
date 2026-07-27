@@ -104,7 +104,7 @@ char* evaluate_madola(const char* source) {
 
         for (size_t i = 0; i < result.outputs.size(); ++i) {
             if (i > 0) json += ",";
-            json += "\"" + result.outputs[i] + "\"";
+            json += "\"" + escapeJsonString(result.outputs[i]) + "\"";
         }
 
         json += "],\"cppFiles\":[";
@@ -200,10 +200,10 @@ char* evaluate_madola(const char* source) {
             }
 
             json += "\"cppContent\":\"" + escapedCppContent + "\",";
-            json += "\"errorMessage\":\"" + result.wasmFiles[i].errorMessage + "\"}";
+            json += "\"errorMessage\":\"" + escapeJsonString(result.wasmFiles[i].errorMessage) + "\"}";
         }
 
-        json += "],\"error\":\"" + result.error + "\"}";
+        json += "],\"error\":\"" + escapeJsonString(result.error) + "\"}";
 
         size_t len = json.length();
         char* output = new char[len + 1];

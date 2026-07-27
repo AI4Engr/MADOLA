@@ -271,13 +271,19 @@ npm run test:regression:wasm    # WASM tests only
 ```
 regression/
 ├── fixtures/           # Test input files (.mda)
-├── expected/           # Expected outputs (native)
+├── expected/           # Expected outputs, SHARED by native and WASM
 │   ├── evaluation/    # Expected evaluation results (.txt)
 │   └── html/          # Expected HTML outputs (.html)
-├── expected_wasm/      # Expected outputs (WASM)
 ├── results/            # Actual test outputs
 └── diff/               # Diff files (when tests fail)
 ```
+
+Native and WASM compare against the same `expected/` baselines — both backends
+must produce identical computation results. Comparison normalizes away a small
+set of diagnostic log lines (import/codegen chatter) that legitimately differ
+between backends (e.g. WASM has no filesystem); see `normalize_file()` in
+`run_regression.sh` (or `:normalize` in `run_regression.bat`) for the exact list.
+Any other native-vs-WASM output difference is a real bug, not baseline drift.
 
 When tests fail, you can:
 1. Review differences in `regression/diff/`

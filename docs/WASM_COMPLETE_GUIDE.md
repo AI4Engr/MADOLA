@@ -200,13 +200,14 @@ regression/
 │   └── testWasm/                 # Local WASM modules
 │       ├── testSquare.{js,wasm}
 │       └── testDouble.{js,wasm}
-├── expected/                      # Native baselines
-│   ├── evaluation/wasm_import.txt
-│   └── html/wasm_import.html
-└── expected_wasm/                 # WASM baselines
+└── expected/                      # Baselines shared by native and WASM
     ├── evaluation/wasm_import.txt
     └── html/wasm_import.html
 ```
+
+Native and WASM compare against the same baselines — diagnostic log lines that
+legitimately differ between backends (import/codegen chatter) are stripped by
+the comparison's normalization step, not by keeping two sets of files.
 
 ---
 
@@ -629,8 +630,7 @@ target_compile_options(madola_wasm PRIVATE -fwasm-exceptions)
 **Test Files:**
 8. `regression/fixtures/wasm_import.mda` - Test case
 9. `regression/fixtures/testWasm/` - Test modules
-10. `regression/expected/` - Native baselines
-11. `regression/expected_wasm/` - WASM baselines
+10. `regression/expected/` - Baselines shared by native and WASM
 
 ---
 

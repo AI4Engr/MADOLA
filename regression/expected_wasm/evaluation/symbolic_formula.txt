@@ -1,5 +1,0 @@
-Execution completed successfully
-Output:
-  -0
-  -0.001
-  -1

@@ -1,3 +1,0 @@
-Execution completed successfully
-Output:
-  9
