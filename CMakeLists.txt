@@ -525,10 +525,16 @@ if(NOT EMSCRIPTEN)
     # Use madola.exe for testing with test files (using absolute paths)
     add_test(NAME madola_test_example COMMAND madola ${CMAKE_SOURCE_DIR}/example.mda)
 
+    # Unit test suite (tests/test_runner.cpp) - hand-built AST/evaluator tests,
+    # independent of the .mda parser pipeline.
+    add_executable(test_runner tests/test_runner.cpp)
+    target_link_libraries(test_runner madola_core)
+    add_test(NAME madola_unit_tests COMMAND test_runner)
+
     # Custom target for running tests
     add_custom_target(run_tests
         COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
-        DEPENDS madola
+        DEPENDS madola test_runner
         COMMENT "Running all tests"
     )
 endif()

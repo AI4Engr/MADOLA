@@ -237,6 +237,23 @@ Value Evaluator::callFunction(const std::string& name, const std::vector<Value>&
         return static_cast<double>(millis);
     }
 
+    if (resolvedName == "testrecord") {
+        // Minimal proof-of-concept record constructor: builds a 2-field record
+        // to prove the RecordValue/member-access mechanism end-to-end (fields
+        // store full Value, so units survive; displayLabel drives rendering).
+        // Not a real feature — a placeholder for a future table-backed
+        // constructor (e.g. a steel-section lookup) built on this mechanism.
+        if (arguments.size() != 2) {
+            throw std::runtime_error("Function testrecord expects 2 arguments, got " + std::to_string(arguments.size()));
+        }
+
+        RecordValue rec;
+        rec.displayLabel = "test";
+        (*rec.fields)["x"] = arguments[0];
+        (*rec.fields)["y"] = arguments[1];
+        return rec;
+    }
+
     if (resolvedName == "sqrt") {
         if (arguments.size() != 1) {
             throw std::runtime_error("Function sqrt expects 1 argument, got " + std::to_string(arguments.size()));
@@ -1290,6 +1307,20 @@ Value Evaluator::evaluateMethodCall(const MethodCall& expr) {
     }
 
     throw std::runtime_error("Method calls are only supported on matrices/arrays");
+}
+
+Value Evaluator::evaluateMemberAccess(const MemberAccess& expr) {
+    Value objectValue = evaluateExpression(*expr.object);
+
+    if (std::holds_alternative<RecordValue>(objectValue)) {
+        const RecordValue& record = std::get<RecordValue>(objectValue);
+        if (!record.has(expr.member_name)) {
+            throw std::runtime_error("Undefined field: " + expr.member_name);
+        }
+        return record.at(expr.member_name);
+    }
+
+    throw std::runtime_error("Member access ('.') is only supported on records");
 }
 
 namespace {

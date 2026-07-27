@@ -26,6 +26,8 @@ Value Evaluator::evaluateExpression(const Expression& expr) {
         return evaluateFunctionCall(*functionCall);
     } else if (const auto* methodCall = dynamic_cast<const MethodCall*>(&expr)) {
         return evaluateMethodCall(*methodCall);
+    } else if (const auto* memberAccess = dynamic_cast<const MemberAccess*>(&expr)) {
+        return evaluateMemberAccess(*memberAccess);
     } else if (dynamic_cast<const RangeExpression*>(&expr)) {
         // Range expressions are evaluated by for loops, not standalone
         throw std::runtime_error("Range expressions can only be used in for loops");
@@ -404,6 +406,13 @@ Value Evaluator::evaluateBinaryExpression(const BinaryExpression& expr) {
             return std::fmod(a, b);
         }
         // Fallthrough to unit-aware logic for any other operator
+    }
+
+    // Record values don't participate in arithmetic/comparison; reject them
+    // explicitly here rather than falling into the std::get<double> below,
+    // which would throw an opaque std::bad_variant_access instead.
+    if (std::holds_alternative<RecordValue>(left) || std::holds_alternative<RecordValue>(right)) {
+        throw std::runtime_error("Binary operator '" + expr.operator_str + "' is not supported on record values");
     }
 
     // Convert pure numbers to UnitValue for consistent handling

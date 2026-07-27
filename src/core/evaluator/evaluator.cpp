@@ -796,6 +796,8 @@ std::string Evaluator::valueToString(const Value& value) {
                 oss << "]";
             }
         }
+    } else if (std::holds_alternative<RecordValue>(value)) {
+        throw std::runtime_error("Cannot convert record value to string");
     }
 
     return oss.str();

@@ -229,6 +229,19 @@ public:
     }
 };
 
+class MemberAccess : public Expression {
+public:
+    ExpressionPtr object;
+    std::string member_name;
+
+    MemberAccess(ExpressionPtr obj, const std::string& name)
+        : object(std::move(obj)), member_name(name) {}
+
+    std::string toString() const override {
+        return object->toString() + "." + member_name;
+    }
+};
+
 class RangeExpression : public Expression {
 public:
     ExpressionPtr start;

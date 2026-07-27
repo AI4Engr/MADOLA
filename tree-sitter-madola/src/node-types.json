@@ -625,6 +625,25 @@
     }
   },
   {
+    "type": "member_access",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "identifier",
+          "named": true
+        },
+        {
+          "type": "primary_expression",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "method_call",
     "named": true,
     "fields": {},
@@ -800,6 +819,10 @@
       "types": [
         {
           "type": "function_call",
+          "named": true
+        },
+        {
+          "type": "member_access",
           "named": true
         },
         {

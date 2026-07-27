@@ -192,6 +192,31 @@ I := [1, 0, 0;
       0, 0, 1];
 ```
 
+### Records
+
+A record is a named bundle of fields, produced by a built-in constructor function
+and read with `.` member access (no parentheses — that's reserved for [method
+calls](#matrix-operations) like `.det()`). Fields can hold any value type,
+including numbers with units.
+
+```madola
+s := testrecord(1, 2 in);  // proof-of-concept constructor; see note below
+
+x := s.x;  // 1
+y := s.y;  // 2 in
+```
+
+Records are read-only after construction — there is no `s.x := 5;` field
+assignment, and no record literal syntax (`{x: 1, y: 2}`) yet. A bare record
+value shown at the top level (e.g. `s := testrecord(1, 2);` on its own) renders
+in HTML/PDF output as a bracketed label like `s = [test]`, not as an expanded
+list of fields — read a field explicitly (`s.x`) to show its value.
+
+> `testrecord` is a minimal built-in added to prove the record/member-access
+> mechanism end-to-end; it is not meant for general use. Real record-returning
+> constructors (e.g. a steel-section lookup) are expected to be added on top of
+> this mechanism.
+
 ---
 
 ## Operators

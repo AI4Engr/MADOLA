@@ -90,6 +90,21 @@ h1, h2, h3 {
     border: 1px solid #ddd;
     border-radius: 8px;
     background: #fafafa;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+/* Ensure legacy graph renderers (graph0, graph1, etc.) shrink with the panel */
+.graph-container > div[id^="graph"] {
+    width: 100%;
+}
+
+.graph-container > div[id^="graph"] svg {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
 }
 
 .graph-title {
@@ -97,6 +112,20 @@ h1, h2, h3 {
     font-weight: bold;
     margin-bottom: 15px;
     color: #2c3e50;
+    text-align: center;
+}
+
+.web-graph {
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.web-graph svg {
+    width: 100%;
+    height: auto;
+    display: block;
+    max-width: 100%;
 }
 
 .axis { stroke: #333; }
@@ -191,6 +220,91 @@ table td > p {
 table td > p[style] {
     white-space: pre-wrap !important;
 }
+
+/* Data table styles for table() function output */
+.table-container {
+    margin: 20px 0;
+    overflow-x: auto;
+}
+
+.data-table {
+    border-collapse: collapse;
+    width: auto;
+    min-width: 300px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+    margin-left: 0.25in;
+}
+
+.data-table thead {
+    background: #3498db;
+    color: white;
+}
+
+.data-table th {
+    padding: 8px 12px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid #2980b9;
+}
+
+.data-table tbody tr {
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.data-table tbody tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+.data-table tbody tr:hover {
+    background-color: #e8f4fc;
+}
+
+.data-table td {
+    padding: 6px 12px;
+    text-align: right;
+}
+
+/* Print styles for PDF output */
+@media print {
+    body {
+        padding: 0;
+        margin: 0;
+        background-color: white;
+    }
+    
+    .container {
+        max-width: 100%;
+        padding: 15px;
+        margin: 0;
+        box-shadow: none;
+        border-radius: 0;
+    }
+    
+    /* Hide source code blocks */
+    .madola-code {
+        display: none !important;
+    }
+    
+    /* Hide graph container borders and backgrounds for cleaner print */
+    .graph-container {
+        border: none;
+        background: white;
+        box-shadow: none;
+        page-break-inside: avoid;
+    }
+    
+    /* Ensure graphs print well */
+    .graph-container svg {
+        max-width: 100%;
+        height: auto;
+    }
+    
+    @page {
+        margin: 0.5in;
+        size: A4;
+    }
+}
     </style>
 </head>
 <body>
@@ -200,21 +314,21 @@ $$\begin{array}{l}
 \textbf{function } boltEcc(n, P_x, P_y, l_x, l_y, s_x, s_y) \\
 \left|
 \begin{array}{l}
-\quad M_o =-\left(P_x \cdot l_y - P_y \cdot l_x\right) \\
-\quad m =\frac{n}{2} \qquad l =\left(m - 1\right) \cdot s_y \\
+\quad M_o = -\left(P_x \cdot l_y - P_y \cdot l_x\right) \\
+\quad m = \frac{n}{2} \qquad l = \left(m - 1\right) \cdot s_y \\
 \quad \textbf{for } i \textbf{ in } 0...n - 1 \\
 \quad \left|
 \begin{array}{l}
 \quad \textbf{if } i < \frac{n}{2} \textbf{ then} \\
 \quad \left|
 \begin{array}{l}
-\quad d_x[i] =\frac{-s_x}{2}
+\quad d_x[i] = \frac{-s_x}{2}
 \end{array}
 \right.\\
 \quad \textbf{else} \\
 \quad \left|
 \begin{array}{l}
-\quad d_x[i] =\frac{s_x}{2}
+\quad d_x[i] = \frac{s_x}{2}
 \end{array}
 \right. \\
 \end{array}
@@ -222,30 +336,30 @@ $$\begin{array}{l}
 \quad \textbf{for } i \textbf{ in } 0...m - 1 \\
 \quad \left|
 \begin{array}{l}
-\quad d_y[i] =i \cdot s_y - \frac{l}{2} \\
-\quad d_y[i + m] =i \cdot s_y - \frac{l}{2} \\
+\quad d_y[i] = i \cdot s_y - \frac{l}{2} \\
+\quad d_y[i + m] = i \cdot s_y - \frac{l}{2} \\
 \end{array}
 \right. \\
-\quad M_o =-\left(P_x \cdot l_y - P_y \cdot l_x\right) \qquad J =\sum d_x^{2} + d_y^{2} \\
-\quad a_x =\frac{-P_y \cdot J}{n \cdot M_o} \qquad a_y =\frac{P_x \cdot J}{n \cdot M_o} \\
-\quad x_{ic} =a_x \qquad y_{ic} =a_y \\
-\quad x_{p,new} =l_x - a_x \qquad y_{p,new} =l_y - a_y \\
-\quad C_u =n \\
+\quad M_o = -\left(P_x \cdot l_y - P_y \cdot l_x\right) \qquad J = \sum d_x^{2} + d_y^{2} \\
+\quad a_x = \frac{-P_y \cdot J}{n \cdot M_o} \qquad a_y = \frac{P_x \cdot J}{n \cdot M_o} \\
+\quad x_{ic} = a_x \qquad y_{ic} = a_y \\
+\quad x_{p,new} = l_x - a_x \qquad y_{p,new} = l_y - a_y \\
+\quad C_u = n \\
 \quad \textbf{for } i \textbf{ in } 0...10 \\
 \quad \left|
 \begin{array}{l}
-\quad M_p =-\left(P_x \cdot y_{p,new} - P_y \cdot x_{p,new}\right) \\
-\quad d_x =d_x - a_x \qquad d_y =d_y - a_y \qquad d =\sqrt{d_x^{2} + d_y^{2}} \\
-\quad d_{sqr} =d^{2} \qquad d_{max} =\text{max}(d) \\
-\quad \Delta =\frac{0.34 \cdot d}{d_{max}} \qquad \frac{R_i}{R_{ult}} =\left(1 - e^{-10 \cdot \Delta}\right)^{0.55} \\
-\quad M =d \cdot \frac{R_i}{R_{ult}} \qquad M_{sum} =\sum M \\
-\quad R_{ult} =\frac{-M_p}{M_{sum}} \\
-\quad R_x =\frac{-d_y}{d} \cdot \frac{R_i}{R_{ult}} \cdot R_{ult} \qquad R_y =\frac{d_x}{d} \cdot \frac{R_i}{R_{ult}} \cdot R_{ult} \\
-\quad C_u =\left|\frac{M_{sum}}{M_p}\right| \\
-\quad F_{xx} =P_x + \sum R_x \qquad F_{yy} =P_y + \sum R_y \qquad F =\sqrt{F_{xx}^{2} + F_{yy}^{2}} \\
-\quad a_x =\frac{-F_{yy} \cdot J}{n \cdot M_o} \qquad a_y =\frac{F_{xx} \cdot J}{n \cdot M_o} \\
-\quad x_{ic} =x_{ic} + a_x \qquad y_{ic} =y_{ic} + a_y \\
-\quad x_{p,new} =x_{p,new} - a_x \qquad y_{p,new} =y_{p,new} - a_y \\
+\quad M_p = -\left(P_x \cdot y_{p,new} - P_y \cdot x_{p,new}\right) \\
+\quad d_x = d_x - a_x \qquad d_y = d_y - a_y \qquad d = \sqrt{d_x^{2} + d_y^{2}} \\
+\quad d_{sqr} = d^{2} \qquad d_{max} = \text{max}(d) \\
+\quad \Delta = 0.34 \frac{d}{d_{max}} \qquad \frac{R_i}{R_{ult}} = \left(1 - e^{-10 \cdot \Delta}\right)^{0.55} \\
+\quad M = d \cdot \frac{R_i}{R_{ult}} \qquad M_{sum} = \sum M \\
+\quad R_{ult} = \frac{-M_p}{M_{sum}} \\
+\quad R_x = \frac{-d_y}{d} \cdot \frac{R_i}{R_{ult}} \cdot R_{ult} \qquad R_y = \frac{d_x}{d} \cdot \frac{R_i}{R_{ult}} \cdot R_{ult} \\
+\quad C_u = \left|\frac{M_{sum}}{M_p}\right| \\
+\quad F_{xx} = P_x + \sum R_x \qquad F_{yy} = P_y + \sum R_y \qquad F = \sqrt{F_{xx}^{2} + F_{yy}^{2}} \\
+\quad a_x = \frac{-F_{yy} \cdot J}{n \cdot M_o} \qquad a_y = \frac{F_{xx} \cdot J}{n \cdot M_o} \\
+\quad x_{ic} = x_{ic} + a_x \qquad y_{ic} = y_{ic} + a_y \\
+\quad x_{p,new} = x_{p,new} - a_x \qquad y_{p,new} = y_{p,new} - a_y \\
 \quad \textbf{if } \left|F\right| < 0.001 \textbf{ then} \\
 \quad \left|
 \begin{array}{l}

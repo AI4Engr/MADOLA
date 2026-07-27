@@ -1,3 +1,5 @@
 Execution completed successfully
 Output:
-  5
+  -0
+  -0.001
+  -1

@@ -309,45 +309,71 @@ table td > p[style] {
 </head>
 <body>
     <div class="container">
-<h1 style="text-align:center">Testing Logical Operators</h1>
-<p style="white-space: pre-wrap">AND operator tests</p>
 <div class="math-expression align-expression">
-$$a = 1 \;\land\; 1 = 1$$
+$$
+\begin{array}{ccccc}
+P_x = 0.6 & \quad \quad P_y = -0.8 & \quad \quad a_x = -0.632 & \quad \quad a_y = -0.474 & \quad \quad M_p = -19.79 \\
+\end{array}
+$$
 </div>
 <div class="math-expression align-expression">
-$$b = 1 \;\land\; 0 = 0$$
+$$
+\begin{array}{cc}
+d_x = \begin{bmatrix}-3 \\ -3 \\ -3 \\ 3 \\ 3 \\ 3\end{bmatrix} & \quad \quad d_y = \begin{bmatrix}-3 \\ 0 \\ 3 \\ -3 \\ 0 \\ 3\end{bmatrix} \\
+\end{array}
+$$
 </div>
 <div class="math-expression align-expression">
-$$c = 0 \;\land\; 1 = 0$$
+$$
+\begin{array}{cc}
+d_x = d_x - a_x = \begin{bmatrix}-1.736 \\ -1.736 \\ -1.736 \\ 4.264 \\ 4.264 \\ 4.264\end{bmatrix} & \quad \quad d_y = d_y - a_y = \begin{bmatrix}-2.052 \\ 0.948 \\ 3.948 \\ -2.052 \\ 0.948 \\ 3.948\end{bmatrix} \\
+\end{array}
+$$
 </div>
 <div class="math-expression align-expression">
-$$d = 0 \;\land\; 0 = 0$$
-</div>
-<p style="white-space: pre-wrap">OR operator tests</p>
-<div class="math-expression align-expression">
-$$e = 1 \;\lor\; 1 = 1$$
-</div>
-<div class="math-expression align-expression">
-$$f = 1 \;\lor\; 0 = 1$$
+$$
+\begin{array}{cc}
+d = \sqrt{d_x^{2} + d_y^{2}} = \begin{bmatrix}3.46238 \\ 2.41497 \\ 4.2043 \\ 4.42404 \\ 3.6628 \\ 5.02594\end{bmatrix} & \quad \quad d_{sqr} = d^{2} = \begin{bmatrix}11.9881 \\ 5.8321 \\ 17.6761 \\ 19.5721 \\ 13.4161 \\ 25.2601\end{bmatrix} \\
+\end{array}
+$$
 </div>
 <div class="math-expression align-expression">
-$$g = 0 \;\lor\; 1 = 1$$
+$$d_{max} = \text{max}(d) = 5.026$$
 </div>
 <div class="math-expression align-expression">
-$$h = 0 \;\lor\; 0 = 0$$
-</div>
-<p style="white-space: pre-wrap">Combined with comparisons</p>
-<div class="math-expression align-expression">
-$$x = 5 = 5$$
+$$\Delta = 0.34 \frac{d}{d_{max}} = \begin{bmatrix}0.234227 \\ 0.163371 \\ 0.284416 \\ 0.299282 \\ 0.247785 \\ 0.34\end{bmatrix}$$
 </div>
 <div class="math-expression align-expression">
-$$result1 = x > 3 \;\land\; x < 10 = 1$$
+$$\frac{R_i}{R_{ult}} = \left(1 - e^{-10 \cdot \Delta}\right)^{0.55} = \begin{bmatrix}0.94594 \\ 0.887415 \\ 0.967568 \\ 0.972101 \\ 0.952933 \\ 0.981505\end{bmatrix}$$
 </div>
 <div class="math-expression align-expression">
-$$result2 = x < 3 \;\lor\; x > 10 = 0$$
+$$M = d \cdot \frac{R_i}{R_{ult}} = \begin{bmatrix}3.27521 \\ 2.14309 \\ 4.06794 \\ 4.30061 \\ 3.4904 \\ 4.93299\end{bmatrix}$$
 </div>
 <div class="math-expression align-expression">
-$$result3 = x > 0 \;\land\; x < 3 = 0$$
+$$M_{sum} = \sum M = 22.21$$
+</div>
+<div class="math-expression align-expression">
+$$R_{ult} = \frac{-M_p}{M_{sum}} = 0.891$$
+</div>
+<div class="math-expression align-expression">
+$$
+\begin{array}{cc}
+R_x = \frac{-d_y}{d} \cdot \frac{R_i}{R_{ult}} \cdot R_{ult} = \begin{bmatrix}0.614914 \\ -0.155198 \\ -0.712379 \\ 0.49456 \\ -0.10988 \\ -0.604501\end{bmatrix} & \quad \quad R_y = \frac{d_x}{d} \cdot \frac{R_i}{R_{ult}} \cdot R_{ult} = \begin{bmatrix}-0.576452 \\ -0.775334 \\ -0.485582 \\ 0.711101 \\ 0.841953 \\ 0.631995\end{bmatrix} \\
+\end{array}
+$$
+</div>
+<div class="math-expression align-expression">
+$$C_u = \left|\frac{M_{sum}}{M_p}\right| = 1.122$$
+</div>
+<div class="math-expression align-expression">
+$$
+\begin{array}{cc}
+F_{xx} = P_x + \sum R_x = 0.128 & \quad \quad F_{yy} = P_y + \sum R_y = -0.452 \\
+\end{array}
+$$
+</div>
+<div class="math-expression align-expression">
+$$F = \sqrt{F_{xx}^{2} + F_{yy}^{2}} = 0.47$$
 </div>
     </div>
 </body>

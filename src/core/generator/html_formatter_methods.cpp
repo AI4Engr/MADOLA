@@ -1277,6 +1277,11 @@ std::string HtmlFormatter::formatValueAsMathPublic(const Value& value) {
             }
             return ss.str();
         }
+    } else if (std::holds_alternative<RecordValue>(value)) {
+        // Records have no established mathematical notation; render as a
+        // bracketed text label (e.g. "[W16x89]") rather than expanding fields.
+        const RecordValue& record = std::get<RecordValue>(value);
+        return "\\text{[" + record.displayLabel + "]}";
     }
     return "UNKNOWN_VALUE";
 }

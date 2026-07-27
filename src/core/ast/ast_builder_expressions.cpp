@@ -32,6 +32,8 @@ ExpressionPtr ASTBuilder::buildExpression(TSNode node, const std::string& source
         return buildFunctionCall(node, source);
     } else if (strcmp(node_type, "method_call") == 0) {
         return buildMethodCall(node, source);
+    } else if (strcmp(node_type, "member_access") == 0) {
+        return buildMemberAccess(node, source);
     } else if (strcmp(node_type, "binary_expression") == 0) {
         return buildBinaryExpression(node, source);
     } else if (strcmp(node_type, "unary_expression") == 0) {
@@ -345,6 +347,27 @@ ExpressionPtr ASTBuilder::buildMethodCall(TSNode node, const std::string& source
     }
 
     return std::make_unique<MethodCall>(std::move(object), methodName, std::move(arguments));
+}
+
+ExpressionPtr ASTBuilder::buildMemberAccess(TSNode node, const std::string& source) {
+    // member_access: primary_expression "." identifier
+    uint32_t childCount = ts_node_child_count(node);
+
+    ExpressionPtr object = nullptr;
+    std::string memberName;
+
+    for (uint32_t i = 0; i < childCount; i++) {
+        TSNode child = ts_node_child(node, i);
+        const char* childType = ts_node_type(child);
+
+        if (strcmp(childType, "primary_expression") == 0) {
+            object = buildExpression(child, source);
+        } else if (strcmp(childType, "identifier") == 0) {
+            memberName = getNodeText(child, source);
+        }
+    }
+
+    return std::make_unique<MemberAccess>(std::move(object), memberName);
 }
 
 ExpressionPtr ASTBuilder::buildBinaryExpression(TSNode node, const std::string& source) {

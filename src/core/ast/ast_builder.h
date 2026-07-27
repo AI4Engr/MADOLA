@@ -47,6 +47,7 @@ private:
     ExpressionPtr buildArchitecturalLength(TSNode node, const std::string& source);
     ExpressionPtr buildFunctionCall(TSNode node, const std::string& source);
     ExpressionPtr buildMethodCall(TSNode node, const std::string& source);
+    ExpressionPtr buildMemberAccess(TSNode node, const std::string& source);
     ExpressionPtr buildBinaryExpression(TSNode node, const std::string& source);
     ExpressionPtr buildUnaryExpression(TSNode node, const std::string& source);
     ExpressionPtr buildRangeExpression(TSNode node, const std::string& source);

@@ -23,8 +23,8 @@ static std::string escapeJsonForPayload(const std::string& input) {
 
 // Render a Value's numeric magnitude and unit as separate fields, matching the
 // {value, unit} shape formula records expose in the payload. Dimensionless doubles
-// get an empty unit string. Arrays/matrices are not broken into value+unit here -
-// the record's "latex" field (via formatStatementAsMath) is the fallback for those.
+// get an empty unit string. Arrays/matrices/records are not broken into value+unit
+// here - the record's "latex" field (via formatStatementAsMath) is the fallback for those.
 static void writeValueAndUnit(std::stringstream& json, const Value& value) {
     if (std::holds_alternative<double>(value)) {
         json << "\"value\":" << std::get<double>(value) << ",\"unit\":\"\"";
@@ -32,7 +32,7 @@ static void writeValueAndUnit(std::stringstream& json, const Value& value) {
         const UnitValue& uv = std::get<UnitValue>(value);
         json << "\"value\":" << uv.value << ",\"unit\":\"" << escapeJsonForPayload(uv.unit) << "\"";
     } else {
-        // Arrays/matrices/other: no single scalar value; consumers should rely on "latex".
+        // Arrays/matrices/records/other: no single scalar value; consumers should rely on "latex".
         json << "\"value\":null,\"unit\":\"\"";
     }
 }

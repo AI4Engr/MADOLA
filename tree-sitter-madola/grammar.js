@@ -273,10 +273,12 @@ module.exports = grammar({
       $.primary_expression,
       $.function_call,
       $.method_call,
+      $.member_access,
       $.unary_expression,
       prec.right(3, seq($.primary_expression, '^', $.power_expression)),
       prec.right(3, seq($.function_call, '^', $.power_expression)),
       prec.right(3, seq($.method_call, '^', $.power_expression)),
+      prec.right(3, seq($.member_access, '^', $.power_expression)),
       prec.right(3, seq($.unary_expression, '^', $.power_expression))
     ),
 
@@ -359,6 +361,15 @@ module.exports = grammar({
       '(',
       optional($.argument_list),
       ')'
+    )),
+
+    // Bare field access on a record value, e.g. `s.Ix` (no arguments/parens —
+    // that's method_call). Shares the same prefix as method_call; whether '('
+    // follows the identifier disambiguates the two with one token of lookahead.
+    member_access: $ => prec(2, seq(
+      $.primary_expression,
+      '.',
+      $.identifier
     )),
 
     argument_list: $ => prec(1, seq(

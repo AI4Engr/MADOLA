@@ -585,6 +585,8 @@ MarkdownFormatter::FormatResult MarkdownFormatter::formatProgramWithExecution(co
                                 ss << "\\end{bmatrix}";
                             }
                         }
+                    } else if (std::holds_alternative<RecordValue>(result)) {
+                        ss << "\\text{[" << std::get<RecordValue>(result).displayLabel << "]}";
                     }
 
                     ss << "\n$$\n\n";
@@ -658,6 +660,8 @@ MarkdownFormatter::FormatResult MarkdownFormatter::formatProgramWithExecution(co
                                 ss << "\\end{bmatrix}";
                             }
                         }
+                    } else if (std::holds_alternative<RecordValue>(result)) {
+                        ss << "\\text{[" << std::get<RecordValue>(result).displayLabel << "]}";
                     }
 
                     ss << "\n$$\n\n";
@@ -718,6 +722,8 @@ MarkdownFormatter::FormatResult MarkdownFormatter::formatProgramWithExecution(co
                                 ss << "\\end{bmatrix}";
                             }
                         }
+                    } else if (std::holds_alternative<RecordValue>(result)) {
+                        ss << "\\text{[" << std::get<RecordValue>(result).displayLabel << "]}";
                     }
                     ss << "\n$$\n\n";
                 }
@@ -797,6 +803,8 @@ MarkdownFormatter::FormatResult MarkdownFormatter::formatProgramWithExecution(co
                                 ss << "\\end{bmatrix}";
                             }
                         }
+                    } else if (std::holds_alternative<RecordValue>(result)) {
+                        ss << "\\text{[" << std::get<RecordValue>(result).displayLabel << "]}";
                     }
 
                     ss << "\n\\end{align}\n";
@@ -1712,6 +1720,8 @@ std::string MarkdownFormatter::formatDecoratedStatementContent(const DecoratedSt
                 } else {
                     ss << unitVal.value;
                 }
+            } else if (std::holds_alternative<RecordValue>(result)) {
+                ss << "\\text{[" << std::get<RecordValue>(result).displayLabel << "]}";
             }
 
             ss << "\n\\end{array}";

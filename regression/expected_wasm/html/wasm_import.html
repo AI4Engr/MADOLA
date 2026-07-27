@@ -92,6 +92,21 @@ h1, h2, h3 {
     border: 1px solid #ddd;
     border-radius: 8px;
     background: #fafafa;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+/* Ensure legacy graph renderers (graph0, graph1, etc.) shrink with the panel */
+.graph-container > div[id^="graph"] {
+    width: 100%;
+}
+
+.graph-container > div[id^="graph"] svg {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
 }
 
 .graph-title {
@@ -99,6 +114,20 @@ h1, h2, h3 {
     font-weight: bold;
     margin-bottom: 15px;
     color: #2c3e50;
+    text-align: center;
+}
+
+.web-graph {
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.web-graph svg {
+    width: 100%;
+    height: auto;
+    display: block;
+    max-width: 100%;
 }
 
 .axis { stroke: #333; }
@@ -192,6 +221,91 @@ table td > p {
 /* Keep right-column paragraph styling (white-space: pre-wrap) intact */
 table td > p[style] {
     white-space: pre-wrap !important;
+}
+
+/* Data table styles for table() function output */
+.table-container {
+    margin: 20px 0;
+    overflow-x: auto;
+}
+
+.data-table {
+    border-collapse: collapse;
+    width: auto;
+    min-width: 300px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+    margin-left: 0.25in;
+}
+
+.data-table thead {
+    background: #3498db;
+    color: white;
+}
+
+.data-table th {
+    padding: 8px 12px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid #2980b9;
+}
+
+.data-table tbody tr {
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.data-table tbody tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+.data-table tbody tr:hover {
+    background-color: #e8f4fc;
+}
+
+.data-table td {
+    padding: 6px 12px;
+    text-align: right;
+}
+
+/* Print styles for PDF output */
+@media print {
+    body {
+        padding: 0;
+        margin: 0;
+        background-color: white;
+    }
+    
+    .container {
+        max-width: 100%;
+        padding: 15px;
+        margin: 0;
+        box-shadow: none;
+        border-radius: 0;
+    }
+    
+    /* Hide source code blocks */
+    .madola-code {
+        display: none !important;
+    }
+    
+    /* Hide graph container borders and backgrounds for cleaner print */
+    .graph-container {
+        border: none;
+        background: white;
+        box-shadow: none;
+        page-break-inside: avoid;
+    }
+    
+    /* Ensure graphs print well */
+    .graph-container svg {
+        max-width: 100%;
+        height: auto;
+    }
+    
+    @page {
+        margin: 0.5in;
+        size: A4;
+    }
 }
     </style>
 </head>

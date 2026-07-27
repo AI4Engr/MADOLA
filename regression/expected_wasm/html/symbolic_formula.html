@@ -309,45 +309,36 @@ table td > p[style] {
 </head>
 <body>
     <div class="container">
-<h1 style="text-align:center">Testing Logical Operators</h1>
-<p style="white-space: pre-wrap">AND operator tests</p>
+<h1>Concise formula syntax: f(x) := expr;</h1>
 <div class="math-expression align-expression">
-$$a = 1 \;\land\; 1 = 1$$
+$$L = 10$$
 </div>
 <div class="math-expression align-expression">
-$$b = 1 \;\land\; 0 = 0$$
+$$E = 29000$$
 </div>
 <div class="math-expression align-expression">
-$$c = 0 \;\land\; 1 = 0$$
+$$I = 800$$
 </div>
 <div class="math-expression align-expression">
-$$d = 0 \;\land\; 0 = 0$$
-</div>
-<p style="white-space: pre-wrap">OR operator tests</p>
-<div class="math-expression align-expression">
-$$e = 1 \;\lor\; 1 = 1$$
+$$\frac{-P \cdot x^{2} \cdot \left(3 \cdot L - x\right)}{6 \cdot E \cdot I}$$
 </div>
 <div class="math-expression align-expression">
-$$f = 1 \;\lor\; 0 = 1$$
+$$tip = deflection(12, L)$$
 </div>
 <div class="math-expression align-expression">
-$$g = 0 \;\lor\; 1 = 1$$
+$$worst = deflection(40, L)$$
 </div>
 <div class="math-expression align-expression">
-$$h = 0 \;\lor\; 0 = 0$$
+$$sign(x) = \begin{cases}
+1 & x > 0 \\
+-1 & x < 0 \\
+0 & \text{otherwise} \\
+\end{cases}$$
 </div>
-<p style="white-space: pre-wrap">Combined with comparisons</p>
-<div class="math-expression align-expression">
-$$x = 5 = 5$$
-</div>
-<div class="math-expression align-expression">
-$$result1 = x > 3 \;\land\; x < 10 = 1$$
-</div>
-<div class="math-expression align-expression">
-$$result2 = x < 3 \;\lor\; x > 10 = 0$$
-</div>
-<div class="math-expression align-expression">
-$$result3 = x > 0 \;\land\; x < 3 = 0$$
+<div class="execution-result">
+-0
+-0.001
+-1
 </div>
     </div>
 </body>

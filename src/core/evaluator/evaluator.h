@@ -5,6 +5,7 @@
 #include "../generator/wasm_addon_loader.h"
 #include "../generator/unit_system.h"
 #include <unordered_map>
+#include <map>
 #include <string>
 #include <variant>
 #include <memory>
@@ -66,7 +67,40 @@ struct ArrayValue {
         : isColumnVector(false), isMatrix(true), matrixRows(std::move(rows)) {}
 };
 
-using Value = std::variant<double, std::string, ComplexValue, UnitValue, ArrayValue>;
+// Forward declaration only: RecordValue's field map must reference Value, but
+// Value (the variant below) cannot be a complete type until RecordValue itself
+// is fully defined first — a recursive-type chicken-and-egg problem. Broken via
+// a shared_ptr indirection (see RecordValue's full definition below, after
+// Value is complete) rather than boost::recursive_wrapper, since boost::variant
+// isn't among the header-only Boost libs already vendored for SymEngine.
+struct RecordValue;
+
+using Value = std::variant<double, std::string, ComplexValue, UnitValue, ArrayValue, RecordValue>;
+
+// A record/object value with named fields, e.g. the result of a built-in
+// constructor like `aisc("W16x89")`, accessed via member access (`s.Ix`).
+// Fields are read-only after construction (no `s.Ix := 5;` in this version).
+//
+// Uses shared_ptr (not unique_ptr) because Value is copied by value throughout
+// the evaluator (e.g. `Environment oldEnv = env;` on every function call) —
+// unique_ptr would make RecordValue, and therefore Value, non-copyable and
+// break those call sites. Since fields are immutable after construction,
+// sharing the underlying map across copies is not observable.
+struct RecordValue {
+    // Display label shown when a bare `s := ctor(...)` statement is rendered
+    // (e.g. "s = [W16x89]") — kept separate from `fields` so renderers never
+    // have to guess which field (if any) is "the name".
+    std::string displayLabel;
+    std::shared_ptr<std::map<std::string, Value>> fields;
+
+    RecordValue() : fields(std::make_shared<std::map<std::string, Value>>()) {}
+
+    // Null-tolerant: the default constructor always allocates, but a future
+    // constructor (or a moved-from instance) could leave `fields` empty, and
+    // these are the public read path every record consumer goes through.
+    bool has(const std::string& name) const { return fields && fields->count(name) > 0; }
+    const Value& at(const std::string& name) const { return fields->at(name); }
+};
 
 struct GraphData {
     std::vector<double> x_values;
@@ -246,6 +280,7 @@ private:
     Value evaluateSummation(const Expression& expr, const std::string& variable, const Expression& lowerBound, const Expression& upperBound);
     Value evaluateFunctionCall(const FunctionCall& expr);
     Value evaluateMethodCall(const MethodCall& expr);
+    Value evaluateMemberAccess(const MemberAccess& expr);
     Value evaluateUnitExpression(const UnitExpression& expr);
     Value evaluateArrayExpression(const ArrayExpression& expr);
     Value evaluateArrayAccess(const ArrayAccess& expr);
