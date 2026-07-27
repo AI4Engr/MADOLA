@@ -16,6 +16,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Sync shared/js into web/js/shared (gitignored, generated at build time)
+        run: node scripts/sync-shared.js
+
       - name: Upload web folder
         uses: actions/upload-pages-artifact@v3
         with:
