@@ -264,7 +264,23 @@ if(WITH_SYMENGINE)
             list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_BINARY_DIR}")
         endif()
 
+        # SymEngine is a vendored third-party library; silence its own warnings so they
+        # don't drown out warnings from our code. Save/restore flags so this only affects
+        # SymEngine's own compilation, not the rest of the project.
+        set(_madola_saved_cxx_flags "${CMAKE_CXX_FLAGS}")
+        set(_madola_saved_c_flags "${CMAKE_C_FLAGS}")
+        if(MSVC)
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /w")
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /w")
+        else()
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -w")
+        endif()
+
         add_subdirectory(external/symengine EXCLUDE_FROM_ALL)
+
+        set(CMAKE_CXX_FLAGS "${_madola_saved_cxx_flags}")
+        set(CMAKE_C_FLAGS "${_madola_saved_c_flags}")
     endif()
 endif()
 
@@ -285,12 +301,15 @@ add_dependencies(madola_core_obj generate_css_header)
 # Target-specific include directories (better than global include_directories)
 target_include_directories(madola_core_obj PUBLIC
     ${CMAKE_SOURCE_DIR}/src/core
+)
+# Third-party headers marked SYSTEM so their warnings don't drown out ours.
+target_include_directories(madola_core_obj SYSTEM PUBLIC
     ${CMAKE_SOURCE_DIR}/external/eigen
 )
 
 # Add SymEngine include directories if enabled
 if(WITH_SYMENGINE)
-    target_include_directories(madola_core_obj PUBLIC
+    target_include_directories(madola_core_obj SYSTEM PUBLIC
         ${CMAKE_SOURCE_DIR}/external/symengine
         ${CMAKE_SOURCE_DIR}/external/symengine/symengine
         ${CMAKE_BINARY_DIR}/external/symengine

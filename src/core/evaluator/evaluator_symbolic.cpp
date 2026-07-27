@@ -263,7 +263,7 @@ Value Evaluator::evaluateSymbolicIntegral(const Expression& expr, const std::str
 }
 
 // Symbolic matrix differentiation
-Value Evaluator::evaluateSymbolicMatrixDiff(const ArrayValue& matrix, const std::string& variable) {
+Value Evaluator::evaluateSymbolicMatrixDiff(const ArrayValue& matrix, const std::string& /*variable*/) {
     try {
         if (!matrix.isMatrix) {
             throw std::runtime_error("Expected matrix for symbolic matrix differentiation");
@@ -272,16 +272,11 @@ Value Evaluator::evaluateSymbolicMatrixDiff(const ArrayValue& matrix, const std:
         // Create result matrix
         std::vector<std::vector<std::string>> resultMatrix;
 
-        // Differentiate each element
+        // Differentiate each element. Every element here is a numeric constant
+        // (ArrayValue only stores doubles), so its derivative is always 0
+        // regardless of which variable is being differentiated with respect to.
         for (const auto& row : matrix.matrixRows) {
-            std::vector<std::string> resultRow;
-            for (double element : row) {
-                // Create a number expression
-                Number numExpr(element);
-
-                // Differentiate (constant derivative is 0)
-                resultRow.push_back("0");
-            }
+            std::vector<std::string> resultRow(row.size(), "0");
             resultMatrix.push_back(resultRow);
         }
 
