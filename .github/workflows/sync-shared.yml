@@ -1,0 +1,43 @@
+name: Sync shared/js copies
+
+# web/js/shared/ and app/js/shared/ are generated copies of shared/js/ (the source
+# of truth). They are committed on purpose because playground.madola.org deploys
+# from a plain git checkout — anything absent from the repo 404s in production.
+#
+# This workflow keeps those copies in lockstep automatically, so nobody has to
+# remember to run `npm run sync-shared` by hand.
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "shared/js/**"
+      - "scripts/sync-shared.js"
+      - ".github/workflows/sync-shared.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Regenerate copies from shared/js
+        run: node scripts/sync-shared.js
+
+      - name: Commit copies if they drifted
+        run: |
+          # app/ is gitignored in this repo, so only web/js/shared/ is tracked here.
+          if git diff --quiet -- web/js/shared/; then
+            echo "Copies already in sync — nothing to commit."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web/js/shared/
+          # [skip ci] keeps this bot commit from re-triggering workflows.
+          git commit -m "chore: sync web/js/shared from shared/js [skip ci]"
+          git push

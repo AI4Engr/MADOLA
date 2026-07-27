@@ -1,8 +1,10 @@
 # Claude Code settings (local)
 .claude/settings.local.json
 
-# Generated copies of shared/js/ (source of truth is shared/js/; run npm run sync-shared)
-web/js/shared/
+# NOTE: web/js/shared/ is a generated copy of shared/js/ (source of truth), but it IS
+# committed on purpose: playground.madola.org is deployed from a plain git checkout
+# (Vercel), so anything gitignored here 404s in production. After editing shared/js/,
+# run `npm run sync-shared` and commit the regenerated copies alongside it.
 
 # Dependencies
 node_modules/
