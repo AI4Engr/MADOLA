@@ -479,6 +479,14 @@ std::string HtmlFormatter::generateOrderedContent(const Program& program, Evalua
                         if (!assignment->inlineComment.empty()) {
                             inlineCommentText = escapeHtml(assignment->inlineComment);
                         }
+                    } else if (const auto* recordFieldAssignment = dynamic_cast<const RecordFieldAssignmentStatement*>(currentStmt.get())) {
+                        // Format record field assignment WITHOUT inline comment in the math expression
+                        leftMath = "$$" + convertToMathJax(recordFieldAssignment->recordName) + "." + recordFieldAssignment->fieldName + " = " +
+                                   formatExpressionAsMath(*recordFieldAssignment->expression, evaluator) + "$$";
+                        // Extract inline comment separately for right column
+                        if (!recordFieldAssignment->inlineComment.empty()) {
+                            inlineCommentText = escapeHtml(recordFieldAssignment->inlineComment);
+                        }
                     } else if (const auto* funcDecl = dynamic_cast<const FunctionDeclaration*>(currentStmt.get())) {
                         leftMath = formatStatementAsMath(*funcDecl, evaluator);
                     } else if (const auto* decoratedStmt = dynamic_cast<const DecoratedStatement*>(currentStmt.get())) {
@@ -489,6 +497,13 @@ std::string HtmlFormatter::generateOrderedContent(const Program& program, Evalua
                                        formatExpressionAsMath(*innerAssignment->expression, evaluator) + "$$";
                             if (!innerAssignment->inlineComment.empty()) {
                                 inlineCommentText = escapeHtml(innerAssignment->inlineComment);
+                            }
+                        } else if (const auto* innerRecordFieldAssignment = dynamic_cast<const RecordFieldAssignmentStatement*>(decoratedStmt->statement.get())) {
+                            // Format WITHOUT inline comment
+                            leftMath = "$$" + convertToMathJax(innerRecordFieldAssignment->recordName) + "." + innerRecordFieldAssignment->fieldName + " = " +
+                                       formatExpressionAsMath(*innerRecordFieldAssignment->expression, evaluator) + "$$";
+                            if (!innerRecordFieldAssignment->inlineComment.empty()) {
+                                inlineCommentText = escapeHtml(innerRecordFieldAssignment->inlineComment);
                             }
                         } else {
                             leftMath = formatStatementAsMath(*decoratedStmt->statement, evaluator);
@@ -625,6 +640,16 @@ std::string HtmlFormatter::generateOrderedContent(const Program& program, Evalua
                                                 }
                                             }
                                             html << result;
+                                        } else if (const auto* recordFieldAssignment = dynamic_cast<const RecordFieldAssignmentStatement*>(arrayStmt.get())) {
+                                            std::string result = convertToMathJax(recordFieldAssignment->recordName) + "." + recordFieldAssignment->fieldName + " = " + formatExpressionAsMath(*recordFieldAssignment->expression, evaluator);
+                                            if (!recordFieldAssignment->inlineComment.empty()) {
+                                                if (recordFieldAssignment->commentBefore) {
+                                                    result = "\\text{" + recordFieldAssignment->inlineComment + "} \\quad " + result;
+                                                } else {
+                                                    result = result + " \\quad \\text{" + recordFieldAssignment->inlineComment + "}";
+                                                }
+                                            }
+                                            html << result;
                                         } else if (const auto* decoratedArrayStmt = dynamic_cast<const DecoratedStatement*>(arrayStmt.get())) {
                                             if (decoratedArrayStmt->hasDecorator("eval")) {
                                                 // Handle @eval decorated statements in arrays
@@ -632,6 +657,12 @@ std::string HtmlFormatter::generateOrderedContent(const Program& program, Evalua
                                                     std::string result = convertToMathJax(assignment->variable) + " = " + formatExpressionAsMath(*assignment->expression, evaluator);
                                                     result += " = ";
                                                     Value evalResult = evaluator.evaluateExpression(*assignment->expression);
+                                                    result += formatValueAsMath(evalResult);
+                                                    html << result;
+                                                } else if (const auto* recordFieldAssignment = dynamic_cast<const RecordFieldAssignmentStatement*>(decoratedArrayStmt->statement.get())) {
+                                                    std::string result = convertToMathJax(recordFieldAssignment->recordName) + "." + recordFieldAssignment->fieldName + " = " + formatExpressionAsMath(*recordFieldAssignment->expression, evaluator);
+                                                    result += " = ";
+                                                    Value evalResult = evaluator.evaluateExpression(*recordFieldAssignment->expression);
                                                     result += formatValueAsMath(evalResult);
                                                     html << result;
                                                 } else if (const auto* exprStmt = dynamic_cast<const ExpressionStatement*>(decoratedArrayStmt->statement.get())) {
@@ -651,6 +682,14 @@ std::string HtmlFormatter::generateOrderedContent(const Program& program, Evalua
                                                     Value evalResult = evaluator.evaluateExpression(*assignment->expression);
                                                     result += formatValueAsMath(evalResult);
                                                     html << result;
+                                                } else if (const auto* recordFieldAssignment = dynamic_cast<const RecordFieldAssignmentStatement*>(decoratedArrayStmt->statement.get())) {
+                                                    std::string result = convertToMathJax(recordFieldAssignment->recordName) + "." + recordFieldAssignment->fieldName + " = " + formatExpressionAsMath(*recordFieldAssignment->expression, evaluator);
+                                                    result += " = ";
+                                                    result += formatExpressionWithValuesAsMath(*recordFieldAssignment->expression, evaluator);
+                                                    result += " = ";
+                                                    Value evalResult = evaluator.evaluateExpression(*recordFieldAssignment->expression);
+                                                    result += formatValueAsMath(evalResult);
+                                                    html << result;
                                                 }
                                             } else if (decoratedArrayStmt->hasDecorator("resolveAlign")) {
                                                 // Handle @resolveAlign decorated statements in arrays
@@ -664,6 +703,16 @@ std::string HtmlFormatter::generateOrderedContent(const Program& program, Evalua
                                                     Value result = evaluator.evaluateExpression(*assignment->expression);
                                                     html << formatValueAsMath(result);
                                                     html << "\n\\end{array}";
+                                                } else if (const auto* recordFieldAssignment = dynamic_cast<const RecordFieldAssignmentStatement*>(decoratedArrayStmt->statement.get())) {
+                                                    html << "\\begin{array}{l}\n";
+                                                    html << convertToMathJax(recordFieldAssignment->recordName) << "." << recordFieldAssignment->fieldName << " = " << formatExpressionAsMath(*recordFieldAssignment->expression, evaluator);
+                                                    html << " \\\\\n";
+                                                    html << "\\quad = " << formatExpressionWithValuesAsMath(*recordFieldAssignment->expression, evaluator);
+                                                    html << " \\\\\n";
+                                                    html << "\\quad = ";
+                                                    Value result = evaluator.evaluateExpression(*recordFieldAssignment->expression);
+                                                    html << formatValueAsMath(result);
+                                                    html << "\n\\end{array}";
                                                 }
                                             } else if (const auto* assignment = dynamic_cast<const AssignmentStatement*>(decoratedArrayStmt->statement.get())) {
                                                 std::string result = convertToMathJax(assignment->variable) + " = " + formatExpressionAsMath(*assignment->expression, evaluator);
@@ -672,6 +721,16 @@ std::string HtmlFormatter::generateOrderedContent(const Program& program, Evalua
                                                         result = "\\text{" + assignment->inlineComment + "} \\quad " + result;
                                                     } else {
                                                         result = result + " \\quad \\text{" + assignment->inlineComment + "}";
+                                                    }
+                                                }
+                                                html << result;
+                                            } else if (const auto* recordFieldAssignment = dynamic_cast<const RecordFieldAssignmentStatement*>(decoratedArrayStmt->statement.get())) {
+                                                std::string result = convertToMathJax(recordFieldAssignment->recordName) + "." + recordFieldAssignment->fieldName + " = " + formatExpressionAsMath(*recordFieldAssignment->expression, evaluator);
+                                                if (!recordFieldAssignment->inlineComment.empty()) {
+                                                    if (recordFieldAssignment->commentBefore) {
+                                                        result = "\\text{" + recordFieldAssignment->inlineComment + "} \\quad " + result;
+                                                    } else {
+                                                        result = result + " \\quad \\text{" + recordFieldAssignment->inlineComment + "}";
                                                     }
                                                 }
                                                 html << result;
@@ -708,6 +767,8 @@ std::string HtmlFormatter::generateOrderedContent(const Program& program, Evalua
                 if (decoratedStmt->hasDecorator("result")) {
                     if (const auto* assignment = dynamic_cast<const AssignmentStatement*>(decoratedStmt->statement.get())) {
                         html << " data-result-var=\"" << assignment->variable << "\"";
+                    } else if (const auto* recordFieldAssignment = dynamic_cast<const RecordFieldAssignmentStatement*>(decoratedStmt->statement.get())) {
+                        html << " data-result-var=\"" << recordFieldAssignment->recordName << "." << recordFieldAssignment->fieldName << "\"";
                     }
                 }
             }

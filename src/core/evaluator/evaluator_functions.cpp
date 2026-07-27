@@ -254,6 +254,39 @@ Value Evaluator::callFunction(const std::string& name, const std::vector<Value>&
         return rec;
     }
 
+    if (resolvedName == "section") {
+        // Eager construction: look up a shape by name immediately. Contains no
+        // steel/domain data itself — queries the "section" table registered at
+        // runtime via Evaluator::registerLookupTable (e.g. by app/'s private JS
+        // through the WASM-exported register_lookup_table).
+        if (arguments.size() != 1) {
+            throw std::runtime_error("Function section expects 1 argument (shape name), got " + std::to_string(arguments.size()));
+        }
+        if (!std::holds_alternative<std::string>(arguments[0])) {
+            throw std::runtime_error("Function section expects a string shape name, e.g. section(\"W16X59\")");
+        }
+        const std::string& shapeName = std::get<std::string>(arguments[0]);
+        Value rec = lookupRecordFromTable("section", shapeName);
+        RecordValue& recordValue = std::get<RecordValue>(rec);
+        (*recordValue.fields)["size"] = shapeName;
+        recordValue.displayLabel = shapeName;
+        return rec;
+    }
+
+    if (resolvedName == "Section") {
+        // Lazy construction: an empty placeholder record. Assigning to its
+        // "size" field later (s.size = "W16X59";) triggers the same lookup
+        // this eager form performs immediately — see
+        // Evaluator::executeRecordFieldAssignment.
+        if (!arguments.empty()) {
+            throw std::runtime_error("Function Section expects 0 arguments, got " + std::to_string(arguments.size()));
+        }
+        RecordValue rec;
+        rec.displayLabel = "";
+        (*rec.fields)["size"] = std::string("");
+        return rec;
+    }
+
     if (resolvedName == "sqrt") {
         if (arguments.size() != 1) {
             throw std::runtime_error("Function sqrt expects 1 argument, got " + std::to_string(arguments.size()));
@@ -1321,6 +1354,25 @@ Value Evaluator::evaluateMemberAccess(const MemberAccess& expr) {
     }
 
     throw std::runtime_error("Member access ('.') is only supported on records");
+}
+
+Value Evaluator::lookupRecordFromTable(const std::string& tableName, const std::string& key) {
+    auto tableIt = s_lookupTables.find(tableName);
+    if (tableIt == s_lookupTables.end()) {
+        throw std::runtime_error("Lookup table '" + tableName + "' is not registered "
+            "(app must register it at startup before using " + tableName + "(...))");
+    }
+    auto rowIt = tableIt->second.find(key);
+    if (rowIt == tableIt->second.end()) {
+        throw std::runtime_error("Unknown " + tableName + " entry: '" + key + "'");
+    }
+
+    // Deep-copy fields so the caller's RecordValue never aliases (and can never
+    // corrupt via a later field assignment) the canonical stored template row.
+    RecordValue result;
+    result.displayLabel = rowIt->second.displayLabel;
+    result.fields = std::make_shared<std::map<std::string, Value>>(*rowIt->second.fields);
+    return result;
 }
 
 namespace {

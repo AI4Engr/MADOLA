@@ -227,6 +227,26 @@ std::string HtmlFormatter::generateTypstPayload(const Program& program) {
                 continue;
             }
 
+            if (const auto* recordFieldAssignment = dynamic_cast<const RecordFieldAssignmentStatement*>(inner)) {
+                // s.field = expr - like ArrayAssignmentStatement, a distinct AST node from
+                // AssignmentStatement, so it needs its own branch here or it silently
+                // vanishes from the payload. formatStatementAsMath handles the "record.field
+                // = expr" rendering directly (used by the HTML path), so reuse it here for
+                // the latex field; the target isn't a plain variable, so value/unit are left
+                // null - "latex" is authoritative, matching the array-element branch above.
+                if (!first) json << ",";
+                first = false;
+                std::string latex = formatStatementAsMath(*stmt, evaluator);
+                if (latex.empty()) {
+                    std::string exprLatex = formatExpressionAsMath(*recordFieldAssignment->expression, evaluator);
+                    latex = convertToMathJax(recordFieldAssignment->recordName) + "." + recordFieldAssignment->fieldName + " = " + exprLatex;
+                }
+                std::string name = recordFieldAssignment->recordName + "." + recordFieldAssignment->fieldName;
+                json << "{\"type\":\"formula\",\"name\":\"" << escapeJsonForPayload(name)
+                     << "\",\"latex\":\"" << escapeJsonForPayload(latex) << "\",\"value\":null,\"unit\":\"\"}";
+                continue;
+            }
+
             // svg() calls, either as a bare expression statement or wrapped in print().
             bool isSvgCall = false;
             if (const auto* exprStmt = dynamic_cast<const ExpressionStatement*>(inner)) {

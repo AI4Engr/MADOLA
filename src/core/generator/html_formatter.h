@@ -43,6 +43,7 @@ private:
     std::string formatStatementWithDepth(const Statement& stmt, int depth = 0);
     std::string formatStatementWithDepth(const Statement& stmt, int depth, bool inFunction);
     std::string formatAssignment(const AssignmentStatement& stmt);
+    std::string formatRecordFieldAssignment(const RecordFieldAssignmentStatement& stmt);
     std::string formatPrint(const PrintStatement& stmt);
     std::string formatExpressionStatement(const ExpressionStatement& stmt);
     std::string formatFunctionDeclaration(const FunctionDeclaration& stmt);

@@ -78,8 +78,11 @@ struct RecordValue;
 using Value = std::variant<double, std::string, ComplexValue, UnitValue, ArrayValue, RecordValue>;
 
 // A record/object value with named fields, e.g. the result of a built-in
-// constructor like `aisc("W16x89")`, accessed via member access (`s.Ix`).
-// Fields are read-only after construction (no `s.Ix := 5;` in this version).
+// constructor like `section("W16x89")`, accessed via member access (`s.Ix`).
+// Fields can be reassigned via `s.field = ...;` (RecordFieldAssignmentStatement,
+// see Evaluator::executeRecordFieldAssignment) — every assignment copy-on-writes
+// a fresh fields map, so an alias created earlier via `t := s;` is never mutated
+// by a later `s.field = ...;`.
 //
 // Uses shared_ptr (not unique_ptr) because Value is copied by value throughout
 // the evaluator (e.g. `Environment oldEnv = env;` on every function call) —
@@ -101,6 +104,14 @@ struct RecordValue {
     bool has(const std::string& name) const { return fields && fields->count(name) > 0; }
     const Value& at(const std::string& name) const { return fields->at(name); }
 };
+
+// A runtime-registered lookup table: table name (e.g. "section") -> row key
+// (e.g. a shape name like "W16X59") -> the RecordValue for that row. Contains
+// zero domain knowledge — callers (e.g. app/'s private JS, via the WASM-exported
+// register_lookup_table) decide what a table/row means; the evaluator only
+// knows how to store and query it. See Evaluator::registerLookupTable and
+// Evaluator::lookupRecordFromTable.
+using LookupTable = std::map<std::string, std::map<std::string, RecordValue>>;
 
 struct GraphData {
     std::vector<double> x_values;
@@ -231,6 +242,16 @@ public:
     void executeStatement(const Statement& stmt, std::vector<std::string>& outputs);
     std::string valueToString(const Value& value);
 
+    // Registers (or replaces) a persistent, name-keyed lookup table, e.g. a table
+    // of steel section records. Static so the data survives across the fresh
+    // per-call `Evaluator evaluator;` construction pattern used throughout
+    // wasm_interface.cpp (see evaluate_madola, svg_eval_curve, eval_named_value) —
+    // there is no persistent Evaluator instance between WASM calls today. A full
+    // replace (not merge) keeps re-registration idempotent across app reloads.
+    // Contains no domain knowledge of what the table/rows mean.
+    static void registerLookupTable(const std::string& tableName,
+                                     const std::map<std::string, RecordValue>& rows);
+
     // Interactive SVG curve recompute (Phase 2): after `evaluate(program)` has already
     // populated `env` and returned `svgs` (the collected SvgData, needed for the width/
     // height/extents that fix the pixel transform), rebind a single variable (e.g. a
@@ -261,8 +282,15 @@ private:
     std::vector<SvgData> collectedSvgs;
     std::vector<ProgramPtr> importedPrograms;  // Keep imported programs alive
 
+    // Persistent runtime lookup tables (e.g. a steel-section table), populated via
+    // registerLookupTable() / the WASM-exported register_lookup_table(). Static so
+    // the data outlives any single Evaluator instance (see registerLookupTable's
+    // doc comment above for why). Contains no hardcoded steel/domain data itself.
+    static LookupTable s_lookupTables;
+
     void executeAssignment(const AssignmentStatement& stmt);
     void executeArrayAssignment(const ArrayAssignmentStatement& stmt);
+    void executeRecordFieldAssignment(const RecordFieldAssignmentStatement& stmt);
     void executePrint(const PrintStatement& stmt, std::vector<std::string>& outputs);
     void executeExpressionStatement(const ExpressionStatement& stmt, std::vector<std::string>& outputs);
     void executeFunction(const FunctionDeclaration& stmt);
@@ -281,6 +309,11 @@ private:
     Value evaluateFunctionCall(const FunctionCall& expr);
     Value evaluateMethodCall(const MethodCall& expr);
     Value evaluateMemberAccess(const MemberAccess& expr);
+    // Queries a registered lookup table by (tableName, key), e.g. ("section", "W16X59").
+    // Throws if the table isn't registered or the key isn't found. Returns a RecordValue
+    // whose fields map is deep-copied from the stored row, so the caller's copy can never
+    // alias (and corrupt) the canonical stored template via a later field assignment.
+    Value lookupRecordFromTable(const std::string& tableName, const std::string& key);
     Value evaluateUnitExpression(const UnitExpression& expr);
     Value evaluateArrayExpression(const ArrayExpression& expr);
     Value evaluateArrayAccess(const ArrayAccess& expr);

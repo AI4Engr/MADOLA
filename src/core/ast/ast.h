@@ -481,6 +481,36 @@ public:
     }
 };
 
+// Assignment to a field of an existing record variable, e.g. `s.size = "W16X59";`.
+// Mirrors ArrayAssignmentStatement's shape: the target is decomposed into a bare
+// record name plus a field name, not represented as a generic LHS Expression.
+class RecordFieldAssignmentStatement : public Statement {
+public:
+    std::string recordName;
+    std::string fieldName;
+    ExpressionPtr expression;
+    std::string inlineComment;
+    bool commentBefore;
+
+    RecordFieldAssignmentStatement(const std::string& recName, const std::string& fldName,
+                                    ExpressionPtr expr, const std::string& comment = "", bool before = false)
+        : recordName(recName), fieldName(fldName), expression(std::move(expr)),
+          inlineComment(comment), commentBefore(before) {}
+
+    std::string toString() const override {
+        std::string result = recordName + "." + fieldName + " = ";
+        if (!inlineComment.empty() && commentBefore) {
+            result += "|-" + inlineComment + " ";
+        }
+        result += expression->toString();
+        if (!inlineComment.empty() && !commentBefore) {
+            result += " -|" + inlineComment;
+        }
+        result += ";";
+        return result;
+    }
+};
+
 class PrintStatement : public Statement {
 public:
     ExpressionPtr expression;

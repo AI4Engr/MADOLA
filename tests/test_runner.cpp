@@ -261,6 +261,137 @@ void test_record_undefined_field_error(TestSuite& suite) {
     });
 }
 
+// Helper: register a small mock "section" lookup table (not real AISC data) so
+// section()/Section()/s.field=... tests don't depend on any private data source.
+void registerMockSectionTable() {
+    RecordValue w16x59;
+    w16x59.displayLabel = "W16X59";
+    (*w16x59.fields)["size"] = std::string("W16X59");
+    (*w16x59.fields)["Ix"] = 954.0;
+    (*w16x59.fields)["A"] = 17.3;
+
+    Evaluator::registerLookupTable("section", { {"W16X59", w16x59} });
+}
+
+void test_section_function_call_construction(TestSuite& suite) {
+    suite.run_test("section(name) Function Call Construction", [&suite]() {
+        registerMockSectionTable();
+
+        auto program = std::make_unique<Program>();
+        program->addStatement(std::make_unique<VersionStatement>("0.01"));
+
+        // s := section("W16X59");
+        std::vector<ExpressionPtr> args;
+        args.push_back(std::make_unique<StringLiteral>("W16X59"));
+        auto call = std::make_unique<FunctionCall>("section", std::move(args));
+        auto assignment = std::make_unique<AssignmentStatement>("s", std::move(call));
+        program->addStatement(std::move(assignment));
+
+        // print(s.Ix);
+        auto sIdent = std::make_unique<Identifier>("s");
+        auto memberIx = std::make_unique<MemberAccess>(std::move(sIdent), "Ix");
+        auto printIx = std::make_unique<PrintStatement>(std::move(memberIx));
+        program->addStatement(std::move(printIx));
+
+        Evaluator evaluator;
+        auto result = evaluator.evaluate(*program);
+
+        suite.assert_true(result.success, "Evaluation should succeed, error: " + result.error);
+        suite.assert_equal("954", result.outputs[0]);
+    });
+}
+
+void test_section_field_assignment_construction(TestSuite& suite) {
+    suite.run_test("Section() + s.size= Field Assignment Construction", [&suite]() {
+        registerMockSectionTable();
+
+        auto program = std::make_unique<Program>();
+        program->addStatement(std::make_unique<VersionStatement>("0.01"));
+
+        // s := Section();
+        std::vector<ExpressionPtr> noArgs;
+        auto ctorCall = std::make_unique<FunctionCall>("Section", std::move(noArgs));
+        auto assignment = std::make_unique<AssignmentStatement>("s", std::move(ctorCall));
+        program->addStatement(std::move(assignment));
+
+        // s.size = "W16X59";
+        auto sizeValue = std::make_unique<StringLiteral>("W16X59");
+        auto fieldAssign = std::make_unique<RecordFieldAssignmentStatement>("s", "size", std::move(sizeValue));
+        program->addStatement(std::move(fieldAssign));
+
+        // print(s.Ix);
+        auto sIdent = std::make_unique<Identifier>("s");
+        auto memberIx = std::make_unique<MemberAccess>(std::move(sIdent), "Ix");
+        auto printIx = std::make_unique<PrintStatement>(std::move(memberIx));
+        program->addStatement(std::move(printIx));
+
+        Evaluator evaluator;
+        auto result = evaluator.evaluate(*program);
+
+        suite.assert_true(result.success, "Evaluation should succeed, error: " + result.error);
+        suite.assert_equal("954", result.outputs[0]);
+    });
+}
+
+void test_section_field_assignment_copy_on_write(TestSuite& suite) {
+    suite.run_test("s.size= Does Not Mutate Aliased Record (Copy-on-Write)", [&suite]() {
+        registerMockSectionTable();
+
+        auto program = std::make_unique<Program>();
+        program->addStatement(std::make_unique<VersionStatement>("0.01"));
+
+        // s := Section();
+        std::vector<ExpressionPtr> noArgs;
+        auto ctorCall = std::make_unique<FunctionCall>("Section", std::move(noArgs));
+        auto assignS = std::make_unique<AssignmentStatement>("s", std::move(ctorCall));
+        program->addStatement(std::move(assignS));
+
+        // t := s;
+        auto sIdentForT = std::make_unique<Identifier>("s");
+        auto assignT = std::make_unique<AssignmentStatement>("t", std::move(sIdentForT));
+        program->addStatement(std::move(assignT));
+
+        // s.size = "W16X59";
+        auto sizeValue = std::make_unique<StringLiteral>("W16X59");
+        auto fieldAssign = std::make_unique<RecordFieldAssignmentStatement>("s", "size", std::move(sizeValue));
+        program->addStatement(std::move(fieldAssign));
+
+        // print(t.size);
+        auto tIdent = std::make_unique<Identifier>("t");
+        auto memberSize = std::make_unique<MemberAccess>(std::move(tIdent), "size");
+        auto printSize = std::make_unique<PrintStatement>(std::move(memberSize));
+        program->addStatement(std::move(printSize));
+
+        Evaluator evaluator;
+        auto result = evaluator.evaluate(*program);
+
+        suite.assert_true(result.success, "Evaluation should succeed, error: " + result.error);
+        suite.assert_equal("", result.outputs[0]);
+    });
+}
+
+void test_section_unknown_shape_error(TestSuite& suite) {
+    suite.run_test("section(\"unknown\") Reports Unknown Entry Error", [&suite]() {
+        registerMockSectionTable();
+
+        auto program = std::make_unique<Program>();
+        program->addStatement(std::make_unique<VersionStatement>("0.01"));
+
+        std::vector<ExpressionPtr> args;
+        args.push_back(std::make_unique<StringLiteral>("W99X99"));
+        auto call = std::make_unique<FunctionCall>("section", std::move(args));
+        auto assignment = std::make_unique<AssignmentStatement>("s", std::move(call));
+        program->addStatement(std::move(assignment));
+
+        Evaluator evaluator;
+        auto result = evaluator.evaluate(*program);
+
+        suite.assert_true(!result.success, "Evaluation should fail for an unknown shape");
+        suite.assert_true(result.error.find("Unknown section entry") != std::string::npos,
+                         "Error should mention unknown section entry, got: " + result.error);
+    });
+}
+
 int main() {
     std::cout << "MADOLA Language Test Suite" << std::endl;
     std::cout << "==========================" << std::endl;
@@ -277,6 +408,10 @@ int main() {
     test_markdown_with_execution(suite);
     test_record_member_access(suite);
     test_record_undefined_field_error(suite);
+    test_section_function_call_construction(suite);
+    test_section_field_assignment_construction(suite);
+    test_section_field_assignment_copy_on_write(suite);
+    test_section_unknown_shape_error(suite);
 
     suite.summary();
     return suite.get_exit_code();

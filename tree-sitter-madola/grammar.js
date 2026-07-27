@@ -52,7 +52,8 @@ module.exports = grammar({
     assignment_statement: $ => seq(
       choice(
         $.identifier,
-        $.array_access
+        $.array_access,
+        $.member_access
       ),
       choice(':=', '='),
       $.expression,

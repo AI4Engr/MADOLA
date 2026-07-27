@@ -186,6 +186,8 @@ void HtmlFormatter::collectNamesInStatements(const std::vector<StatementPtr>& st
             userDefinedNames.insert(a->variable);
         } else if (const auto* aa = dynamic_cast<const ArrayAssignmentStatement*>(stmt)) {
             userDefinedNames.insert(aa->arrayName);
+        } else if (const auto* rfa = dynamic_cast<const RecordFieldAssignmentStatement*>(stmt)) {
+            userDefinedNames.insert(rfa->recordName);
         } else if (const auto* f = dynamic_cast<const FunctionDeclaration*>(stmt)) {
             userDefinedNames.insert(f->name);
             for (const auto& p : f->parameters) userDefinedNames.insert(p);
@@ -243,6 +245,11 @@ std::string HtmlFormatter::formatStatementAsMathInFunction(const Statement& stmt
         std::string indexStr = formatExpressionAsMath(*arrayAssignment->index, evaluator);
         std::string exprStr = formatExpressionAsMath(*arrayAssignment->expression, evaluator);
         return arrayName + "[" + indexStr + "] = " + exprStr;
+    } else if (const auto* recordFieldAssignment = dynamic_cast<const RecordFieldAssignmentStatement*>(&stmt)) {
+        // Format record field assignment statements inside functions/loops
+        std::string recordName = convertToMathJax(recordFieldAssignment->recordName);
+        std::string exprStr = formatExpressionAsMath(*recordFieldAssignment->expression, evaluator);
+        return recordName + "." + recordFieldAssignment->fieldName + " = " + exprStr;
     } else if (const auto* returnStmt = dynamic_cast<const ReturnStatement*>(&stmt)) {
         std::string exprStr = formatExpressionAsMath(*returnStmt->expression, evaluator);
         return "\\text{return } " + exprStr;
@@ -709,6 +716,10 @@ std::string HtmlFormatter::formatExpressionAsMath(const Expression& expr, Evalua
         }
         ss << ")";
         return ss.str();
+    } else if (const auto* memberAccess = dynamic_cast<const MemberAccess*>(&expr)) {
+        // Record field access: render as object.field (no parens - distinguishes
+        // from a method call above).
+        return formatExpressionAsMath(*memberAccess->object, evaluator) + "." + memberAccess->member_name;
     } else if (const auto* unary = dynamic_cast<const UnaryExpression*>(&expr)) {
         std::string operand = formatExpressionAsMath(*unary->operand, evaluator);
 
@@ -774,6 +785,8 @@ std::string HtmlFormatter::formatStatementWithDepth(const Statement& stmt, int d
 
     if (const auto* assignment = dynamic_cast<const AssignmentStatement*>(&stmt)) {
         return indent + formatAssignment(*assignment);
+    } else if (const auto* recordFieldAssignment = dynamic_cast<const RecordFieldAssignmentStatement*>(&stmt)) {
+        return indent + formatRecordFieldAssignment(*recordFieldAssignment);
     } else if (const auto* print = dynamic_cast<const PrintStatement*>(&stmt)) {
         return indent + formatPrint(*print);
     } else if (const auto* expr = dynamic_cast<const ExpressionStatement*>(&stmt)) {
@@ -795,6 +808,21 @@ std::string HtmlFormatter::formatStatementWithDepth(const Statement& stmt, int d
 
 std::string HtmlFormatter::formatAssignment(const AssignmentStatement& stmt) {
     std::string assignment = formatVariableName(stmt.variable) + " := " + formatExpression(*stmt.expression);
+    std::string result;
+    if (!stmt.inlineComment.empty()) {
+        if (stmt.commentBefore) {
+            result = "\\text{" + stmt.inlineComment + "} \\quad " + assignment;
+        } else {
+            result = assignment + " \\quad \\text{" + stmt.inlineComment + "}";
+        }
+    } else {
+        result = assignment;
+    }
+    return result + ";";
+}
+
+std::string HtmlFormatter::formatRecordFieldAssignment(const RecordFieldAssignmentStatement& stmt) {
+    std::string assignment = formatVariableName(stmt.recordName) + "." + stmt.fieldName + " := " + formatExpression(*stmt.expression);
     std::string result;
     if (!stmt.inlineComment.empty()) {
         if (stmt.commentBefore) {

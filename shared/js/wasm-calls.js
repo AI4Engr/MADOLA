@@ -17,6 +17,10 @@
 //   evalNamedValue(module, source, varName)
 //                                     -> { success, name, value } | { success:false, error }
 //   typstPayload(module, source)     -> { success, records:[...] } | { success:false, error }
+//   registerLookupTable(module, tableName, jsonTableData) -> true | false
+//     Data-agnostic ccall plumbing only — this file has no knowledge of what's
+//     inside jsonTableData (e.g. steel section data); only the caller (private
+//     app-side code) knows that. See src/wasm_interface.cpp's register_lookup_table.
 
 (function () {
   'use strict';
@@ -86,5 +90,13 @@
     return JSON.parse(json);
   }
 
-  root.MadolaCalls = { evaluate, format, formatHtml, evalSvgCurve, evalNamedValue, typstPayload };
+  function registerLookupTable(module, tableName, jsonTableData) {
+    if (!module) throw new Error('Module not loaded');
+    const result = module.ccall(
+      'register_lookup_table', 'number', ['string', 'string'], [tableName, jsonTableData]
+    );
+    return result === 1;
+  }
+
+  root.MadolaCalls = { evaluate, format, formatHtml, evalSvgCurve, evalNamedValue, typstPayload, registerLookupTable };
 })();

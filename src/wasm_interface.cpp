@@ -34,6 +34,148 @@ static std::string escapeJsonString(const std::string& input) {
     return result;
 }
 
+// Minimal hand-rolled JSON parser, deliberately narrow: it only understands the
+// exact shape register_lookup_table's caller sends — a flat object of flat objects,
+// e.g. {"W16X59": {"Ix": 954, "size": "W16X59"}, "W16X67": {...}, ...}. No arrays,
+// no nesting beyond two levels, no unicode escapes. Not a general JSON parser — the
+// input shape is fully controlled by the (private, app-side) caller, so this narrow
+// scope avoids vendoring a full JSON library into the WASM binary for one call site.
+namespace {
+
+void skipJsonWhitespace(const std::string& s, size_t& pos) {
+    while (pos < s.size() && std::isspace(static_cast<unsigned char>(s[pos]))) pos++;
+}
+
+std::string parseJsonStringLiteral(const std::string& s, size_t& pos) {
+    if (pos >= s.size() || s[pos] != '"') {
+        throw std::runtime_error("Expected '\"' at position " + std::to_string(pos));
+    }
+    pos++; // skip opening quote
+    std::string result;
+    while (pos < s.size() && s[pos] != '"') {
+        if (s[pos] == '\\' && pos + 1 < s.size()) {
+            char next = s[pos + 1];
+            switch (next) {
+                case '"':  result += '"';  break;
+                case '\\': result += '\\'; break;
+                case '/':  result += '/';  break;
+                case 'n':  result += '\n'; break;
+                case 'r':  result += '\r'; break;
+                case 't':  result += '\t'; break;
+                default:   result += next; break;
+            }
+            pos += 2;
+        } else {
+            result += s[pos];
+            pos++;
+        }
+    }
+    if (pos >= s.size()) {
+        throw std::runtime_error("Unterminated string literal");
+    }
+    pos++; // skip closing quote
+    return result;
+}
+
+// Parses a JSON value that is either a string, or a number (returned as a double
+// wrapped in madola::Value), for use as a single field's value inside a row object.
+madola::Value parseJsonScalarValue(const std::string& s, size_t& pos) {
+    skipJsonWhitespace(s, pos);
+    if (pos < s.size() && s[pos] == '"') {
+        return madola::Value(parseJsonStringLiteral(s, pos));
+    }
+    // Number: read a contiguous run of digits/sign/decimal-point/exponent chars.
+    size_t start = pos;
+    while (pos < s.size() && (std::isdigit(static_cast<unsigned char>(s[pos])) ||
+           s[pos] == '-' || s[pos] == '+' || s[pos] == '.' || s[pos] == 'e' || s[pos] == 'E')) {
+        pos++;
+    }
+    if (pos == start) {
+        throw std::runtime_error("Expected string or number at position " + std::to_string(pos));
+    }
+    return madola::Value(std::stod(s.substr(start, pos - start)));
+}
+
+// Parses one row object: {"field": value, "field2": value2, ...}
+madola::RecordValue parseJsonRowObject(const std::string& s, size_t& pos) {
+    skipJsonWhitespace(s, pos);
+    if (pos >= s.size() || s[pos] != '{') {
+        throw std::runtime_error("Expected '{' at position " + std::to_string(pos));
+    }
+    pos++; // skip '{'
+    madola::RecordValue row;
+    skipJsonWhitespace(s, pos);
+    if (pos < s.size() && s[pos] == '}') {
+        pos++;
+        return row;
+    }
+    while (true) {
+        skipJsonWhitespace(s, pos);
+        std::string fieldName = parseJsonStringLiteral(s, pos);
+        skipJsonWhitespace(s, pos);
+        if (pos >= s.size() || s[pos] != ':') {
+            throw std::runtime_error("Expected ':' at position " + std::to_string(pos));
+        }
+        pos++; // skip ':'
+        madola::Value fieldValue = parseJsonScalarValue(s, pos);
+        (*row.fields)[fieldName] = fieldValue;
+
+        skipJsonWhitespace(s, pos);
+        if (pos < s.size() && s[pos] == ',') {
+            pos++;
+            continue;
+        }
+        break;
+    }
+    skipJsonWhitespace(s, pos);
+    if (pos >= s.size() || s[pos] != '}') {
+        throw std::runtime_error("Expected '}' at position " + std::to_string(pos));
+    }
+    pos++; // skip '}'
+    return row;
+}
+
+// Parses the top-level table object: {"ROWKEY": {row...}, "ROWKEY2": {row...}, ...}
+std::map<std::string, madola::RecordValue> parseLookupTableJson(const std::string& s) {
+    size_t pos = 0;
+    skipJsonWhitespace(s, pos);
+    if (pos >= s.size() || s[pos] != '{') {
+        throw std::runtime_error("Expected '{' at position " + std::to_string(pos));
+    }
+    pos++; // skip '{'
+    std::map<std::string, madola::RecordValue> rows;
+    skipJsonWhitespace(s, pos);
+    if (pos < s.size() && s[pos] == '}') {
+        return rows;
+    }
+    while (true) {
+        skipJsonWhitespace(s, pos);
+        std::string rowKey = parseJsonStringLiteral(s, pos);
+        skipJsonWhitespace(s, pos);
+        if (pos >= s.size() || s[pos] != ':') {
+            throw std::runtime_error("Expected ':' at position " + std::to_string(pos));
+        }
+        pos++; // skip ':'
+        madola::RecordValue row = parseJsonRowObject(s, pos);
+        row.displayLabel = rowKey;
+        rows[rowKey] = row;
+
+        skipJsonWhitespace(s, pos);
+        if (pos < s.size() && s[pos] == ',') {
+            pos++;
+            continue;
+        }
+        break;
+    }
+    skipJsonWhitespace(s, pos);
+    if (pos >= s.size() || s[pos] != '}') {
+        throw std::runtime_error("Expected '}' at position " + std::to_string(pos));
+    }
+    return rows;
+}
+
+} // namespace
+
 extern "C" {
 
 // Initialize MADOLA WASM module
@@ -444,6 +586,26 @@ char* eval_named_value(const char* source, const char* var_name) {
     memcpy(output, json.c_str(), len);
     output[len] = '\0';
     return output;
+}
+
+// Register (or replace) a persistent named lookup table, e.g. "section", that
+// section()/Section()/s.field=... assignment can query at runtime — without any
+// domain-specific data (e.g. AISC steel shapes) compiled into this binary. Called
+// once by app-private JS at startup (see app/js/data/section-registry.js), after
+// loading its own private JSON data file. This function and Evaluator::s_lookupTables
+// contain zero hardcoded row data — only the generic storage/lookup mechanism.
+//
+// json_table_data shape: {"W16X59": {"Ix": 954, "Zx": 108, ...}, "W16X67": {...}, ...}
+// Values must be JSON strings or numbers. Returns 1 on success, 0 on malformed input.
+EMSCRIPTEN_KEEPALIVE
+int register_lookup_table(const char* table_name, const char* json_table_data) {
+    try {
+        auto rows = parseLookupTableJson(std::string(json_table_data));
+        Evaluator::registerLookupTable(std::string(table_name), rows);
+        return 1;
+    } catch (...) {
+        return 0;
+    }
 }
 
 // Free memory allocated by WASM functions

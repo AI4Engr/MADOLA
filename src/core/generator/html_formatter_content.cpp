@@ -631,6 +631,24 @@ std::string HtmlFormatter::formatStatementAsMath(const Statement& stmt, Evaluato
             }
         }
         return result;
+    } else if (const auto* recordFieldAssignment = dynamic_cast<const RecordFieldAssignmentStatement*>(&stmt)) {
+        // Format record field assignment as math (mirrors AssignmentStatement above).
+        std::string targetName = convertToMathJax(recordFieldAssignment->recordName) + "." + recordFieldAssignment->fieldName;
+        std::string exprStr;
+        if (dynamic_cast<const ArrayExpression*>(recordFieldAssignment->expression.get())) {
+            exprStr = formatExpressionWithValuesAsMath(*recordFieldAssignment->expression, evaluator);
+        } else {
+            exprStr = formatExpressionAsMath(*recordFieldAssignment->expression, evaluator);
+        }
+        std::string result = targetName + " = " + exprStr;
+        if (!recordFieldAssignment->inlineComment.empty()) {
+            if (recordFieldAssignment->commentBefore) {
+                result = "\\text{" + recordFieldAssignment->inlineComment + "} \\quad " + result;
+            } else {
+                result = result + " \\quad \\text{" + recordFieldAssignment->inlineComment + "}";
+            }
+        }
+        return result;
     } else if (const auto* forStmt = dynamic_cast<const ForStatement*>(&stmt)) {
         // Format for loop with algorithmic structure like markdown
         std::stringstream ss;
@@ -902,6 +920,10 @@ std::string HtmlFormatter::formatStatementAsMath(const Statement& stmt, Evaluato
                 Value result = evaluator.evaluateExpression(*assignment->expression);
                 return convertToMathJax(assignment->variable) + " = " + formatValueAsMath(result);
             }
+            if (const auto* recordFieldAssignment = dynamic_cast<const RecordFieldAssignmentStatement*>(decoratedStmt->statement.get())) {
+                Value result = evaluator.evaluateExpression(*recordFieldAssignment->expression);
+                return convertToMathJax(recordFieldAssignment->recordName) + "." + recordFieldAssignment->fieldName + " = " + formatValueAsMath(result);
+            }
         }
         if (decoratedStmt->hasDecorator("resolve")) {
             if (const auto* assignment = dynamic_cast<const AssignmentStatement*>(decoratedStmt->statement.get())) {
@@ -915,6 +937,22 @@ std::string HtmlFormatter::formatStatementAsMath(const Statement& stmt, Evaluato
                 // Add = and show final result
                 ss << " = ";
                 Value result = evaluator.evaluateExpression(*assignment->expression);
+                ss << formatValueAsMath(result);
+
+                return ss.str();
+            }
+            if (const auto* recordFieldAssignment = dynamic_cast<const RecordFieldAssignmentStatement*>(decoratedStmt->statement.get())) {
+                std::stringstream ss;
+                std::string targetName = convertToMathJax(recordFieldAssignment->recordName) + "." + recordFieldAssignment->fieldName;
+                ss << targetName << " = " << formatExpressionAsMath(*recordFieldAssignment->expression, evaluator);
+
+                // Add = and show variable values substituted
+                ss << " = ";
+                ss << formatExpressionWithValuesAsMath(*recordFieldAssignment->expression, evaluator);
+
+                // Add = and show final result
+                ss << " = ";
+                Value result = evaluator.evaluateExpression(*recordFieldAssignment->expression);
                 ss << formatValueAsMath(result);
 
                 return ss.str();
@@ -1061,6 +1099,148 @@ std::string HtmlFormatter::formatStatementAsMath(const Statement& stmt, Evaluato
                 }
 
                 return ss.str();
+            } else if (const auto* recordFieldAssignment = dynamic_cast<const RecordFieldAssignmentStatement*>(decoratedStmt->statement.get())) {
+                std::stringstream ss;
+                std::string targetName = convertToMathJax(recordFieldAssignment->recordName) + "." + recordFieldAssignment->fieldName;
+                ss << targetName << " = " << formatExpressionAsMath(*recordFieldAssignment->expression, evaluator);
+
+                // For @eval statements, we need to evaluate the expression with the PRE-assignment value
+                // Create a fresh evaluator and execute all statements before this one
+                ss << " = ";
+                if (currentProgram && currentStatement) {
+                    Evaluator freshEvaluator;
+                    for (const auto& prevStmt : currentProgram->statements) {
+                        if (prevStmt.get() == currentStatement) {
+                            break; // Stop before the current statement
+                        }
+                        // Execute previous statements to build up environment
+                        std::vector<std::string> dummyOutputs;
+                        try {
+                            freshEvaluator.executeStatement(*prevStmt, dummyOutputs);
+                        } catch (...) {
+                            // Ignore errors
+                        }
+                    }
+                    // Now evaluate with the fresh evaluator
+                    Value result = freshEvaluator.evaluateExpression(*recordFieldAssignment->expression);
+
+                    // If result is a string (symbolic expression), format it as LaTeX
+#ifdef WITH_SYMENGINE
+                    if (std::holds_alternative<std::string>(result)) {
+                        // For symbolic expressions, parse and format as LaTeX
+                        std::string symbolicStr = std::get<std::string>(result);
+
+                        // Clean up formatting: remove .0 from numbers
+                        size_t pos = 0;
+                        while ((pos = symbolicStr.find(".0", pos)) != std::string::npos) {
+                            // Check if followed by * or ^ or end of string
+                            if (pos + 2 >= symbolicStr.length() ||
+                                symbolicStr[pos + 2] == '*' ||
+                                symbolicStr[pos + 2] == ' ') {
+                                symbolicStr.erase(pos, 2);
+                            } else {
+                                pos++;
+                            }
+                        }
+
+                        // Remove ^1.0 or ^1 (x^1 = x)
+                        pos = 0;
+                        while ((pos = symbolicStr.find("**1.0", pos)) != std::string::npos) {
+                            symbolicStr.erase(pos, 5);
+                        }
+                        pos = 0;
+                        while ((pos = symbolicStr.find("**1", pos)) != std::string::npos) {
+                            // Make sure it's not **10, **11, etc.
+                            if (pos + 3 >= symbolicStr.length() || !isdigit(symbolicStr[pos + 3])) {
+                                symbolicStr.erase(pos, 3);
+                            } else {
+                                pos++;
+                            }
+                        }
+
+                        // Replace ** with ^
+                        pos = 0;
+                        while ((pos = symbolicStr.find("**", pos)) != std::string::npos) {
+                            symbolicStr.replace(pos, 2, "^");
+                            pos += 1;
+                        }
+
+                        // Replace * with \cdot
+                        pos = 0;
+                        while ((pos = symbolicStr.find("*", pos)) != std::string::npos) {
+                            symbolicStr.replace(pos, 1, " \\cdot ");
+                            pos += 7;
+                        }
+
+                        ss << symbolicStr;
+                    } else {
+                        ss << formatValueAsMath(result);
+                    }
+#else
+                    ss << formatValueAsMath(result);
+#endif
+                } else {
+                    // Fallback to old behavior if context not available
+                    Value result = evaluator.evaluateExpression(*recordFieldAssignment->expression);
+
+                    // If result is a string (symbolic expression), format it as LaTeX
+#ifdef WITH_SYMENGINE
+                    if (std::holds_alternative<std::string>(result)) {
+                        // For symbolic expressions, parse and format as LaTeX
+                        std::string symbolicStr = std::get<std::string>(result);
+
+                        // Clean up formatting: remove .0 from numbers
+                        size_t pos = 0;
+                        while ((pos = symbolicStr.find(".0", pos)) != std::string::npos) {
+                            // Check if followed by * or ^ or end of string
+                            if (pos + 2 >= symbolicStr.length() ||
+                                symbolicStr[pos + 2] == '*' ||
+                                symbolicStr[pos + 2] == ' ') {
+                                symbolicStr.erase(pos, 2);
+                            } else {
+                                pos++;
+                            }
+                        }
+
+                        // Remove ^1.0 or ^1 (x^1 = x)
+                        pos = 0;
+                        while ((pos = symbolicStr.find("**1.0", pos)) != std::string::npos) {
+                            symbolicStr.erase(pos, 5);
+                        }
+                        pos = 0;
+                        while ((pos = symbolicStr.find("**1", pos)) != std::string::npos) {
+                            // Make sure it's not **10, **11, etc.
+                            if (pos + 3 >= symbolicStr.length() || !isdigit(symbolicStr[pos + 3])) {
+                                symbolicStr.erase(pos, 3);
+                            } else {
+                                pos++;
+                            }
+                        }
+
+                        // Replace ** with ^
+                        pos = 0;
+                        while ((pos = symbolicStr.find("**", pos)) != std::string::npos) {
+                            symbolicStr.replace(pos, 2, "^");
+                            pos += 1;
+                        }
+
+                        // Replace * with \cdot
+                        pos = 0;
+                        while ((pos = symbolicStr.find("*", pos)) != std::string::npos) {
+                            symbolicStr.replace(pos, 1, " \\cdot ");
+                            pos += 7;
+                        }
+
+                        ss << symbolicStr;
+                    } else {
+                        ss << formatValueAsMath(result);
+                    }
+#else
+                    ss << formatValueAsMath(result);
+#endif
+                }
+
+                return ss.str();
             } else if (const auto* exprStmt = dynamic_cast<const ExpressionStatement*>(decoratedStmt->statement.get())) {
                 // Handle @eval on expression statements like "a;"
                 std::stringstream ss;
@@ -1133,12 +1313,37 @@ std::string HtmlFormatter::formatStatementAsMath(const Statement& stmt, Evaluato
                 ss << "\n\\end{align}";
                 return ss.str();
             }
+            if (const auto* recordFieldAssignment = dynamic_cast<const RecordFieldAssignmentStatement*>(decoratedStmt->statement.get())) {
+                std::stringstream ss;
+                std::string targetName = convertToMathJax(recordFieldAssignment->recordName) + "." + recordFieldAssignment->fieldName;
+                ss << "\\begin{align}\n";
+                ss << targetName << " &= " << formatExpressionAsMath(*recordFieldAssignment->expression, evaluator);
+
+                // Add = and show variable values substituted (aligned)
+                ss << " \\\\\n";
+                ss << "&= ";
+                ss << formatExpressionWithValuesAsMath(*recordFieldAssignment->expression, evaluator);
+
+                // Add = and show final result (aligned)
+                ss << " \\\\\n";
+                ss << "&= ";
+                Value result = evaluator.evaluateExpression(*recordFieldAssignment->expression);
+                ss << formatValueAsMath(result);
+
+                ss << "\n\\end{align}";
+                return ss.str();
+            }
         } else {
             // For other decorators, format the underlying statement
             if (const auto* assignment = dynamic_cast<const AssignmentStatement*>(decoratedStmt->statement.get())) {
                 std::string varName = convertToMathJax(assignment->variable);
                 std::string exprStr = formatExpressionAsMath(*assignment->expression, evaluator);
                 return varName + " = " + exprStr;
+            }
+            if (const auto* recordFieldAssignment = dynamic_cast<const RecordFieldAssignmentStatement*>(decoratedStmt->statement.get())) {
+                std::string targetName = convertToMathJax(recordFieldAssignment->recordName) + "." + recordFieldAssignment->fieldName;
+                std::string exprStr = formatExpressionAsMath(*recordFieldAssignment->expression, evaluator);
+                return targetName + " = " + exprStr;
             }
         }
     } else if (const auto* func = dynamic_cast<const FunctionCall*>(&stmt)) {

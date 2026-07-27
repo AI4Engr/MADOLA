@@ -209,6 +209,15 @@ MarkdownFormatter::FormatResult MarkdownFormatter::formatProgramWithExecution(co
             ss << formatVariableName(assignment->variable) << " = " << formatExpression(*assignment->expression);
             ss << "\n$$\n\n";
 
+        } else if (const auto* recordFieldAssignment = dynamic_cast<const RecordFieldAssignmentStatement*>(stmt.get())) {
+            ss << "$$\n";
+            if (!recordFieldAssignment->inlineComment.empty()) {
+                ss << "\\text{" << recordFieldAssignment->inlineComment << "} \\quad ";
+            }
+            ss << formatVariableName(recordFieldAssignment->recordName) << "." << recordFieldAssignment->fieldName
+               << " = " << formatExpression(*recordFieldAssignment->expression);
+            ss << "\n$$\n\n";
+
         } else if (dynamic_cast<const PrintStatement*>(stmt.get())) {
             // Skip formatting print statements in the LaTeX section
             // The output will be shown separately below
@@ -880,6 +889,8 @@ MarkdownFormatter::FormatResult MarkdownFormatter::formatProgramWithExecution(co
 std::string MarkdownFormatter::formatStatement(const Statement& stmt) {
     if (const auto* assignment = dynamic_cast<const AssignmentStatement*>(&stmt)) {
         return formatAssignment(*assignment);
+    } else if (const auto* recordFieldAssignment = dynamic_cast<const RecordFieldAssignmentStatement*>(&stmt)) {
+        return formatRecordFieldAssignment(*recordFieldAssignment);
     } else if (const auto* print = dynamic_cast<const PrintStatement*>(&stmt)) {
         return formatPrint(*print);
     } else if (const auto* exprStmt = dynamic_cast<const ExpressionStatement*>(&stmt)) {
@@ -900,6 +911,21 @@ std::string MarkdownFormatter::formatStatement(const Statement& stmt) {
 
 std::string MarkdownFormatter::formatAssignment(const AssignmentStatement& stmt) {
     std::string assignment = formatVariableName(stmt.variable) + " =" + formatExpression(*stmt.expression);
+    std::string result;
+    if (!stmt.inlineComment.empty()) {
+        if (stmt.commentBefore) {
+            result = "\\text{" + stmt.inlineComment + "} \\quad " + assignment;
+        } else {
+            result = assignment + " \\quad \\text{" + stmt.inlineComment + "}";
+        }
+    } else {
+        result = assignment;
+    }
+    return result + ";";
+}
+
+std::string MarkdownFormatter::formatRecordFieldAssignment(const RecordFieldAssignmentStatement& stmt) {
+    std::string assignment = formatVariableName(stmt.recordName) + "." + stmt.fieldName + " =" + formatExpression(*stmt.expression);
     std::string result;
     if (!stmt.inlineComment.empty()) {
         if (stmt.commentBefore) {
@@ -1030,6 +1056,10 @@ std::string MarkdownFormatter::formatExpression(const Expression& expr) {
         return formatFunctionCall(*functionCall);
     } else if (const auto* methodCall = dynamic_cast<const MethodCall*>(&expr)) {
         return formatMethodCall(*methodCall);
+    } else if (const auto* memberAccess = dynamic_cast<const MemberAccess*>(&expr)) {
+        // Record field access: object.field (no parens - distinguishes from a
+        // method call above).
+        return formatExpression(*memberAccess->object) + "." + memberAccess->member_name;
     } else if (const auto* rangeExpr = dynamic_cast<const RangeExpression*>(&expr)) {
         return formatRangeExpression(*rangeExpr);
     } else if (const auto* piecewiseExpr = dynamic_cast<const PiecewiseExpression*>(&expr)) {
@@ -1199,6 +1229,9 @@ std::string MarkdownFormatter::formatStatementWithDepth(const Statement& stmt, i
         }
         result += "] =" + formatExpression(*arrayAssignment->expression);
         return result;
+    } else if (const auto* recordFieldAssignment = dynamic_cast<const RecordFieldAssignmentStatement*>(&stmt)) {
+        return indent + formatVariableName(recordFieldAssignment->recordName) + "." + recordFieldAssignment->fieldName +
+               " =" + formatExpression(*recordFieldAssignment->expression);
     } else if (const auto* returnStmt = dynamic_cast<const ReturnStatement*>(&stmt)) {
         return indent + "\\text{return } " + formatExpression(*returnStmt->expression);
     } else if (dynamic_cast<const BreakStatement*>(&stmt)) {
@@ -1269,6 +1302,9 @@ std::string MarkdownFormatter::formatStatementWithDepth(const Statement& stmt, i
         }
         result += "] =" + formatExpression(*arrayAssignment->expression);
         return result;
+    } else if (const auto* recordFieldAssignment = dynamic_cast<const RecordFieldAssignmentStatement*>(&stmt)) {
+        return indent + formatVariableName(recordFieldAssignment->recordName) + "." + recordFieldAssignment->fieldName +
+               " =" + formatExpression(*recordFieldAssignment->expression);
     } else if (const auto* returnStmt = dynamic_cast<const ReturnStatement*>(&stmt)) {
         return indent + "\\text{return } " + formatExpression(*returnStmt->expression);
     } else if (dynamic_cast<const BreakStatement*>(&stmt)) {

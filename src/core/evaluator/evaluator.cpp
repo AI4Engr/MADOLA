@@ -12,6 +12,13 @@
 
 namespace madola {
 
+LookupTable Evaluator::s_lookupTables;
+
+void Evaluator::registerLookupTable(const std::string& tableName,
+                                     const std::map<std::string, RecordValue>& rows) {
+    s_lookupTables[tableName] = rows;
+}
+
 Evaluator::Evaluator() {
     // Define unit identifiers as constants with value 1
     // This allows compound units like: velocity := 25 * m/s
@@ -138,6 +145,8 @@ void Evaluator::executeStatement(const Statement& stmt, std::vector<std::string>
         executeAssignment(*assignment);
     } else if (const auto* arrayAssignment = dynamic_cast<const ArrayAssignmentStatement*>(&stmt)) {
         executeArrayAssignment(*arrayAssignment);
+    } else if (const auto* recordFieldAssignment = dynamic_cast<const RecordFieldAssignmentStatement*>(&stmt)) {
+        executeRecordFieldAssignment(*recordFieldAssignment);
     } else if (const auto* print = dynamic_cast<const PrintStatement*>(&stmt)) {
         executePrint(*print, outputs);
     } else if (const auto* exprStmt = dynamic_cast<const ExpressionStatement*>(&stmt)) {
@@ -266,6 +275,48 @@ void Evaluator::executeArrayAssignment(const ArrayAssignmentStatement& stmt) {
 
     // Store the updated array
     env.define(stmt.arrayName, arrayVal);
+}
+
+void Evaluator::executeRecordFieldAssignment(const RecordFieldAssignmentStatement& stmt) {
+    if (!env.exists(stmt.recordName)) {
+        throw std::runtime_error("Undefined variable: " + stmt.recordName);
+    }
+
+    Value existingVal = env.get(stmt.recordName);
+    if (!std::holds_alternative<RecordValue>(existingVal)) {
+        throw std::runtime_error("'" + stmt.recordName + "' is not a record; cannot assign field '" + stmt.fieldName + "'");
+    }
+    const RecordValue& existingRecord = std::get<RecordValue>(existingVal);
+
+    // Copy-on-write: deep-copy the fields map so this assignment never mutates any
+    // other alias of the same RecordValue sharing the old shared_ptr (e.g. a `t := s;`
+    // done earlier). This matches the value semantics the rest of the language has on
+    // assignment (arrays/doubles are always copied), even though RecordValue's fields
+    // are stored behind a shared_ptr as an implementation detail (see evaluator.h).
+    RecordValue updated;
+    updated.displayLabel = existingRecord.displayLabel;
+    updated.fields = std::make_shared<std::map<std::string, Value>>(*existingRecord.fields);
+
+    Value assignedValue = evaluateExpression(*stmt.expression);
+
+    if (stmt.fieldName == "size") {
+        // Triggering field: re-run the lookup and replace ALL fields (not just
+        // "size"), repopulating Ix/Zx/A/etc. in place.
+        if (!std::holds_alternative<std::string>(assignedValue)) {
+            throw std::runtime_error("Field 'size' must be assigned a string shape name, e.g. s.size = \"W16X59\";");
+        }
+        const std::string& shapeName = std::get<std::string>(assignedValue);
+        Value looked = lookupRecordFromTable("section", shapeName);
+        const RecordValue& lookedRecord = std::get<RecordValue>(looked);
+        updated.fields = std::make_shared<std::map<std::string, Value>>(*lookedRecord.fields);
+        (*updated.fields)["size"] = shapeName;
+        updated.displayLabel = shapeName;
+    } else {
+        // Non-triggering field: plain field set/overwrite, no repopulation.
+        (*updated.fields)[stmt.fieldName] = assignedValue;
+    }
+
+    env.define(stmt.recordName, updated);
 }
 
 void Evaluator::executePrint(const PrintStatement& stmt, std::vector<std::string>& outputs) {

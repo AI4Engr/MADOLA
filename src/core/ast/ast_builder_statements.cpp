@@ -282,6 +282,39 @@ StatementPtr ASTBuilder::buildAssignmentStatement(TSNode node, const std::string
         }
 
         return std::make_unique<ArrayAssignmentStatement>(arrayName, std::move(indexExpr), std::move(expr), inlineComment, isColumnVector);
+    } else if (strcmp(targetType, "member_access") == 0) {
+        // member_access: primary_expression "." identifier
+        // Assignment to a record field, e.g. `s.size = "W16X59";`. The object must
+        // resolve to a bare identifier (a variable name) — arbitrary expressions like
+        // `(f()).size = "X";` are rejected here, not in the grammar.
+        std::string recordName;
+        std::string fieldName;
+        bool foundIdentifierObject = false;
+
+        uint32_t targetChildCount = ts_node_child_count(target_node);
+        for (uint32_t i = 0; i < targetChildCount; i++) {
+            TSNode child = ts_node_child(target_node, i);
+            const char* childType = ts_node_type(child);
+
+            if (strcmp(childType, "primary_expression") == 0) {
+                uint32_t objChildCount = ts_node_child_count(child);
+                if (objChildCount == 1) {
+                    TSNode inner = ts_node_child(child, 0);
+                    if (strcmp(ts_node_type(inner), "identifier") == 0) {
+                        recordName = getNodeText(inner, source);
+                        foundIdentifierObject = true;
+                    }
+                }
+            } else if (strcmp(childType, "identifier") == 0) {
+                fieldName = getNodeText(child, source);
+            }
+        }
+
+        if (!foundIdentifierObject) {
+            throw std::runtime_error("Left-hand side of a field assignment must be a plain variable name, e.g. s.field = ...;");
+        }
+
+        return std::make_unique<RecordFieldAssignmentStatement>(recordName, fieldName, std::move(expr), inlineComment, commentBefore);
     } else {
         // Regular identifier assignment
         std::string varName = getNodeText(target_node, source);

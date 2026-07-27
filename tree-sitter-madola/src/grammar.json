@@ -157,6 +157,10 @@
             {
               "type": "SYMBOL",
               "name": "array_access"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "member_access"
             }
           ]
         },
