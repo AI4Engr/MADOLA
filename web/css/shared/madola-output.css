@@ -108,11 +108,14 @@
     text-align: center;
 }
 
-/* svg() function output: scale to fit the panel width while keeping the
-   viewBox's aspect ratio (the <svg> already carries width/height attrs that
-   define its coordinate system via viewBox, so this only affects display size). */
+/* svg() function output: scale to fit the panel width (capped at 480px) while
+   keeping the viewBox's aspect ratio. The cap matters for portrait diagrams
+   (e.g. a beam cross-section) - without it, a panel much wider than the
+   drawing is tall stretches the SVG to fill that width, blowing up the height
+   and the whitespace around the actual content along with it. */
 .madola-output .svg-container {
     width: 100%;
+    max-width: 480px;
     box-sizing: border-box;
     overflow: hidden;
 }
