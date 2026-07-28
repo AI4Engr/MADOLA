@@ -106,6 +106,22 @@
     text-align: center;
 }
 
+/* svg() function output: scale to fit the panel width while keeping the
+   viewBox's aspect ratio (the <svg> already carries width/height attrs that
+   define its coordinate system via viewBox, so this only affects display size). */
+.madola-output .svg-container {
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.madola-output .svg-container svg {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+}
+
 .madola-output .web-graph {
     width: 100%;
     box-sizing: border-box;
