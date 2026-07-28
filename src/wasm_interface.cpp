@@ -36,8 +36,11 @@ static std::string escapeJsonString(const std::string& input) {
 
 // Minimal hand-rolled JSON parser, deliberately narrow: it only understands the
 // exact shape register_lookup_table's caller sends — a flat object of flat objects,
-// e.g. {"W16X59": {"Ix": 954, "size": "W16X59"}, "W16X67": {...}, ...}. No arrays,
-// no nesting beyond two levels, no unicode escapes. Not a general JSON parser — the
+// e.g. {"W16X59": {"Ix": 954, "size": "W16X59"}, "W16X67": {...}, ...}. A field's
+// value may also be a tagged {"value": <number>, "unit": "<string>"} object, which
+// parses to a UnitValue — this is a generic protocol addition (no notion of which
+// fields "should" have units; the caller's JSON decides per field). No arrays, no
+// nesting beyond two levels, no unicode escapes. Not a general JSON parser — the
 // input shape is fully controlled by the (private, app-side) caller, so this narrow
 // scope avoids vendoring a full JSON library into the WASM binary for one call site.
 namespace {
@@ -77,23 +80,70 @@ std::string parseJsonStringLiteral(const std::string& s, size_t& pos) {
     return result;
 }
 
-// Parses a JSON value that is either a string, or a number (returned as a double
-// wrapped in madola::Value), for use as a single field's value inside a row object.
-madola::Value parseJsonScalarValue(const std::string& s, size_t& pos) {
-    skipJsonWhitespace(s, pos);
-    if (pos < s.size() && s[pos] == '"') {
-        return madola::Value(parseJsonStringLiteral(s, pos));
-    }
-    // Number: read a contiguous run of digits/sign/decimal-point/exponent chars.
+// Reads a JSON number token (digits/sign/decimal-point/exponent chars) starting
+// at pos and returns it as a double. Shared by the bare-number and tagged-unit-
+// object branches of parseJsonScalarValue.
+double parseJsonNumberToken(const std::string& s, size_t& pos) {
     size_t start = pos;
     while (pos < s.size() && (std::isdigit(static_cast<unsigned char>(s[pos])) ||
            s[pos] == '-' || s[pos] == '+' || s[pos] == '.' || s[pos] == 'e' || s[pos] == 'E')) {
         pos++;
     }
     if (pos == start) {
-        throw std::runtime_error("Expected string or number at position " + std::to_string(pos));
+        throw std::runtime_error("Expected number at position " + std::to_string(pos));
     }
-    return madola::Value(std::stod(s.substr(start, pos - start)));
+    return std::stod(s.substr(start, pos - start));
+}
+
+// Parses a JSON value that is a string, a bare number, or a tagged unit object
+// {"value": <number>, "unit": "<string>"} (key order doesn't matter), for use as
+// a single field's value inside a row object.
+madola::Value parseJsonScalarValue(const std::string& s, size_t& pos) {
+    skipJsonWhitespace(s, pos);
+    if (pos < s.size() && s[pos] == '"') {
+        return madola::Value(parseJsonStringLiteral(s, pos));
+    }
+    if (pos < s.size() && s[pos] == '{') {
+        pos++; // skip '{'
+        bool haveValue = false, haveUnit = false;
+        double numericValue = 0.0;
+        std::string unit;
+        skipJsonWhitespace(s, pos);
+        while (pos < s.size() && s[pos] != '}') {
+            std::string key = parseJsonStringLiteral(s, pos);
+            skipJsonWhitespace(s, pos);
+            if (pos >= s.size() || s[pos] != ':') {
+                throw std::runtime_error("Expected ':' at position " + std::to_string(pos));
+            }
+            pos++; // skip ':'
+            skipJsonWhitespace(s, pos);
+            if (key == "value") {
+                numericValue = parseJsonNumberToken(s, pos);
+                haveValue = true;
+            } else if (key == "unit") {
+                unit = parseJsonStringLiteral(s, pos);
+                haveUnit = true;
+            } else {
+                throw std::runtime_error("Unexpected key \"" + key + "\" in unit value object");
+            }
+            skipJsonWhitespace(s, pos);
+            if (pos < s.size() && s[pos] == ',') {
+                pos++;
+                skipJsonWhitespace(s, pos);
+                continue;
+            }
+            break;
+        }
+        if (pos >= s.size() || s[pos] != '}') {
+            throw std::runtime_error("Expected '}' at position " + std::to_string(pos));
+        }
+        pos++; // skip '}'
+        if (!haveValue || !haveUnit) {
+            throw std::runtime_error("Unit value object requires both \"value\" and \"unit\"");
+        }
+        return madola::Value(madola::UnitValue(numericValue, unit));
+    }
+    return madola::Value(parseJsonNumberToken(s, pos));
 }
 
 // Parses one row object: {"field": value, "field2": value2, ...}
