@@ -1,5 +1,4 @@
 #include "html_formatter.h"
-#include "embedded_css.h"
 #include <sstream>
 #include <algorithm>
 #include <regex>
@@ -72,54 +71,23 @@ static std::string imageAlignStyle(const std::string& style) {
 
 HtmlFormatter::HtmlFormatter() = default;
 
-std::string HtmlFormatter::loadCssFile() {
-    // Return embedded CSS from generated header
-    return getEmbeddedCss();
-}
-
-std::string HtmlFormatter::generateHtmlHeader(const std::string& title) {
-    std::string cssContent = loadCssFile();
-    return R"(<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>)" + title + R"(</title>
-    <script>
-        window.MathJax = {
-            tex: {
-                displayMath: [['$$', '$$'], ['\\[', '\\]']],
-                inlineMath: [['$', '$'], ['\\(', '\\)']],
-                processEscapes: true,
-                processEnvironments: true,
-                packages: {'[+]': ['ams', 'newcommand', 'configmacros']}
-            },
-            chtml: {
-                scale: 1.0,
-                displayAlign: 'left'
-            },
-            options: {
-                ignoreHtmlClass: 'tex2jax_ignore',
-                processHtmlClass: 'tex2jax_process'
-            }
-        };
-    </script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-    <style>
-)" + cssContent + R"(
-    </style>
-</head>
-<body>
-    <div class="container">
-)";
+// Output is an HTML *fragment*, not a standalone document: callers inject it into
+// an existing page (web/'s #output, app/'s .preview-host), which already loads the
+// stylesheet (shared/css/madola-output.css), MathJax, and any chart libraries.
+//
+// It deliberately does NOT emit <!DOCTYPE>/<head>/<style>/<script>. Those used to be
+// included, but innerHTML discards the document scaffolding and never executes
+// injected <script> tags — so they were dead weight that also leaked ~6 KB of
+// globally-scoped CSS into the host page on every run. Standalone export builds its
+// own document shell around this fragment (see web/js/app-ui.js downloadHtml).
+//
+// `title` is unused now that there's no <head>; kept for signature stability.
+std::string HtmlFormatter::generateHtmlHeader(const std::string& /*title*/) {
+    return "<div class=\"container madola-output\">\n";
 }
 
 std::string HtmlFormatter::generateHtmlFooter() {
-    return R"(    </div>
-</body>
-</html>)";
+    return "</div>";
 }
 
 std::string HtmlFormatter::escapeHtml(const std::string& text) {

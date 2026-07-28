@@ -14,11 +14,21 @@ Object.assign(MadolaApp.prototype, {
         });
     },
 
-    downloadHtml() {
+    async downloadHtml() {
         const output = document.getElementById('output');
-        const html = output.innerHTML; // Get the HTML content
+        const html = output.innerHTML; // The rendered fragment
 
-        // Create a complete HTML document
+        // The formatter emits a fragment, so the standalone export owns the document
+        // shell. Inline the same stylesheet the app uses (rather than a link) so the
+        // downloaded file renders identically when opened on its own.
+        let css = '';
+        try {
+            const res = await fetch('css/shared/madola-output.css');
+            if (res.ok) css = await res.text();
+        } catch (e) {
+            console.warn('Could not inline madola-output.css into export:', e);
+        }
+
         const completeHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -41,14 +51,12 @@ Object.assign(MadolaApp.prototype, {
     </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .output-container { max-width: 800px; margin: 0 auto; }
+body { margin: 20px; background: #f8f9fa; }
+${css}
     </style>
 </head>
 <body>
-    <div class="output-container">
-        ${html}
-    </div>
+${html}
 </body>
 </html>`;
 

@@ -71,20 +71,8 @@ endif()
 find_program(NODE_EXECUTABLE NAMES node nodejs REQUIRED)
 message(STATUS "Found Node.js: ${NODE_EXECUTABLE}")
 
-# Generate embedded CSS header from CSS file
-add_custom_command(
-    OUTPUT ${CMAKE_SOURCE_DIR}/src/core/generator/embedded_css.h
-    COMMAND ${NODE_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/generate_css_header.js
-            ${CMAKE_SOURCE_DIR}/web/css/madola-output.css
-            ${CMAKE_SOURCE_DIR}/src/core/generator/embedded_css.h
-    DEPENDS ${CMAKE_SOURCE_DIR}/web/css/madola-output.css
-    COMMENT "Generating embedded CSS header"
-)
-
-# Add generated header as a dependency
-add_custom_target(generate_css_header
-    DEPENDS ${CMAKE_SOURCE_DIR}/src/core/generator/embedded_css.h
-)
+# NOTE: CSS is no longer embedded into the binary. The HTML formatter emits a
+# fragment; the host page (web/, app/) loads shared/css/madola-output.css itself.
 
 # Source files
 set(CORE_SOURCES
@@ -296,7 +284,6 @@ endif()
 
 # Object library for shared compilation (avoids recompiling for multiple targets)
 add_library(madola_core_obj OBJECT ${CORE_SOURCES})
-add_dependencies(madola_core_obj generate_css_header)
 
 # Target-specific include directories (better than global include_directories)
 target_include_directories(madola_core_obj PUBLIC

@@ -377,9 +377,9 @@ class MadolaApp {
         }
     }
 
-    exportFiles() {
+    async exportFiles() {
         // Export functionality - could export multiple formats
-        this.downloadHtml();
+        await this.downloadHtml();
         this.addMessage('success', 'Files exported successfully');
     }
 

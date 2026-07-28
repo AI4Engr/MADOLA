@@ -36,7 +36,6 @@ public:
     static std::string formatValueAsMathPublic(const Value& value);
 
 private:
-    std::string loadCssFile();
     std::string generateHtmlHeader(const std::string& title = "MADOLA Output");
     std::string generateHtmlFooter();
     std::string formatStatement(const Statement& stmt);
