@@ -276,6 +276,25 @@
     }
   },
   {
+    "type": "decorator_block",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "decorator",
+          "named": true
+        },
+        {
+          "type": "statement",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "decorator_style",
     "named": true,
     "fields": {}
@@ -997,6 +1016,10 @@
         },
         {
           "type": "decorated_statement",
+          "named": true
+        },
+        {
+          "type": "decorator_block",
           "named": true
         },
         {

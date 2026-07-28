@@ -26,6 +26,7 @@ module.exports = grammar({
       $.import_statement,
       $.if_statement,
       $.decorated_statement,
+      $.decorator_block,
       $.skip_statement,
       $.break_statement,
       $.heading_statement,
@@ -43,6 +44,18 @@ module.exports = grammar({
         $.comment_statement,
         $.image_statement
       )
+    ),
+
+    // Block form: decorators apply to every statement inside { ... }, e.g.
+    // @hidden { s := Section(); s.size = "W16X57"; } instead of repeating the
+    // decorator on each line. Desugared at the AST-builder level into one
+    // DecoratedStatement per inner statement, so evaluator/generator code never
+    // needs to know this block form exists.
+    decorator_block: $ => seq(
+      repeat1($.decorator),
+      '{',
+      repeat($.statement),
+      '}'
     ),
 
     skip_statement: $ => '@skip',

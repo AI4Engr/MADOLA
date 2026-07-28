@@ -66,6 +66,10 @@
         },
         {
           "type": "SYMBOL",
+          "name": "decorator_block"
+        },
+        {
+          "type": "SYMBOL",
           "name": "skip_statement"
         },
         {
@@ -124,6 +128,33 @@
               "name": "image_statement"
             }
           ]
+        }
+      ]
+    },
+    "decorator_block": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "REPEAT1",
+          "content": {
+            "type": "SYMBOL",
+            "name": "decorator"
+          }
+        },
+        {
+          "type": "STRING",
+          "value": "{"
+        },
+        {
+          "type": "REPEAT",
+          "content": {
+            "type": "SYMBOL",
+            "name": "statement"
+          }
+        },
+        {
+          "type": "STRING",
+          "value": "}"
         }
       ]
     },

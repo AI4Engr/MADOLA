@@ -1,0 +1,21 @@
+@version 0.01
+
+@hidden {
+a := 5;
+b := 10;
+c := a + b;
+}
+
+@result
+d := c * 2;
+
+@hidden
+old := 1;
+
+@resolveAlign {
+x := 5;
+y := x + 1;
+}
+
+@result
+z := y * 2;

@@ -2,6 +2,7 @@
 #include "ast.h"
 #include "../tree_sitter_madola.h"
 #include <memory>
+#include <vector>
 
 namespace madola {
 
@@ -31,6 +32,14 @@ private:
     StatementPtr buildWhileStatement(TSNode node, const std::string& source);
     StatementPtr buildIfStatement(TSNode node, const std::string& source);
     StatementPtr buildDecoratedStatement(TSNode node, const std::string& source);
+    std::vector<Decorator> parseDecoratorList(TSNode decoratorParentNode, const std::string& source);
+    // Builds `node` (a "statement" wrapper or a bare statement node) into zero or
+    // more statements, appending them to `out`. Almost always exactly one — the
+    // sole exception is decorator_block, which desugars to one DecoratedStatement
+    // per inner statement, all sharing the same decorator list. Every statement-list
+    // builder (program/function/for/while/if bodies) should call this instead of
+    // buildStatement() directly so `@dec { a; b; }` works wherever `@dec a;` does.
+    void appendStatement(std::vector<StatementPtr>& out, TSNode node, const std::string& source);
     StatementPtr buildSkipStatement(TSNode node, const std::string& source);
     StatementPtr buildImportStatement(TSNode node, const std::string& source);
     StatementPtr buildPiecewiseFunctionDeclaration(TSNode node, const std::string& source);

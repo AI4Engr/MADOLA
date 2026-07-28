@@ -92,16 +92,13 @@ ProgramPtr ASTBuilder::buildProgram(const std::string& source) {
     }
 
     uint32_t child_count = ts_node_child_count(root_node);
+    std::vector<StatementPtr> statements;
     for (uint32_t i = 0; i < child_count; i++) {
         TSNode child = ts_node_child(root_node, i);
-        // const char* child_type = ts_node_type(child);  // Unused for now
-        // For debugging: print the node type we're trying to parse
-        std::string debug_text = getNodeText(child, source);
-
-        auto stmt = buildStatement(child, source);
-        if (stmt) {
-            program->addStatement(std::move(stmt));
-        }
+        appendStatement(statements, child, source);
+    }
+    for (auto& stmt : statements) {
+        program->addStatement(std::move(stmt));
     }
 
     ts_tree_delete(tree);
@@ -213,6 +210,13 @@ StatementPtr ASTBuilder::buildStatement(TSNode node, const std::string& source) 
         return buildIfStatement(node, source);
     } else if (strcmp(node_type, "decorated_statement") == 0) {
         return buildDecoratedStatement(node, source);
+    } else if (strcmp(node_type, "decorator_block") == 0) {
+        // decorator_block expands to zero or more statements, which buildStatement's
+        // one-in-one-out signature can't represent - it must go through
+        // appendStatement() instead. Reaching here means some statement-list builder
+        // forgot to switch from buildStatement() to appendStatement().
+        throw std::runtime_error("Internal error: decorator_block must be expanded via "
+                                  "ASTBuilder::appendStatement, not buildStatement");
     } else if (strcmp(node_type, "skip_statement") == 0) {
         return buildSkipStatement(node, source);
     } else if (strcmp(node_type, "import_statement") == 0) {
@@ -407,10 +411,7 @@ StatementPtr ASTBuilder::buildFunctionDeclaration(TSNode node, const std::string
                 // Skip comma tokens
             }
         } else if (strcmp(childType, "statement") == 0) {
-            auto stmt = buildStatement(child, source);
-            if (stmt) {
-                body.push_back(std::move(stmt));
-            }
+            appendStatement(body, child, source);
         }
     }
 
@@ -458,10 +459,7 @@ StatementPtr ASTBuilder::buildDecoratedFunctionDeclaration(TSNode node, const st
                 }
             }
         } else if (strcmp(childType, "statement") == 0) {
-            auto stmt = buildStatement(child, source);
-            if (stmt) {
-                body.push_back(std::move(stmt));
-            }
+            appendStatement(body, child, source);
         }
     }
 
@@ -494,10 +492,7 @@ StatementPtr ASTBuilder::buildForStatement(TSNode node, const std::string& sourc
         const char* childType = ts_node_type(child);
 
         if (strcmp(childType, "statement") == 0) {
-            auto stmt = buildStatement(child, source);
-            if (stmt) {
-                body.push_back(std::move(stmt));
-            }
+            appendStatement(body, child, source);
         }
     }
 
@@ -524,18 +519,12 @@ StatementPtr ASTBuilder::buildWhileStatement(TSNode node, const std::string& sou
             const char* childType = ts_node_type(child);
 
             if (strcmp(childType, "statement") == 0) {
-                auto stmt = buildStatement(child, source);
-                if (stmt) {
-                    body.push_back(std::move(stmt));
-                }
+                appendStatement(body, child, source);
             }
         }
     } else {
         // Single statement form
-        auto stmt = buildStatement(bodyNode, source);
-        if (stmt) {
-            body.push_back(std::move(stmt));
-        }
+        appendStatement(body, bodyNode, source);
     }
 
     return std::make_unique<WhileStatement>(std::move(condition), std::move(body));
@@ -612,18 +601,12 @@ StatementPtr ASTBuilder::buildIfStatement(TSNode node, const std::string& source
             if (strcmp(childType, "}") == 0) {
                 break; // End of then block
             } else if (strcmp(childType, "statement") == 0) {
-                auto stmt = buildStatement(child, source);
-                if (stmt) {
-                    thenBody.push_back(std::move(stmt));
-                }
+                appendStatement(thenBody, child, source);
             }
         }
     } else {
         // Single statement form
-        auto stmt = buildStatement(thenBodyNode, source);
-        if (stmt) {
-            thenBody.push_back(std::move(stmt));
-        }
+        appendStatement(thenBody, thenBodyNode, source);
     }
 
     // Check for else clause
@@ -647,18 +630,12 @@ StatementPtr ASTBuilder::buildIfStatement(TSNode node, const std::string& source
                         if (strcmp(elseChildType, "}") == 0) {
                             break; // End of else block
                         } else if (strcmp(elseChildType, "statement") == 0) {
-                            auto stmt = buildStatement(elseChild, source);
-                            if (stmt) {
-                                elseBody.push_back(std::move(stmt));
-                            }
+                            appendStatement(elseBody, elseChild, source);
                         }
                     }
                 } else {
                     // Single statement form
-                    auto stmt = buildStatement(elseBodyNode, source);
-                    if (stmt) {
-                        elseBody.push_back(std::move(stmt));
-                    }
+                    appendStatement(elseBody, elseBodyNode, source);
                 }
             }
             break;
@@ -668,14 +645,16 @@ StatementPtr ASTBuilder::buildIfStatement(TSNode node, const std::string& source
     return std::make_unique<IfStatement>(std::move(condition), std::move(thenBody), std::move(elseBody));
 }
 
-StatementPtr ASTBuilder::buildDecoratedStatement(TSNode node, const std::string& source) {
-    // decorated_statement: repeat1(decorator) (assignment_statement | expression_statement | print_statement | comment_statement)
+// Parses every leading `decorator` child of decoratorParentNode (works for both
+// decorated_statement and decorator_block, which share the repeat1(decorator)
+// prefix). Non-decorator children are ignored, so callers can pass the whole
+// node without pre-filtering.
+std::vector<Decorator> ASTBuilder::parseDecoratorList(TSNode decoratorParentNode, const std::string& source) {
     std::vector<Decorator> decorators;
-    TSNode statementNode;
 
-    uint32_t childCount = ts_node_child_count(node);
+    uint32_t childCount = ts_node_child_count(decoratorParentNode);
     for (uint32_t i = 0; i < childCount; i++) {
-        TSNode child = ts_node_child(node, i);
+        TSNode child = ts_node_child(decoratorParentNode, i);
         const char* childType = ts_node_type(child);
 
         if (strcmp(childType, "decorator") == 0) {
@@ -810,19 +789,77 @@ StatementPtr ASTBuilder::buildDecoratedStatement(TSNode node, const std::string&
                 std::string decoratorName = getNodeText(identifierNode, source);
                 decorators.emplace_back(decoratorName);
             }
-        } else if (strcmp(childType, "assignment_statement") == 0 ||
-                   strcmp(childType, "expression_statement") == 0 ||
-                   strcmp(childType, "print_statement") == 0 ||
-                   strcmp(childType, "comment_statement") == 0 ||
-                   strcmp(childType, "image_statement") == 0) {
+        }
+        // Non-decorator children (the wrapped statement, '{', '}', etc.) are the
+        // caller's concern - this function only collects the decorator prefix.
+    }
+
+    return decorators;
+}
+
+StatementPtr ASTBuilder::buildDecoratedStatement(TSNode node, const std::string& source) {
+    // decorated_statement: repeat1(decorator) (assignment_statement | expression_statement | print_statement | comment_statement)
+    std::vector<Decorator> decorators = parseDecoratorList(node, source);
+
+    TSNode statementNode;
+    uint32_t childCount = ts_node_child_count(node);
+    for (uint32_t i = 0; i < childCount; i++) {
+        TSNode child = ts_node_child(node, i);
+        const char* childType = ts_node_type(child);
+        if (strcmp(childType, "assignment_statement") == 0 ||
+            strcmp(childType, "expression_statement") == 0 ||
+            strcmp(childType, "print_statement") == 0 ||
+            strcmp(childType, "comment_statement") == 0 ||
+            strcmp(childType, "image_statement") == 0) {
             statementNode = child;
+            break;
         }
     }
 
-    // Build the underlying statement
     auto stmt = buildStatement(statementNode, source);
-
     return std::make_unique<DecoratedStatement>(std::move(decorators), std::move(stmt));
+}
+
+void ASTBuilder::appendStatement(std::vector<StatementPtr>& out, TSNode node, const std::string& source) {
+    // Unwrap the generic "statement" wrapper node (used by source_file/function/
+    // for/while/if bodies) to see the actual statement kind underneath.
+    TSNode actual = node;
+    if (strcmp(ts_node_type(actual), "statement") == 0 && ts_node_child_count(actual) > 0) {
+        actual = ts_node_child(actual, 0);
+    }
+
+    if (strcmp(ts_node_type(actual), "decorator_block") == 0) {
+        // decorator_block: repeat1(decorator) '{' repeat(statement) '}'. Desugar into
+        // one DecoratedStatement per inner statement, all sharing a copy of the same
+        // decorator list - equivalent to the user having repeated the decorator on
+        // every line, so no other code needs to know this block form exists.
+        std::vector<Decorator> decorators = parseDecoratorList(actual, source);
+
+        uint32_t childCount = ts_node_child_count(actual);
+        for (uint32_t i = 0; i < childCount; i++) {
+            TSNode child = ts_node_child(actual, i);
+            if (strcmp(ts_node_type(child), "statement") != 0) continue;
+
+            TSNode inner = ts_node_child(child, 0);
+            if (strcmp(ts_node_type(inner), "decorator_block") == 0) {
+                // Nested blocks would need their decorator lists merged; not
+                // supported (and not produced by the grammar's repeat($.statement)
+                // recursion in a way that needs it today).
+                throw std::runtime_error("Nested decorator blocks are not supported");
+            }
+
+            auto stmt = buildStatement(child, source);
+            if (stmt) {
+                out.push_back(std::make_unique<DecoratedStatement>(decorators, std::move(stmt)));
+            }
+        }
+        return;
+    }
+
+    auto stmt = buildStatement(node, source);
+    if (stmt) {
+        out.push_back(std::move(stmt));
+    }
 }
 
 StatementPtr ASTBuilder::buildSkipStatement(TSNode node, const std::string& source) {
