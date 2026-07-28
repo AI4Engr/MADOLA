@@ -10,6 +10,34 @@
 
 namespace madola {
 
+namespace {
+
+// Strip the line breaks that surround brace-delimited content, e.g.
+//   @p{
+//   text}
+// where the source's own formatting puts the content on its own line. Those
+// breaks belong to the source layout, not the text — and since paragraphs render
+// with white-space: pre-wrap, a leading one would show up as a blank line.
+//
+// Only line breaks are removed, symmetrically at both ends. Interior line breaks
+// and all indentation are preserved, since pre-wrap content relies on them for
+// its layout (see the tabs/indentation case in regression's text.mda).
+std::string trimSurroundingLineBreaks(const std::string& text) {
+    size_t start = 0;
+    size_t end = text.size();
+
+    while (start < end && (text[start] == '\n' || text[start] == '\r')) {
+        ++start;
+    }
+    while (end > start && (text[end - 1] == '\n' || text[end - 1] == '\r')) {
+        --end;
+    }
+
+    return text.substr(start, end - start);
+}
+
+} // namespace
+
 ASTBuilder::ASTBuilder() {
     parser = ts_parser_new();
     ts_parser_set_language(parser, tree_sitter_madola());
@@ -935,7 +963,7 @@ StatementPtr ASTBuilder::buildHeadingStatement(TSNode node, const std::string& s
         const char* childType = ts_node_type(child);
 
         if (strcmp(childType, "heading_content") == 0) {
-            std::string content = getNodeText(child, source);
+            std::string content = trimSurroundingLineBreaks(getNodeText(child, source));
             paragraphs.push_back(content);
         }
     }
@@ -972,7 +1000,7 @@ StatementPtr ASTBuilder::buildParagraphStatement(TSNode node, const std::string&
         if (strcmp(childType, "paragraph_style") == 0) {
             style = getNodeText(child, source);
         } else if (strcmp(childType, "paragraph_content") == 0) {
-            std::string content = getNodeText(child, source);
+            std::string content = trimSurroundingLineBreaks(getNodeText(child, source));
             lines.push_back(content);
         }
     }
