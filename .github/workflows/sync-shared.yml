@@ -1,8 +1,9 @@
-name: Sync shared/js copies
+name: Sync shared/{js,css} copies
 
-# web/js/shared/ and app/js/shared/ are generated copies of shared/js/ (the source
-# of truth). They are committed on purpose because playground.madola.org deploys
-# from a plain git checkout — anything absent from the repo 404s in production.
+# web/{js,css}/shared/ and app/{js,css}/shared/ are generated copies of
+# shared/js/ and shared/css/ (the source of truth). They are committed on
+# purpose because playground.madola.org deploys from a plain git checkout —
+# anything absent from the repo 404s in production.
 #
 # This workflow keeps those copies in lockstep automatically, so nobody has to
 # remember to run `npm run sync-shared` by hand.
@@ -12,6 +13,7 @@ on:
     branches: ["main"]
     paths:
       - "shared/js/**"
+      - "shared/css/**"
       - "scripts/sync-shared.js"
       - ".github/workflows/sync-shared.yml"
 
@@ -25,19 +27,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Regenerate copies from shared/js
+      - name: Regenerate copies from shared/js and shared/css
         run: node scripts/sync-shared.js
 
       - name: Commit copies if they drifted
         run: |
-          # app/ is gitignored in this repo, so only web/js/shared/ is tracked here.
-          if git diff --quiet -- web/js/shared/; then
+          # app/ is gitignored in this repo, so only web/{js,css}/shared/ is tracked here.
+          if git diff --quiet -- web/js/shared/ web/css/shared/; then
             echo "Copies already in sync — nothing to commit."
             exit 0
           fi
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add web/js/shared/
+          git add web/js/shared/ web/css/shared/
           # [skip ci] keeps this bot commit from re-triggering workflows.
-          git commit -m "chore: sync web/js/shared from shared/js [skip ci]"
+          git commit -m "chore: sync web/{js,css}/shared from shared/{js,css} [skip ci]"
           git push
