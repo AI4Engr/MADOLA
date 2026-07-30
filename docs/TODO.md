@@ -213,6 +213,19 @@
   - **Impact:** Turns the opaque UI error into a locatable message — baseline for a
     commercial editor
 
+- [ ] **🔥 Print-to-PDF must be a real deliverable path** — product decision (2026-07): the
+      open-source build **can** export PDF, so it stays a complete standalone tool; the hosted
+      product differentiates on *typesetting quality* (cover page, headers/footers, page numbers,
+      project metadata via Typst), not on whether PDF export exists at all.
+  - **Today:** `web/js/app-ui.js:93` calls `window.print()` and `shared/css/madola-output.css:279`
+    has a `@media print` block (hides source blocks, strips graph borders, A4 margins) — but this
+    has never been verified as something an engineer would actually hand over.
+  - **Needs:** verify/polish the print stylesheet against real documents — page-break behaviour
+    around formulas, tables and `svg()` diagrams (avoid splitting a figure across pages), MathJax
+    rendering in print, and that `.svg-container`'s new 480px cap behaves sensibly on paper.
+  - **Explicitly NOT in scope here:** cover pages, running headers/footers, page numbering — those
+    are the paid tier's Typst pipeline and deliberately stay out of the open-source build.
+
 - [ ] **Error Recovery** - Better error messages with suggestions
 - [ ] **Debugging Support** - Breakpoints, variable inspection, call stack
 
@@ -225,7 +238,12 @@
   - LaTeX export for academic papers
   - MathML for web standards
   - SVG/PNG for graphics (see Generic SVG Output Primitive under High Priority)
-  - Typst → PDF for signable engineering reports (headers/footers/page numbers)
+  - ~~Typst → PDF for signable engineering reports (headers/footers/page numbers)~~
+    ⚠️ **Deliberately stays out of the open-source build** (product decision 2026-07). The
+    open-source path to PDF is the browser print stylesheet (see the print-to-PDF item under
+    High Priority); Typst-based report typesetting — cover pages, running headers/footers, page
+    numbers, project metadata — is the hosted product's differentiator. Keeping it out is what
+    makes "open source can export PDF" true without giving away the paid tier.
 
 ### Low Priority
 - [ ] **ODE / PDE / difference-equation Solver Primitive** (split from the integration item, deferred)
@@ -308,6 +326,79 @@
 - ✅ **Already have:** Code generation (`@gen_cpp`, `@gen_addon`), markdown export, WASM execution
 - 🔨 **Need to add:** WYSIWYG document mode, cell-based execution, richer unit system
 - 🎯 **Future:** Multi-language interop, collaborative editing, template library
+
+---
+
+## 🔍 Competitive Analysis: Calcpad / CalcpadCE
+
+[CalcpadCE](https://github.com/imartincei/CalcpadCE) is an MIT-licensed community fork of Calcpad
+7.6.2 (the original went closed-source in March 2026). C#/.NET, WPF desktop + web + VS Code
+extension, ~12 years of accumulated features. It is the closest direct competitor to MADOLA and
+occupies the "free open-source engineering worksheet" position we are also targeting.
+
+Sources: [quick reference](https://calcpad.eu/download/Calcpad-quick-reference.pdf) ·
+[modules](https://calcpad.eu/help/59/modules-include) ·
+[macros](https://calcpad.eu/help/60/macros-and-string-variables) ·
+[input forms](https://calcpad.eu/help/34/input-forms)
+
+### Worth borrowing — output control directives (high value, low cost)
+
+Their `#`-directives are line-scoped modes that persist "after the current line until the end of the
+report or another command that overwrites it." MADOLA's decorators are strictly per-statement, so
+every line needs its own `@result`. A mode-style directive would complement (not replace) decorators.
+`@hidden { ... }` blocks (done) already cover part of this.
+
+- [ ] **`#nosub` / `#novar` / `#varsub` equivalents** — control whether equations render with
+      symbols only, substituted values only, or both. MADOLA has `@resolve`/`@resolveAlign`
+      hardcoded to "both"; making this a selectable mode is strictly more expressive.
+- [ ] **`#val` / `#equ` / `#noc`** — show result only / full equation + result / equation without
+      evaluating. `@result` ≈ `#val`, but we have no "show the equation, skip the math" mode.
+- [ ] **`#round n` / `#format`** — global output rounding and custom number formatting. MADOLA
+      currently hardcodes 3-decimal trailing-zero-trimmed formatting in `UnitValue::toString`.
+- [ ] **`#pre` / `#post`** — show content only before / only after calculation.
+- [ ] **`#const`** — declare read-only variables/functions (write protection).
+
+### Worth borrowing — language features
+
+- [ ] **Target-unit conversion operator** — Calcpad's `V|dm^3` renders a value converted into the
+      requested unit. This is the single most-used ergonomic feature in their syntax and MADOLA has
+      no equivalent. Depends on a real unit-conversion engine (see gap below).
+- [ ] **`#include` with `#local` / `#global` visibility** — their module system supports nested
+      includes and lets the *module* mark which sections are exported. MADOLA's `import` is less
+      capable here. Note their docs do not specify name-collision or circular-include semantics —
+      we should define those explicitly rather than copy the ambiguity.
+- [ ] **Table lookup functions** — `hlookup`/`vlookup` family with comparison variants
+      (`_eq`, `_ne`, `_lt`, `_le`, `_gt`, `_ge`) for pulling values out of matrices. This is their
+      generic answer to what MADOLA solves specifically with `section()`.
+- [ ] **`$Root` / `$Sup` / `$Inf` / `$Area` / `$Integral` / `$Slope`** — declarative numerical
+      methods with an `@ x = a : b` range syntax. MADOLA has `math.diff`/`math.intg` but no root
+      finding or optimization.
+- [ ] **CSV / Excel I/O** (`#read` / `#write` / `#append` with cell-range addressing) — relevant to
+      engineers with existing spreadsheets. Note: browser sandbox makes arbitrary file paths
+      infeasible for the web build; would need a file-picker-based design.
+
+### Known gaps this analysis exposes (independent of Calcpad)
+
+- [ ] **Unit system is the most glaring weakness** — mixed dimensionless/dimensional arithmetic
+      throws (`100 - h_px/2` fails when `h_px` carries a unit), there is no unit conversion, and
+      compound units are display-only strings. This is directly comparable to a mature competitor
+      feature and is the first thing an evaluating engineer will hit.
+- [ ] **Comments are rejected inside function-call argument lists** — `svg(100, 100,\n // note\n
+      line(...))` fails to parse, silently returning empty output from `format_madola_html`.
+      Affects any multi-line call, not just `svg()`.
+- [ ] **`@hidden` is ignored inside `for` / `if` bodies** — the aggregate loop/branch math rendering
+      does not consult per-statement decorators. Pre-existing, predates `@hidden { }` blocks.
+
+### Deliberately NOT copying
+
+- **Their input-form design.** Calcpad's `select`/`radio`/`checkbox` require hand-written raw HTML
+  with manual `name`/`id` pairing, and "accepts input only from text boxes" — every widget is glue
+  that populates a text field. MADOLA's `// @input` annotation generating data-driven widgets is a
+  higher level of abstraction and is our clearest differentiator. Do not regress toward their model.
+- **Feature-parity chase in general-purpose math.** They have a 12-year head start on matrices,
+  FFT, complex numbers, and numerical methods. Competing there is a losing game; depth in
+  structural engineering (AISC section lookup, design-code checks) is where they are deliberately
+  neutral and we can win.
 
 ---
 
