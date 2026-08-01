@@ -1379,10 +1379,22 @@ namespace {
 
 double requireNumber(Evaluator& evaluator, const Expression& expr, const char* context) {
     Value v = evaluator.evaluateExpression(expr);
-    if (!std::holds_alternative<double>(v)) {
+    double value;
+    if (std::holds_alternative<double>(v)) {
+        value = std::get<double>(v);
+    } else if (std::holds_alternative<UnitValue>(v) &&
+               std::get<UnitValue>(v).isDimensionless()) {
+        // A ratio whose units cancel (e.g. deflection/allowable, or a length
+        // divided by a length) stays wrapped in UnitValue with an empty unit
+        // string — UnitValue::operator/ never collapses back to a plain double.
+        // Such a value IS a number, so accept it rather than making callers
+        // hunt for a unit-stripping idiom the language doesn't have. Anything
+        // still carrying a real unit is still rejected: passing "5 mm" as an
+        // SVG coordinate is a genuine mistake worth reporting.
+        value = std::get<UnitValue>(v).value;
+    } else {
         throw std::runtime_error(std::string(context) + " expects a number argument");
     }
-    double value = std::get<double>(v);
     // Reject inf/nan here rather than letting them leak into SVG attributes (produces
     // invalid markup like cx="inf") or data-* attrs (breaks JS parseFloat on recompute).
     // Callers that sample a curve expression already catch this and treat it as a gap.
