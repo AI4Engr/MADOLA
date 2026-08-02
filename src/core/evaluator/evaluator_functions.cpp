@@ -292,14 +292,11 @@ Value Evaluator::callFunction(const std::string& name, const std::vector<Value>&
             throw std::runtime_error("Function sqrt expects 1 argument, got " + std::to_string(arguments.size()));
         }
 
-        double val;
-        if (std::holds_alternative<double>(arguments[0])) {
-            val = std::get<double>(arguments[0]);
-        } else if (std::holds_alternative<UnitValue>(arguments[0])) {
-            val = std::get<UnitValue>(arguments[0]).value;
-        } else {
-            throw std::runtime_error("Function sqrt only supports numeric arguments");
+        auto number = asDimensionlessNumber(arguments[0]);
+        if (!number) {
+            throw std::runtime_error("Function sqrt only supports dimensionless numeric arguments");
         }
+        double val = *number;
 
         if (val < 0) {
             throw std::runtime_error("Cannot take square root of negative number: " + std::to_string(val));
@@ -312,16 +309,12 @@ Value Evaluator::callFunction(const std::string& name, const std::vector<Value>&
             throw std::runtime_error("Function sin expects 1 argument, got " + std::to_string(arguments.size()));
         }
 
-        double val;
-        if (std::holds_alternative<double>(arguments[0])) {
-            val = std::get<double>(arguments[0]);
-        } else if (std::holds_alternative<UnitValue>(arguments[0])) {
-            val = std::get<UnitValue>(arguments[0]).value;
-        } else {
-            throw std::runtime_error("Function sin only supports numeric arguments");
+        auto number = asDimensionlessNumber(arguments[0]);
+        if (!number) {
+            throw std::runtime_error("Function sin only supports dimensionless numeric arguments");
         }
 
-        return std::sin(val);
+        return std::sin(*number);
     }
 
     if (resolvedName == "cos") {
@@ -329,16 +322,12 @@ Value Evaluator::callFunction(const std::string& name, const std::vector<Value>&
             throw std::runtime_error("Function cos expects 1 argument, got " + std::to_string(arguments.size()));
         }
 
-        double val;
-        if (std::holds_alternative<double>(arguments[0])) {
-            val = std::get<double>(arguments[0]);
-        } else if (std::holds_alternative<UnitValue>(arguments[0])) {
-            val = std::get<UnitValue>(arguments[0]).value;
-        } else {
-            throw std::runtime_error("Function cos only supports numeric arguments");
+        auto number = asDimensionlessNumber(arguments[0]);
+        if (!number) {
+            throw std::runtime_error("Function cos only supports dimensionless numeric arguments");
         }
 
-        return std::cos(val);
+        return std::cos(*number);
     }
 
     if (resolvedName == "tan") {
@@ -346,16 +335,12 @@ Value Evaluator::callFunction(const std::string& name, const std::vector<Value>&
             throw std::runtime_error("Function tan expects 1 argument, got " + std::to_string(arguments.size()));
         }
 
-        double val;
-        if (std::holds_alternative<double>(arguments[0])) {
-            val = std::get<double>(arguments[0]);
-        } else if (std::holds_alternative<UnitValue>(arguments[0])) {
-            val = std::get<UnitValue>(arguments[0]).value;
-        } else {
-            throw std::runtime_error("Function tan only supports numeric arguments");
+        auto number = asDimensionlessNumber(arguments[0]);
+        if (!number) {
+            throw std::runtime_error("Function tan only supports dimensionless numeric arguments");
         }
 
-        return std::tan(val);
+        return std::tan(*number);
     }
 
 
@@ -736,16 +721,12 @@ Value Evaluator::evaluateMethodCall(const MethodCall& expr) {
                 }
 
                 Value argVal = evaluateExpression(*expr.arguments[0]);
-                double val;
-                if (std::holds_alternative<double>(argVal)) {
-                    val = std::get<double>(argVal);
-                } else if (std::holds_alternative<UnitValue>(argVal)) {
-                    val = std::get<UnitValue>(argVal).value;
-                } else {
-                    throw std::runtime_error("Function math.sin only supports numeric arguments");
+                auto number = asDimensionlessNumber(argVal);
+                if (!number) {
+                    throw std::runtime_error("Function math.sin only supports dimensionless numeric arguments");
                 }
 
-                return std::sin(val);
+                return std::sin(*number);
             }
             // math.cos
             else if (expr.method_name == "cos") {
@@ -754,16 +735,12 @@ Value Evaluator::evaluateMethodCall(const MethodCall& expr) {
                 }
 
                 Value argVal = evaluateExpression(*expr.arguments[0]);
-                double val;
-                if (std::holds_alternative<double>(argVal)) {
-                    val = std::get<double>(argVal);
-                } else if (std::holds_alternative<UnitValue>(argVal)) {
-                    val = std::get<UnitValue>(argVal).value;
-                } else {
-                    throw std::runtime_error("Function math.cos only supports numeric arguments");
+                auto number = asDimensionlessNumber(argVal);
+                if (!number) {
+                    throw std::runtime_error("Function math.cos only supports dimensionless numeric arguments");
                 }
 
-                return std::cos(val);
+                return std::cos(*number);
             }
             // math.tan
             else if (expr.method_name == "tan") {
@@ -772,16 +749,12 @@ Value Evaluator::evaluateMethodCall(const MethodCall& expr) {
                 }
 
                 Value argVal = evaluateExpression(*expr.arguments[0]);
-                double val;
-                if (std::holds_alternative<double>(argVal)) {
-                    val = std::get<double>(argVal);
-                } else if (std::holds_alternative<UnitValue>(argVal)) {
-                    val = std::get<UnitValue>(argVal).value;
-                } else {
-                    throw std::runtime_error("Function math.tan only supports numeric arguments");
+                auto number = asDimensionlessNumber(argVal);
+                if (!number) {
+                    throw std::runtime_error("Function math.tan only supports dimensionless numeric arguments");
                 }
 
-                return std::tan(val);
+                return std::tan(*number);
             }
             // math.arcsin
             else if (expr.method_name == "arcsin") {
@@ -790,14 +763,11 @@ Value Evaluator::evaluateMethodCall(const MethodCall& expr) {
                 }
 
                 Value argVal = evaluateExpression(*expr.arguments[0]);
-                double val;
-                if (std::holds_alternative<double>(argVal)) {
-                    val = std::get<double>(argVal);
-                } else if (std::holds_alternative<UnitValue>(argVal)) {
-                    val = std::get<UnitValue>(argVal).value;
-                } else {
-                    throw std::runtime_error("Function math.arcsin only supports numeric arguments");
+                auto number = asDimensionlessNumber(argVal);
+                if (!number) {
+                    throw std::runtime_error("Function math.arcsin only supports dimensionless numeric arguments");
                 }
+                double val = *number;
 
                 if (val < -1.0 || val > 1.0) {
                     throw std::runtime_error("math.arcsin argument must be in range [-1, 1], got " + std::to_string(val));
@@ -811,14 +781,11 @@ Value Evaluator::evaluateMethodCall(const MethodCall& expr) {
                 }
 
                 Value argVal = evaluateExpression(*expr.arguments[0]);
-                double val;
-                if (std::holds_alternative<double>(argVal)) {
-                    val = std::get<double>(argVal);
-                } else if (std::holds_alternative<UnitValue>(argVal)) {
-                    val = std::get<UnitValue>(argVal).value;
-                } else {
-                    throw std::runtime_error("Function math.arccos only supports numeric arguments");
+                auto number = asDimensionlessNumber(argVal);
+                if (!number) {
+                    throw std::runtime_error("Function math.arccos only supports dimensionless numeric arguments");
                 }
+                double val = *number;
 
                 if (val < -1.0 || val > 1.0) {
                     throw std::runtime_error("math.arccos argument must be in range [-1, 1], got " + std::to_string(val));
@@ -832,16 +799,12 @@ Value Evaluator::evaluateMethodCall(const MethodCall& expr) {
                 }
 
                 Value argVal = evaluateExpression(*expr.arguments[0]);
-                double val;
-                if (std::holds_alternative<double>(argVal)) {
-                    val = std::get<double>(argVal);
-                } else if (std::holds_alternative<UnitValue>(argVal)) {
-                    val = std::get<UnitValue>(argVal).value;
-                } else {
-                    throw std::runtime_error("Function math.arctan only supports numeric arguments");
+                auto number = asDimensionlessNumber(argVal);
+                if (!number) {
+                    throw std::runtime_error("Function math.arctan only supports dimensionless numeric arguments");
                 }
 
-                return std::atan(val);
+                return std::atan(*number);
             }
             // math.sqrt
             else if (expr.method_name == "sqrt") {
@@ -866,14 +829,11 @@ Value Evaluator::evaluateMethodCall(const MethodCall& expr) {
                 }
 
                 // Handle scalar input
-                double val;
-                if (std::holds_alternative<double>(argVal)) {
-                    val = std::get<double>(argVal);
-                } else if (std::holds_alternative<UnitValue>(argVal)) {
-                    val = std::get<UnitValue>(argVal).value;
-                } else {
-                    throw std::runtime_error("Function math.sqrt only supports numeric or array arguments");
+                auto number = asDimensionlessNumber(argVal);
+                if (!number) {
+                    throw std::runtime_error("Function math.sqrt only supports dimensionless numeric or array arguments");
                 }
+                double val = *number;
 
                 if (val < 0) {
                     throw std::runtime_error("Cannot take square root of negative number: " + std::to_string(val));
@@ -900,16 +860,12 @@ Value Evaluator::evaluateMethodCall(const MethodCall& expr) {
                 }
 
                 // Handle scalar input
-                double val;
-                if (std::holds_alternative<double>(argVal)) {
-                    val = std::get<double>(argVal);
-                } else if (std::holds_alternative<UnitValue>(argVal)) {
-                    val = std::get<UnitValue>(argVal).value;
-                } else {
-                    throw std::runtime_error("Function math.sqr only supports numeric or array arguments");
+                auto number = asDimensionlessNumber(argVal);
+                if (!number) {
+                    throw std::runtime_error("Function math.sqr only supports dimensionless numeric or array arguments");
                 }
 
-                return val * val;
+                return (*number) * (*number);
             }
             // math.abs
             else if (expr.method_name == "abs") {
@@ -984,16 +940,12 @@ Value Evaluator::evaluateMethodCall(const MethodCall& expr) {
                 }
 
                 // Handle scalar input
-                double val;
-                if (std::holds_alternative<double>(argVal)) {
-                    val = std::get<double>(argVal);
-                } else if (std::holds_alternative<UnitValue>(argVal)) {
-                    val = std::get<UnitValue>(argVal).value;
-                } else {
-                    throw std::runtime_error("Function math.max only supports numeric or array arguments");
+                auto number = asDimensionlessNumber(argVal);
+                if (!number) {
+                    throw std::runtime_error("Function math.max only supports dimensionless numeric or array arguments");
                 }
 
-                return val;
+                return *number;
             }
             // math.min
             else if (expr.method_name == "min") {
@@ -1020,16 +972,12 @@ Value Evaluator::evaluateMethodCall(const MethodCall& expr) {
                 }
 
                 // Handle scalar input
-                double val;
-                if (std::holds_alternative<double>(argVal)) {
-                    val = std::get<double>(argVal);
-                } else if (std::holds_alternative<UnitValue>(argVal)) {
-                    val = std::get<UnitValue>(argVal).value;
-                } else {
-                    throw std::runtime_error("Function math.min only supports numeric or array arguments");
+                auto number = asDimensionlessNumber(argVal);
+                if (!number) {
+                    throw std::runtime_error("Function math.min only supports dimensionless numeric or array arguments");
                 }
 
-                return val;
+                return *number;
             }
             // math.exp
             else if (expr.method_name == "exp") {
@@ -1052,16 +1000,12 @@ Value Evaluator::evaluateMethodCall(const MethodCall& expr) {
                 }
 
                 // Handle scalar input
-                double val;
-                if (std::holds_alternative<double>(argVal)) {
-                    val = std::get<double>(argVal);
-                } else if (std::holds_alternative<UnitValue>(argVal)) {
-                    val = std::get<UnitValue>(argVal).value;
-                } else {
-                    throw std::runtime_error("Function math.exp only supports numeric or array arguments");
+                auto number = asDimensionlessNumber(argVal);
+                if (!number) {
+                    throw std::runtime_error("Function math.exp only supports dimensionless numeric or array arguments");
                 }
 
-                return std::exp(val);
+                return std::exp(*number);
             }
             // math.ln (natural log)
             else if (expr.method_name == "ln") {
@@ -1070,14 +1014,11 @@ Value Evaluator::evaluateMethodCall(const MethodCall& expr) {
                 }
 
                 Value argVal = evaluateExpression(*expr.arguments[0]);
-                double val;
-                if (std::holds_alternative<double>(argVal)) {
-                    val = std::get<double>(argVal);
-                } else if (std::holds_alternative<UnitValue>(argVal)) {
-                    val = std::get<UnitValue>(argVal).value;
-                } else {
-                    throw std::runtime_error("Function math.ln only supports numeric arguments");
+                auto number = asDimensionlessNumber(argVal);
+                if (!number) {
+                    throw std::runtime_error("Function math.ln only supports dimensionless numeric arguments");
                 }
+                double val = *number;
 
                 if (val <= 0) {
                     throw std::runtime_error("math.ln argument must be positive, got " + std::to_string(val));
@@ -1091,14 +1032,11 @@ Value Evaluator::evaluateMethodCall(const MethodCall& expr) {
                 }
 
                 Value argVal = evaluateExpression(*expr.arguments[0]);
-                double val;
-                if (std::holds_alternative<double>(argVal)) {
-                    val = std::get<double>(argVal);
-                } else if (std::holds_alternative<UnitValue>(argVal)) {
-                    val = std::get<UnitValue>(argVal).value;
-                } else {
-                    throw std::runtime_error("Function math.log only supports numeric arguments");
+                auto number = asDimensionlessNumber(argVal);
+                if (!number) {
+                    throw std::runtime_error("Function math.log only supports dimensionless numeric arguments");
                 }
+                double val = *number;
 
                 if (val <= 0) {
                     throw std::runtime_error("math.log argument must be positive, got " + std::to_string(val));
@@ -1109,14 +1047,11 @@ Value Evaluator::evaluateMethodCall(const MethodCall& expr) {
                 }
 
                 Value baseVal = evaluateExpression(*expr.arguments[1]);
-                double base;
-                if (std::holds_alternative<double>(baseVal)) {
-                    base = std::get<double>(baseVal);
-                } else if (std::holds_alternative<UnitValue>(baseVal)) {
-                    base = std::get<UnitValue>(baseVal).value;
-                } else {
-                    throw std::runtime_error("Function math.log base only supports numeric arguments");
+                auto baseNumber = asDimensionlessNumber(baseVal);
+                if (!baseNumber) {
+                    throw std::runtime_error("Function math.log base only supports dimensionless numeric arguments");
                 }
+                double base = *baseNumber;
 
                 if (base <= 0 || base == 1.0) {
                     throw std::runtime_error("math.log base must be positive and not equal to 1, got " + std::to_string(base));
@@ -1146,16 +1081,12 @@ Value Evaluator::evaluateMethodCall(const MethodCall& expr) {
                 }
 
                 // Handle scalar input (sum of a scalar is the scalar itself)
-                double val;
-                if (std::holds_alternative<double>(argVal)) {
-                    val = std::get<double>(argVal);
-                } else if (std::holds_alternative<UnitValue>(argVal)) {
-                    val = std::get<UnitValue>(argVal).value;
-                } else {
-                    throw std::runtime_error("Function math.sum only supports numeric or array arguments");
+                auto number = asDimensionlessNumber(argVal);
+                if (!number) {
+                    throw std::runtime_error("Function math.sum only supports dimensionless numeric or array arguments");
                 }
 
-                return val;
+                return *number;
             }
             // math.mean
             else if (expr.method_name == "mean") {
@@ -1377,22 +1308,11 @@ namespace {
 
 double requireNumber(Evaluator& evaluator, const Expression& expr, const char* context) {
     Value v = evaluator.evaluateExpression(expr);
-    double value;
-    if (std::holds_alternative<double>(v)) {
-        value = std::get<double>(v);
-    } else if (std::holds_alternative<UnitValue>(v) &&
-               std::get<UnitValue>(v).isDimensionless()) {
-        // A ratio whose units cancel (e.g. deflection/allowable, or a length
-        // divided by a length) stays wrapped in UnitValue with an empty unit
-        // string — UnitValue::operator/ never collapses back to a plain double.
-        // Such a value IS a number, so accept it rather than making callers
-        // hunt for a unit-stripping idiom the language doesn't have. Anything
-        // still carrying a real unit is still rejected: passing "5 mm" as an
-        // SVG coordinate is a genuine mistake worth reporting.
-        value = std::get<UnitValue>(v).value;
-    } else {
+    auto number = asDimensionlessNumber(v);
+    if (!number) {
         throw std::runtime_error(std::string(context) + " expects a number argument");
     }
+    double value = *number;
     // Reject inf/nan here rather than letting them leak into SVG attributes (produces
     // invalid markup like cx="inf") or data-* attrs (breaks JS parseFloat on recompute).
     // Callers that sample a curve expression already catch this and treat it as a gap.

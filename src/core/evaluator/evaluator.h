@@ -105,6 +105,24 @@ struct RecordValue {
     const Value& at(const std::string& name) const { return fields->at(name); }
 };
 
+// A ratio whose units cancel (e.g. length/length, or deflection/allowable)
+// stays wrapped in UnitValue with an empty unit string — UnitValue's
+// operators never collapse back down to a plain double. Such a value IS a
+// number, so callers that need a bare double (array/matrix elements, most
+// math.* functions) should accept it via this helper rather than rejecting
+// it and making users hunt for a unit-stripping idiom the language doesn't
+// have. Returns nullopt for anything that isn't a double or a dimensionless
+// UnitValue (a value still carrying a real unit is a genuine type error).
+inline std::optional<double> asDimensionlessNumber(const Value& v) {
+    if (std::holds_alternative<double>(v)) {
+        return std::get<double>(v);
+    }
+    if (std::holds_alternative<UnitValue>(v) && std::get<UnitValue>(v).isDimensionless()) {
+        return std::get<UnitValue>(v).value;
+    }
+    return std::nullopt;
+}
+
 // A runtime-registered lookup table: table name (e.g. "section") -> row key
 // (e.g. a shape name like "W16X59") -> the RecordValue for that row. Contains
 // zero domain knowledge — callers (e.g. app/'s private JS, via the WASM-exported

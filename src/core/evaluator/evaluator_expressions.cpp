@@ -597,12 +597,12 @@ Value Evaluator::evaluateArrayExpression(const ArrayExpression& expr) {
             for (const auto& elementExpr : row) {
                 Value val = evaluateExpression(*elementExpr);
 
-                if (std::holds_alternative<double>(val)) {
-                    rowElements.push_back(std::get<double>(val));
+                if (auto number = asDimensionlessNumber(val)) {
+                    rowElements.push_back(*number);
                 } else if (std::holds_alternative<std::string>(val)) {
                     throw std::runtime_error("Matrix elements must be numeric (got string: '" + std::get<std::string>(val) + "')");
                 } else if (std::holds_alternative<UnitValue>(val)) {
-                    throw std::runtime_error("Matrix elements must be numeric (got unit value)");
+                    throw std::runtime_error("Matrix elements must be numeric (got a value with units: '" + std::get<UnitValue>(val).toString() + "')");
                 } else if (std::holds_alternative<ArrayValue>(val)) {
                     throw std::runtime_error("Matrix elements must be numeric (got nested array)");
                 } else {
@@ -620,12 +620,12 @@ Value Evaluator::evaluateArrayExpression(const ArrayExpression& expr) {
         for (const auto& elementExpr : expr.elements) {
             Value val = evaluateExpression(*elementExpr);
 
-            if (std::holds_alternative<double>(val)) {
-                elements.push_back(std::get<double>(val));
+            if (auto number = asDimensionlessNumber(val)) {
+                elements.push_back(*number);
             } else if (std::holds_alternative<std::string>(val)) {
                 throw std::runtime_error("Array elements must be numeric (got string: '" + std::get<std::string>(val) + "')");
             } else if (std::holds_alternative<UnitValue>(val)) {
-                throw std::runtime_error("Array elements must be numeric (got unit value)");
+                throw std::runtime_error("Array elements must be numeric (got a value with units: '" + std::get<UnitValue>(val).toString() + "')");
             } else if (std::holds_alternative<ArrayValue>(val)) {
                 throw std::runtime_error("Array elements must be numeric (got nested array)");
             } else {
