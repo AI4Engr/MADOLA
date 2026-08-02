@@ -115,8 +115,21 @@
 
       // Compute absolute offsets of the literal in the full source
       const literalStartInLine = assignIdx + 2 + literalRaw.indexOf(literalTrimmed);
-      const literalStart = lineStart + literalStartInLine;
-      const literalEnd = literalStart + literalTrimmed.length;
+      let literalStart = lineStart + literalStartInLine;
+      let literalEnd = literalStart + literalTrimmed.length;
+
+      // A number literal (only - matrix/vector/select can't carry a unit
+      // suffix) may be followed by a MADOLA unit expression, e.g. "2.0 m" or
+      // "758 in^4". Narrow literalStart/literalEnd to just the numeric part so
+      // replaceLiteral() only ever overwrites the number and re-appends this
+      // suffix verbatim - dragging a slider on "L := 2.0 m;" must not delete
+      // " m" the way treating the whole "2.0 m" as one opaque literal would.
+      let unitSuffix = '';
+      const numMatch = literalTrimmed.match(/^[-+]?\d+(?:\.\d+)?/);
+      if (numMatch && numMatch[0].length < literalTrimmed.length) {
+        unitSuffix = literalTrimmed.slice(numMatch[0].length);
+        literalEnd = literalStart + numMatch[0].length;
+      }
 
       // Parse annotation
       const annRest = line.slice(annIdx).replace(/^\/\/\s*@input\s*/, '');
@@ -152,6 +165,7 @@
         literalStart,
         literalEnd,
         raw: literalTrimmed,
+        unitSuffix,
       });
     }
     return inputs;

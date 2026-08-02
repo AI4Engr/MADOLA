@@ -7,6 +7,7 @@
 #include <cctype>
 #include <algorithm>
 #include <vector>
+#include <unordered_set>
 
 namespace madola {
 
@@ -821,9 +822,33 @@ std::string UnitSystem::formatDims(const DimVector& dims, double /*factor*/,
             if (it != unitDefinitions.end() && it->second.dims == dims) return tok.first;
         }
     }
-    for (const auto& pair : unitDefinitions) {
-        if (pair.second.dims == dims) return pair.first;
+    // No hint token named this dimension directly: pick from every registered
+    // unit with a matching dimension. unordered_map iteration order is
+    // otherwise arbitrary (e.g. a metric-only expression could resolve to
+    // "ksi" just because it hashes before "Pa"), so break the tie using the
+    // hints' own unit family - an all-SI expression should surface an SI
+    // result, not a US customary one it never mentioned.
+    bool hintsUseImperial = false;
+    for (const auto& hint : displayHints) {
+        for (const auto& tok : tokenizeHint(hint, unitDefinitions)) {
+            static const std::unordered_set<std::string> kImperialUnits = {
+                "in", "ft", "yd", "mi", "lb", "oz", "ton", "lbf", "kip", "psi", "ksi", "F"
+            };
+            if (kImperialUnits.count(tok.first)) { hintsUseImperial = true; break; }
+        }
+        if (hintsUseImperial) break;
     }
+    std::string firstMatch;
+    for (const auto& pair : unitDefinitions) {
+        if (pair.second.dims != dims) continue;
+        if (firstMatch.empty()) firstMatch = pair.first;
+        static const std::unordered_set<std::string> kImperialUnits = {
+            "in", "ft", "yd", "mi", "lb", "oz", "ton", "lbf", "kip", "psi", "ksi", "F"
+        };
+        bool isImperial = kImperialUnits.count(pair.first) > 0;
+        if (isImperial == hintsUseImperial) return pair.first;
+    }
+    if (!firstMatch.empty()) return firstMatch;
 
     // No single registered unit has this exact dimension - synthesize a
     // compound name from the operands' own unit tokens (not generic SI axis
