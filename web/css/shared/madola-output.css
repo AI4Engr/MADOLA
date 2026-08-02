@@ -39,9 +39,85 @@
     margin-top: 0;
 }
 
+/* Section headings read as the numbered dividers of an engineering
+   calculation sheet: a coloured label with a rule under it, so a long
+   report scans as discrete steps rather than one continuous wall. */
+.madola-output h2 {
+    color: #1f5fa8;
+    font-size: 1.05em;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid #c9d3e0;
+    padding-bottom: 0.25em;
+    margin-top: 1.6em;
+}
+
 .madola-output p {
     margin-top: 0;
     margin-bottom: 0.8em;
+}
+
+/* ── Engineering check result box (@check[limit]) ──
+   The verdict a calculation sheet ends on: the computed utilisation ratio,
+   and whether it is within the allowable limit. Colour is a redundant cue —
+   the OK/NG word carries the meaning on its own, so this still reads when
+   printed in greyscale or by someone who can't distinguish red from green. */
+.madola-output .madola-check {
+    display: inline-block;
+    min-width: 200px;
+    margin: 16px 0;
+    border: 1px solid #b8c0cc;
+    border-radius: 4px;
+    text-align: center;
+    background: #f5f7fa;
+    overflow: hidden;
+    vertical-align: top;
+}
+
+.madola-output .madola-check-title {
+    background: #dde3ec;
+    border-bottom: 1px solid #b8c0cc;
+    padding: 5px 14px;
+    font-weight: 600;
+    font-size: 0.9em;
+    letter-spacing: 0.06em;
+    color: #2c3e50;
+}
+
+.madola-output .madola-check-label {
+    padding: 8px 14px 0;
+    font-size: 0.9em;
+    color: #55606f;
+}
+
+.madola-output .madola-check-value {
+    padding: 2px 14px;
+    font-size: 1.7em;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.madola-output .madola-check-verdict {
+    padding: 0 14px;
+    font-size: 1.3em;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.madola-output .madola-check-note {
+    padding: 0 14px 10px;
+    font-size: 0.78em;
+    color: #6b7280;
+}
+
+.madola-output .madola-check-pass .madola-check-value,
+.madola-output .madola-check-pass .madola-check-verdict {
+    color: #1a7f42;
+}
+
+.madola-output .madola-check-fail .madola-check-value,
+.madola-output .madola-check-fail .madola-check-verdict {
+    color: #c0392b;
 }
 
 .madola-output .madola-code {

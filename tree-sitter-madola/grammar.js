@@ -115,7 +115,10 @@ module.exports = grammar({
       seq('@', 'array', $.number, 'x', $.number)
     ),
 
-    decorator_style: $ => /[a-zA-Z][a-zA-Z0-9_-]*/,
+    // Leading digit and '.' are allowed so a decorator can carry a numeric
+    // argument (e.g. @check[1.0], a unity-ratio limit) alongside the original
+    // word-style attributes like @h1[center].
+    decorator_style: $ => /[a-zA-Z0-9][a-zA-Z0-9_.-]*/,
 
     heading_statement: $ => prec.right(seq(
       choice('@h1', '@h2', '@h3', '@h4'),

@@ -770,10 +770,10 @@ std::vector<Decorator> ASTBuilder::parseDecoratorList(TSNode decoratorParentNode
                                 decorators.emplace_back(tokenText);
                             }
                         } else {
-                            // Simple decorator (no digits)
-                            // But still check if there's a style
+                            // Simple decorator (no digits), optionally carrying a style
+                            // argument such as @check[1.0].
                             if (!decoratorStyle.empty()) {
-                                decorators.emplace_back(tokenText);
+                                decorators.emplace_back(tokenText, decoratorStyle);
                             } else {
                                 decorators.emplace_back(tokenText);
                             }

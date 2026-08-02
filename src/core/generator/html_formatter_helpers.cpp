@@ -377,6 +377,81 @@ std::string HtmlFormatter::generateOrderedContent(const Program& program, Evalua
             continue;
         }
 
+        // @check[limit] — render an engineering pass/fail verdict box for the
+        // decorated assignment. The assignment's value is a unity/utilization
+        // ratio; it passes when value <= limit (default 1.0, the near-universal
+        // convention for a demand/capacity ratio). Emits the value, the limit
+        // and an OK/NG verdict so a calculation sheet can end with the same
+        // "is this member adequate?" statement an engineer expects to sign.
+        //
+        // Deliberately does not decide WHAT is being checked — it only compares
+        // an already-computed ratio. Keeping the engineering in the .mda and
+        // only the presentation here means the same box serves deflection,
+        // stress, shear or anything else expressible as a ratio.
+        if (const auto* decoratedStmt = dynamic_cast<const DecoratedStatement*>(stmt.get())) {
+            if (decoratedStmt->hasDecorator("check")) {
+                const auto* assignment = dynamic_cast<const AssignmentStatement*>(decoratedStmt->statement.get());
+                if (assignment != nullptr) {
+                    double limit = 1.0;
+                    for (const auto& dec : decoratedStmt->decorators) {
+                        if (dec.name == "check" && !dec.style.empty()) {
+                            try {
+                                limit = std::stod(dec.style);
+                            } catch (const std::exception&) {
+                                // A non-numeric style is a typo, not a limit. Fall back to
+                                // 1.0 rather than throwing: a malformed decorator should not
+                                // take down the whole report.
+                                limit = 1.0;
+                            }
+                        }
+                    }
+
+                    // Read the already-evaluated value rather than re-evaluating the
+                    // expression: re-running it could repeat side effects, and the
+                    // evaluator has already computed exactly this assignment.
+                    double actual = 0.0;
+                    bool haveActual = false;
+                    try {
+                        Value v = evaluator.getVariableValue(assignment->variable);
+                        if (std::holds_alternative<double>(v)) {
+                            actual = std::get<double>(v);
+                            haveActual = true;
+                        } else if (std::holds_alternative<UnitValue>(v)) {
+                            actual = std::get<UnitValue>(v).value;
+                            haveActual = true;
+                        }
+                    } catch (const std::exception&) {
+                        haveActual = false;
+                    }
+
+                    bool passed = haveActual && actual <= limit;
+                    std::string verdict = passed ? "OK" : "NG";
+                    std::string verdictNote = passed ? "Within Limit" : "Exceeds Limit";
+                    std::string stateClass = passed ? "madola-check-pass" : "madola-check-fail";
+
+                    std::ostringstream actualStr;
+                    actualStr.precision(3);
+                    actualStr << std::fixed << actual;
+                    std::ostringstream limitStr;
+                    limitStr.precision(2);
+                    limitStr << std::fixed << limit;
+
+                    html << "<div class=\"madola-check " << stateClass << "\""
+                         << " data-check-var=\"" << assignment->variable << "\">\n";
+                    html << "<div class=\"madola-check-title\">RESULT</div>\n";
+                    html << "<div class=\"madola-check-label\">"
+                         << escapeHtml(convertToMathJax(assignment->variable)) << "</div>\n";
+                    html << "<div class=\"madola-check-value\">"
+                         << (haveActual ? actualStr.str() : "—") << "</div>\n";
+                    html << "<div class=\"madola-check-verdict\">" << verdict << "</div>\n";
+                    html << "<div class=\"madola-check-note\">(" << verdictNote
+                         << ", limit " << limitStr.str() << ")</div>\n";
+                    html << "</div>\n";
+                    continue;
+                }
+            }
+        }
+
         // Check for parameterized decorators (like @table2, @pair2) that affect multiple statements
         if (const auto* decoratedStmt = dynamic_cast<const DecoratedStatement*>(stmt.get())) {
             // Check for any parameterized decorator
@@ -440,9 +515,25 @@ std::string HtmlFormatter::generateOrderedContent(const Program& program, Evalua
                     std::string inlineCommentText = "";
 
                     if (const auto* assignment = dynamic_cast<const AssignmentStatement*>(currentStmt.get())) {
-                        // Format assignment WITHOUT inline comment in the math expression
-                        leftMath = "$$" + convertToMathJax(assignment->variable) + " = " +
-                                   formatExpressionAsMath(*assignment->expression, evaluator) + "$$";
+                        // A table row exists to show a labelled VALUE, not a derivation step —
+                        // unlike a normal assignment restated in the document body (where
+                        // "x := y" deliberately shows the symbolic relationship), a bare
+                        // variable reference or member-access lookup here (e.g. "Shape := s.size"
+                        // or "I := Ix") has no formula worth restating; showing the RHS name
+                        // instead of its value is meaningless to the reader. Resolve those two
+                        // cases to their value, same as @result does; anything else (a literal or
+                        // a real formula) still shows its expression as before.
+                        bool isBareReference = dynamic_cast<const MemberAccess*>(assignment->expression.get()) != nullptr ||
+                                               dynamic_cast<const Identifier*>(assignment->expression.get()) != nullptr;
+                        if (isBareReference) {
+                            Value result = evaluator.evaluateExpression(*assignment->expression);
+                            leftMath = "$$" + convertToMathJax(assignment->variable) + " = " +
+                                       formatValueAsMath(result) + "$$";
+                        } else {
+                            // Format assignment WITHOUT inline comment in the math expression
+                            leftMath = "$$" + convertToMathJax(assignment->variable) + " = " +
+                                       formatExpressionAsMath(*assignment->expression, evaluator) + "$$";
+                        }
                         // Extract inline comment separately for right column
                         if (!assignment->inlineComment.empty()) {
                             inlineCommentText = escapeHtml(assignment->inlineComment);
@@ -460,9 +551,20 @@ std::string HtmlFormatter::generateOrderedContent(const Program& program, Evalua
                     } else if (const auto* decoratedStmt = dynamic_cast<const DecoratedStatement*>(currentStmt.get())) {
                         // Check if the decorated statement is an assignment with inline comment
                         if (const auto* innerAssignment = dynamic_cast<const AssignmentStatement*>(decoratedStmt->statement.get())) {
-                            // Format WITHOUT inline comment
-                            leftMath = "$$" + convertToMathJax(innerAssignment->variable) + " = " +
-                                       formatExpressionAsMath(*innerAssignment->expression, evaluator) + "$$";
+                            // Same bare-reference resolution as the plain-assignment branch
+                            // above — this is the code path for the FIRST row of a table
+                            // (the statement the @tableN decorator itself is attached to).
+                            bool isBareReference = dynamic_cast<const MemberAccess*>(innerAssignment->expression.get()) != nullptr ||
+                                                   dynamic_cast<const Identifier*>(innerAssignment->expression.get()) != nullptr;
+                            if (isBareReference) {
+                                Value result = evaluator.evaluateExpression(*innerAssignment->expression);
+                                leftMath = "$$" + convertToMathJax(innerAssignment->variable) + " = " +
+                                           formatValueAsMath(result) + "$$";
+                            } else {
+                                // Format WITHOUT inline comment
+                                leftMath = "$$" + convertToMathJax(innerAssignment->variable) + " = " +
+                                           formatExpressionAsMath(*innerAssignment->expression, evaluator) + "$$";
+                            }
                             if (!innerAssignment->inlineComment.empty()) {
                                 inlineCommentText = escapeHtml(innerAssignment->inlineComment);
                             }

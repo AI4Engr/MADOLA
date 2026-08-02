@@ -771,6 +771,12 @@ public:
     Decorator(const std::string& decoratorName)
         : type(Simple), name(decoratorName), rows(0), cols(0), parameter(0), style("") {}
 
+    // Simple decorator carrying a style/argument, e.g. @check[1.0] or @h1[center].
+    // Before this existed the style was parsed then dropped for simple decorators,
+    // so any attribute on a non-parameterized decorator was silently lost.
+    Decorator(const std::string& decoratorName, const std::string& decoratorStyle)
+        : type(Simple), name(decoratorName), rows(0), cols(0), parameter(0), style(decoratorStyle) {}
+
     Decorator(int r, int c)
         : type(Layout), name("layout"), rows(r), cols(c), parameter(0), style("") {}
 

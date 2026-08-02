@@ -1310,6 +1310,11 @@ std::string HtmlFormatter::formatValueAsMathPublic(const Value& value) {
         // bracketed text label (e.g. "[W16x89]") rather than expanding fields.
         const RecordValue& record = std::get<RecordValue>(value);
         return "\\text{[" + record.displayLabel + "]}";
+    } else if (std::holds_alternative<std::string>(value)) {
+        // A plain string result (e.g. a section name like "W16X57" read back via
+        // s.size) has no numeric form — render as LaTeX text rather than falling
+        // through to the UNKNOWN_VALUE placeholder every other branch here ends in.
+        return "\\text{" + std::get<std::string>(value) + "}";
     }
     return "UNKNOWN_VALUE";
 }

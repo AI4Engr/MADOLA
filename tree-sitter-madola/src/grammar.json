@@ -447,7 +447,7 @@
     },
     "decorator_style": {
       "type": "PATTERN",
-      "value": "[a-zA-Z][a-zA-Z0-9_-]*"
+      "value": "[a-zA-Z0-9][a-zA-Z0-9_.-]*"
     },
     "heading_statement": {
       "type": "PREC_RIGHT",
