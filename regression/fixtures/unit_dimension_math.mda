@@ -1,0 +1,38 @@
+@version 0.01
+
+@h1{Unit Dimension Math Regression}
+
+@p{Cross-unit-family beam deflection (ft span, in/ksi/in^4 section) - must
+match the all-consistent-inches control value of 0.983 in, not silently
+collapse to 0 the way the pre-dimension-vector unit engine did.}
+
+@eval
+L := 20 ft;
+
+@eval
+w := 0.5 kip/in;
+
+@eval
+E := 29000 ksi;
+
+@eval
+I := 758 in^4;
+
+@eval
+delta := 5*w*L^4/(384*E*I);
+
+@p{The 0 - f(x) negation idiom (madola has no unary-minus-before-call syntax)
+must work on a unit-bearing expression rather than throwing "Cannot subtract
+dimensionless value from value with units".}
+
+v(w, x) := 0 - w*x*(L^3 - 2*L*x^2 + x^3)/(24*E*I);
+
+@eval
+mid := v(w, 120 in);
+
+@p{math.abs() must preserve the operand's unit rather than silently
+returning a bare number (which previously made a same-unit ratio display as
+"1/in" instead of cancelling to dimensionless).}
+
+@eval
+ratio := math.abs(delta) / (L/360);

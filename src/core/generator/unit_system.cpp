@@ -245,19 +245,32 @@ UnitValue UnitValue::operator+(const UnitValue& other) const {
         return UnitValue(value + other.value);
     }
 
+    // A bare 0 is unambiguous regardless of the other operand's unit (unlike
+    // e.g. "100 m + 3", where 3's implied unit is genuinely unclear) - this is
+    // what lets "0 - f(x)" work as a negation idiom for unit-bearing function
+    // bodies, since madola has no unary-minus-before-call syntax.
+    if (isDimensionless() && value == 0.0) {
+        return other;
+    }
+    if (other.isDimensionless() && other.value == 0.0) {
+        return *this;
+    }
+
     if (isDimensionless() || other.isDimensionless()) {
         throw std::runtime_error("Cannot add dimensionless value to value with units");
     }
 
-    if (!unitSys.areUnitsCompatible(unit, other.unit)) {
+    ParsedUnit a = unitSys.parseUnitString(unit);
+    ParsedUnit b = unitSys.parseUnitString(other.unit);
+    if (a.dims != b.dims) {
         throw std::runtime_error("Cannot add incompatible units: " + unit + " + " + other.unit);
     }
 
     // Convert to same unit (use first operand's unit)
-    double otherValueConverted = other.value * unitSys.getConversionFactor(other.unit) / unitSys.getConversionFactor(unit);
+    double otherValueConverted = other.value * b.factor / a.factor;
     if (displayStyle == UnitDisplayStyle::ARCHITECTURAL_IMPERIAL && other.displayStyle != UnitDisplayStyle::ARCHITECTURAL_IMPERIAL) {
-        double lhsMeters = value * unitSys.getConversionFactor(unit);
-        double rhsMeters = other.value * unitSys.getConversionFactor(other.unit);
+        double lhsMeters = value * a.factor;
+        double rhsMeters = other.value * b.factor;
         double totalMeters = lhsMeters + rhsMeters;
         double totalInches = totalMeters / unitSys.getConversionFactor("in");
         return UnitValue(totalInches, "in", UnitDisplayStyle::ARCHITECTURAL_IMPERIAL);
@@ -276,19 +289,30 @@ UnitValue UnitValue::operator-(const UnitValue& other) const {
         return UnitValue(value - other.value);
     }
 
+    // See operator+ above: a bare 0 is unambiguous regardless of unit, so
+    // "0 - f(x)" works as a negation idiom for unit-bearing expressions.
+    if (isDimensionless() && value == 0.0) {
+        return -other;
+    }
+    if (other.isDimensionless() && other.value == 0.0) {
+        return *this;
+    }
+
     if (isDimensionless() || other.isDimensionless()) {
         throw std::runtime_error("Cannot subtract dimensionless value from value with units");
     }
 
-    if (!unitSys.areUnitsCompatible(unit, other.unit)) {
+    ParsedUnit a = unitSys.parseUnitString(unit);
+    ParsedUnit b = unitSys.parseUnitString(other.unit);
+    if (a.dims != b.dims) {
         throw std::runtime_error("Cannot subtract incompatible units: " + unit + " - " + other.unit);
     }
 
     // Convert to same unit (use first operand's unit)
-    double otherValueConverted = other.value * unitSys.getConversionFactor(other.unit) / unitSys.getConversionFactor(unit);
+    double otherValueConverted = other.value * b.factor / a.factor;
     if (displayStyle == UnitDisplayStyle::ARCHITECTURAL_IMPERIAL && other.displayStyle != UnitDisplayStyle::ARCHITECTURAL_IMPERIAL) {
-        double lhsMeters = value * unitSys.getConversionFactor(unit);
-        double rhsMeters = other.value * unitSys.getConversionFactor(other.unit);
+        double lhsMeters = value * a.factor;
+        double rhsMeters = other.value * b.factor;
         double totalMeters = lhsMeters - rhsMeters;
         double totalInches = totalMeters / unitSys.getConversionFactor("in");
         return UnitValue(totalInches, "in", UnitDisplayStyle::ARCHITECTURAL_IMPERIAL);
@@ -308,12 +332,21 @@ UnitValue UnitValue::operator*(const UnitValue& other) const {
         return UnitValue(value * other.value, unit, displayStyle);
     }
 
-    // Multiply units and simplify. Operands are parenthesized so a compound
-    // operand (e.g. "kip-in^2" from a prior multiplication) is treated as one
-    // group rather than having its terms bleed into the other operand's scope.
-    std::string resultUnit = "(" + unit + ")*(" + other.unit + ")";
-    resultUnit = UnitSystem::getInstance().simplifyUnit(resultUnit);
-    return UnitValue(value * other.value, resultUnit);
+    auto& unitSys = UnitSystem::getInstance();
+    ParsedUnit a = unitSys.parseUnitString(unit);
+    ParsedUnit b = unitSys.parseUnitString(other.unit);
+
+    // Combine in SI-base terms so the numeric result is always physically
+    // correct regardless of which display units the two operands used, then
+    // pick a display unit from the operands' own dimensions/vocabulary.
+    double resultSiValue = (value * a.factor) * (other.value * b.factor);
+    DimVector resultDims = addDim(a.dims, b.dims);
+
+    std::string displayUnit = unitSys.formatDims(resultDims, 1.0, {unit, other.unit});
+    ParsedUnit displayParsed = unitSys.parseUnitString(displayUnit);
+    double displayValue = displayParsed.factor != 0.0 ? resultSiValue / displayParsed.factor
+                                                       : resultSiValue;
+    return UnitValue(displayValue, displayUnit);
 }
 
 UnitValue UnitValue::operator/(const UnitValue& other) const {
@@ -321,20 +354,40 @@ UnitValue UnitValue::operator/(const UnitValue& other) const {
         throw std::runtime_error("Division by zero");
     }
 
+    auto& unitSys = UnitSystem::getInstance();
+
     if (isDimensionless()) {
+        if (other.isDimensionless()) {
+            return UnitValue(value / other.value);
+        }
         // Dimensionless / unit = 1/unit
-        std::string resultUnit = other.isDimensionless() ? "" : "1/" + other.unit;
-        return UnitValue(value / other.value, resultUnit);
+        ParsedUnit b = unitSys.parseUnitString(other.unit);
+        double resultSiValue = value / (other.value * b.factor);
+        DimVector resultDims = subDim(kDimensionlessVec, b.dims);
+        std::string displayUnit = unitSys.formatDims(resultDims, 1.0, {"1/" + other.unit});
+        ParsedUnit displayParsed = unitSys.parseUnitString(displayUnit);
+        double displayValue = displayParsed.factor != 0.0 ? resultSiValue / displayParsed.factor
+                                                           : resultSiValue;
+        return UnitValue(displayValue, displayUnit);
     }
     if (other.isDimensionless()) {
         return UnitValue(value / other.value, unit, displayStyle);
     }
 
-    // Divide units and simplify. Operands are parenthesized for the same reason
-    // as operator* above — see comment there.
-    std::string resultUnit = "(" + unit + ")/(" + other.unit + ")";
-    resultUnit = UnitSystem::getInstance().simplifyUnit(resultUnit);
-    return UnitValue(value / other.value, resultUnit);
+    ParsedUnit a = unitSys.parseUnitString(unit);
+    ParsedUnit b = unitSys.parseUnitString(other.unit);
+
+    double resultSiValue = (value * a.factor) / (other.value * b.factor);
+    DimVector resultDims = subDim(a.dims, b.dims);
+
+    // other.unit must be hinted as a denominator term (e.g. "kip"/"in" ->
+    // hint "1/(in)"), not as a bare numerator token, or formatDims's compound
+    // synthesis would add its exponent instead of subtracting it.
+    std::string displayUnit = unitSys.formatDims(resultDims, 1.0, {unit, "1/(" + other.unit + ")"});
+    ParsedUnit displayParsed = unitSys.parseUnitString(displayUnit);
+    double displayValue = displayParsed.factor != 0.0 ? resultSiValue / displayParsed.factor
+                                                       : resultSiValue;
+    return UnitValue(displayValue, displayUnit);
 }
 
 UnitValue UnitValue::operator^(const UnitValue& other) const {
@@ -342,15 +395,27 @@ UnitValue UnitValue::operator^(const UnitValue& other) const {
         throw std::runtime_error("Exponent must be dimensionless");
     }
 
-    double result = std::pow(value, other.value);
-
     if (isDimensionless()) {
-        return UnitValue(result);
+        return UnitValue(std::pow(value, other.value));
     }
 
-    // For now, represent power units as unit^power
-    std::string resultUnit = unit + "^" + std::to_string(static_cast<int>(other.value));
-    return UnitValue(result, resultUnit);
+    auto& unitSys = UnitSystem::getInstance();
+    ParsedUnit a = unitSys.parseUnitString(unit);
+    int exp = static_cast<int>(other.value);
+
+    // Raise the SI-base value by the exponent, then convert back into the
+    // *original* display unit raised to the same exponent - e.g. (20 ft)^4
+    // must scale the conversion factor to the 4th power too, not just relabel
+    // the unit string. This is the fix for the historical bug where L^4 with
+    // L in ft silently kept the raw ft-numbered value.
+    double siValue = std::pow(value * a.factor, other.value);
+    DimVector resultDims = scaleDim(a.dims, exp);
+
+    std::string displayUnit = unit + (exp == 1 ? "" : "^" + std::to_string(exp));
+    ParsedUnit displayParsed = unitSys.parseUnitString(displayUnit);
+    double displayValue = displayParsed.factor != 0.0 ? siValue / displayParsed.factor : siValue;
+    (void)resultDims;
+    return UnitValue(displayValue, displayUnit);
 }
 
 UnitValue UnitValue::operator-() const {
@@ -362,65 +427,91 @@ UnitSystem& UnitSystem::getInstance() {
     return instance;
 }
 
+namespace {
+
+DimVector dimOf(DimIndex idx, int exp = 1) {
+    DimVector v{};
+    v[static_cast<size_t>(idx)] = exp;
+    return v;
+}
+
+const DimVector kLengthDim = dimOf(DimIndex::LENGTH);
+const DimVector kMassDim = dimOf(DimIndex::MASS);
+const DimVector kTimeDim = dimOf(DimIndex::TIME);
+const DimVector kTempDim = dimOf(DimIndex::TEMPERATURE);
+const DimVector kForceDim = dimOf(DimIndex::FORCE);
+// Pressure = force / length^2
+const DimVector kPressureDim = subDim(kForceDim, scaleDim(kLengthDim, 2));
+const DimVector kAreaDim = scaleDim(kLengthDim, 2);
+const DimVector kVolumeDim = scaleDim(kLengthDim, 3);
+
+} // namespace
+
 void UnitSystem::initializeBuiltinUnits() {
     // Length units (base: meter)
-    unitDefinitions.emplace("m", UnitDefinition("m", UnitDimension::LENGTH, 1.0, "m"));
-    unitDefinitions.emplace("mm", UnitDefinition("mm", UnitDimension::LENGTH, 0.001, "m"));
-    unitDefinitions.emplace("cm", UnitDefinition("cm", UnitDimension::LENGTH, 0.01, "m"));
-    unitDefinitions.emplace("km", UnitDefinition("km", UnitDimension::LENGTH, 1000.0, "m"));
-    unitDefinitions.emplace("in", UnitDefinition("in", UnitDimension::LENGTH, 0.0254, "m"));
-    unitDefinitions.emplace("ft", UnitDefinition("ft", UnitDimension::LENGTH, 0.3048, "m"));
-    unitDefinitions.emplace("yd", UnitDefinition("yd", UnitDimension::LENGTH, 0.9144, "m"));
-    unitDefinitions.emplace("mi", UnitDefinition("mi", UnitDimension::LENGTH, 1609.34, "m"));
+    unitDefinitions.emplace("m", UnitDefinition("m", UnitDimension::LENGTH, 1.0, "m", "", kLengthDim));
+    unitDefinitions.emplace("mm", UnitDefinition("mm", UnitDimension::LENGTH, 0.001, "m", "", kLengthDim));
+    unitDefinitions.emplace("cm", UnitDefinition("cm", UnitDimension::LENGTH, 0.01, "m", "", kLengthDim));
+    unitDefinitions.emplace("km", UnitDefinition("km", UnitDimension::LENGTH, 1000.0, "m", "", kLengthDim));
+    unitDefinitions.emplace("in", UnitDefinition("in", UnitDimension::LENGTH, 0.0254, "m", "", kLengthDim));
+    unitDefinitions.emplace("ft", UnitDefinition("ft", UnitDimension::LENGTH, 0.3048, "m", "", kLengthDim));
+    unitDefinitions.emplace("yd", UnitDefinition("yd", UnitDimension::LENGTH, 0.9144, "m", "", kLengthDim));
+    unitDefinitions.emplace("mi", UnitDefinition("mi", UnitDimension::LENGTH, 1609.34, "m", "", kLengthDim));
 
     // Mass units (base: kilogram)
-    unitDefinitions.emplace("kg", UnitDefinition("kg", UnitDimension::MASS, 1.0, "kg"));
-    unitDefinitions.emplace("g", UnitDefinition("g", UnitDimension::MASS, 0.001, "kg"));
-    unitDefinitions.emplace("mg", UnitDefinition("mg", UnitDimension::MASS, 0.000001, "kg"));
-    unitDefinitions.emplace("lb", UnitDefinition("lb", UnitDimension::MASS, 0.453592, "kg"));
-    unitDefinitions.emplace("oz", UnitDefinition("oz", UnitDimension::MASS, 0.0283495, "kg"));
-    unitDefinitions.emplace("ton", UnitDefinition("ton", UnitDimension::MASS, 907.185, "kg"));
+    unitDefinitions.emplace("kg", UnitDefinition("kg", UnitDimension::MASS, 1.0, "kg", "", kMassDim));
+    unitDefinitions.emplace("g", UnitDefinition("g", UnitDimension::MASS, 0.001, "kg", "", kMassDim));
+    unitDefinitions.emplace("mg", UnitDefinition("mg", UnitDimension::MASS, 0.000001, "kg", "", kMassDim));
+    unitDefinitions.emplace("lb", UnitDefinition("lb", UnitDimension::MASS, 0.453592, "kg", "", kMassDim));
+    unitDefinitions.emplace("oz", UnitDefinition("oz", UnitDimension::MASS, 0.0283495, "kg", "", kMassDim));
+    unitDefinitions.emplace("ton", UnitDefinition("ton", UnitDimension::MASS, 907.185, "kg", "", kMassDim));
 
     // Force units (base: Newton)
-    unitDefinitions.emplace("N", UnitDefinition("N", UnitDimension::FORCE, 1.0, "N"));
-    unitDefinitions.emplace("kN", UnitDefinition("kN", UnitDimension::FORCE, 1000.0, "N"));
-    unitDefinitions.emplace("lbf", UnitDefinition("lbf", UnitDimension::FORCE, 4.44822, "N"));
-    unitDefinitions.emplace("kip", UnitDefinition("kip", UnitDimension::FORCE, 4448.22, "N"));
+    unitDefinitions.emplace("N", UnitDefinition("N", UnitDimension::FORCE, 1.0, "N", "", kForceDim));
+    unitDefinitions.emplace("kN", UnitDefinition("kN", UnitDimension::FORCE, 1000.0, "N", "", kForceDim));
+    unitDefinitions.emplace("lbf", UnitDefinition("lbf", UnitDimension::FORCE, 4.44822, "N", "", kForceDim));
+    unitDefinitions.emplace("kip", UnitDefinition("kip", UnitDimension::FORCE, 4448.22, "N", "", kForceDim));
 
-    // Pressure/Stress units (base: Pascal)
-    unitDefinitions.emplace("Pa", UnitDefinition("Pa", UnitDimension::PRESSURE, 1.0, "Pa"));
-    unitDefinitions.emplace("kPa", UnitDefinition("kPa", UnitDimension::PRESSURE, 1000.0, "Pa"));
-    unitDefinitions.emplace("MPa", UnitDefinition("MPa", UnitDimension::PRESSURE, 1e6, "Pa"));
-    unitDefinitions.emplace("GPa", UnitDefinition("GPa", UnitDimension::PRESSURE, 1e9, "Pa"));
-    unitDefinitions.emplace("psi", UnitDefinition("psi", UnitDimension::PRESSURE, 6894.76, "Pa", "lbf/in^2"));
-    unitDefinitions.emplace("ksi", UnitDefinition("ksi", UnitDimension::PRESSURE, 6.89476e6, "Pa", "kip/in^2"));
+    // Pressure/Stress units (base: Pascal). compositeForm kept only as a
+    // display fallback; dims is the actual force/length^2 vector so ksi/psi
+    // cancel and combine with any other force/length unit, not just their
+    // literal composite-form string.
+    unitDefinitions.emplace("Pa", UnitDefinition("Pa", UnitDimension::PRESSURE, 1.0, "Pa", "", kPressureDim));
+    unitDefinitions.emplace("kPa", UnitDefinition("kPa", UnitDimension::PRESSURE, 1000.0, "Pa", "", kPressureDim));
+    unitDefinitions.emplace("MPa", UnitDefinition("MPa", UnitDimension::PRESSURE, 1e6, "Pa", "", kPressureDim));
+    unitDefinitions.emplace("GPa", UnitDefinition("GPa", UnitDimension::PRESSURE, 1e9, "Pa", "", kPressureDim));
+    unitDefinitions.emplace("psi", UnitDefinition("psi", UnitDimension::PRESSURE, 6894.76, "Pa", "lbf/in^2", kPressureDim));
+    unitDefinitions.emplace("ksi", UnitDefinition("ksi", UnitDimension::PRESSURE, 6.89476e6, "Pa", "kip/in^2", kPressureDim));
 
     // Area units (base: square meter)
-    unitDefinitions.emplace("m2", UnitDefinition("m2", UnitDimension::AREA, 1.0, "m2"));
-    unitDefinitions.emplace("mm2", UnitDefinition("mm2", UnitDimension::AREA, 1e-6, "m2"));
-    unitDefinitions.emplace("cm2", UnitDefinition("cm2", UnitDimension::AREA, 1e-4, "m2"));
-    unitDefinitions.emplace("in2", UnitDefinition("in2", UnitDimension::AREA, 0.00064516, "m2"));
-    unitDefinitions.emplace("ft2", UnitDefinition("ft2", UnitDimension::AREA, 0.092903, "m2"));
+    unitDefinitions.emplace("m2", UnitDefinition("m2", UnitDimension::AREA, 1.0, "m2", "", kAreaDim));
+    unitDefinitions.emplace("mm2", UnitDefinition("mm2", UnitDimension::AREA, 1e-6, "m2", "", kAreaDim));
+    unitDefinitions.emplace("cm2", UnitDefinition("cm2", UnitDimension::AREA, 1e-4, "m2", "", kAreaDim));
+    unitDefinitions.emplace("in2", UnitDefinition("in2", UnitDimension::AREA, 0.00064516, "m2", "", kAreaDim));
+    unitDefinitions.emplace("ft2", UnitDefinition("ft2", UnitDimension::AREA, 0.092903, "m2", "", kAreaDim));
 
     // Volume units (base: cubic meter)
-    unitDefinitions.emplace("m3", UnitDefinition("m3", UnitDimension::VOLUME, 1.0, "m3"));
-    unitDefinitions.emplace("mm3", UnitDefinition("mm3", UnitDimension::VOLUME, 1e-9, "m3"));
-    unitDefinitions.emplace("cm3", UnitDefinition("cm3", UnitDimension::VOLUME, 1e-6, "m3"));
-    unitDefinitions.emplace("in3", UnitDefinition("in3", UnitDimension::VOLUME, 1.63871e-5, "m3"));
-    unitDefinitions.emplace("ft3", UnitDefinition("ft3", UnitDimension::VOLUME, 0.0283168, "m3"));
-    unitDefinitions.emplace("L", UnitDefinition("L", UnitDimension::VOLUME, 0.001, "m3"));
-    unitDefinitions.emplace("gal", UnitDefinition("gal", UnitDimension::VOLUME, 0.00378541, "m3"));
+    unitDefinitions.emplace("m3", UnitDefinition("m3", UnitDimension::VOLUME, 1.0, "m3", "", kVolumeDim));
+    unitDefinitions.emplace("mm3", UnitDefinition("mm3", UnitDimension::VOLUME, 1e-9, "m3", "", kVolumeDim));
+    unitDefinitions.emplace("cm3", UnitDefinition("cm3", UnitDimension::VOLUME, 1e-6, "m3", "", kVolumeDim));
+    unitDefinitions.emplace("in3", UnitDefinition("in3", UnitDimension::VOLUME, 1.63871e-5, "m3", "", kVolumeDim));
+    unitDefinitions.emplace("ft3", UnitDefinition("ft3", UnitDimension::VOLUME, 0.0283168, "m3", "", kVolumeDim));
+    unitDefinitions.emplace("L", UnitDefinition("L", UnitDimension::VOLUME, 0.001, "m3", "", kVolumeDim));
+    unitDefinitions.emplace("gal", UnitDefinition("gal", UnitDimension::VOLUME, 0.00378541, "m3", "", kVolumeDim));
 
     // Time units (base: second)
-    unitDefinitions.emplace("s", UnitDefinition("s", UnitDimension::TIME, 1.0, "s"));
-    unitDefinitions.emplace("ms", UnitDefinition("ms", UnitDimension::TIME, 0.001, "s"));
-    unitDefinitions.emplace("min", UnitDefinition("min", UnitDimension::TIME, 60.0, "s"));
-    unitDefinitions.emplace("h", UnitDefinition("h", UnitDimension::TIME, 3600.0, "s"));
+    unitDefinitions.emplace("s", UnitDefinition("s", UnitDimension::TIME, 1.0, "s", "", kTimeDim));
+    unitDefinitions.emplace("ms", UnitDefinition("ms", UnitDimension::TIME, 0.001, "s", "", kTimeDim));
+    unitDefinitions.emplace("min", UnitDefinition("min", UnitDimension::TIME, 60.0, "s", "", kTimeDim));
+    unitDefinitions.emplace("h", UnitDefinition("h", UnitDimension::TIME, 3600.0, "s", "", kTimeDim));
 
-    // Temperature units (base: Kelvin)
-    unitDefinitions.emplace("K", UnitDefinition("K", UnitDimension::TEMPERATURE, 1.0, "K"));
-    unitDefinitions.emplace("C", UnitDefinition("C", UnitDimension::TEMPERATURE, 1.0, "K"));
-    unitDefinitions.emplace("F", UnitDefinition("F", UnitDimension::TEMPERATURE, 0.555556, "K"));
+    // Temperature units (base: Kelvin). NOTE: C/F conversionFactor here models
+    // a *temperature difference* (ratio only, no offset) - this preserves the
+    // pre-existing (known, deferred) limitation that absolute C/F points are
+    // not converted with their zero-offset. Not addressed by this rewrite.
+    unitDefinitions.emplace("K", UnitDefinition("K", UnitDimension::TEMPERATURE, 1.0, "K", "", kTempDim));
+    unitDefinitions.emplace("C", UnitDefinition("C", UnitDimension::TEMPERATURE, 1.0, "K", "", kTempDim));
+    unitDefinitions.emplace("F", UnitDefinition("F", UnitDimension::TEMPERATURE, 0.555556, "K", "", kTempDim));
 }
 
 bool UnitSystem::isValidUnit(const std::string& unit) const {
@@ -452,241 +543,326 @@ std::string UnitSystem::getBaseUnit(const std::string& unit) const {
     return "";
 }
 
-std::string UnitSystem::simplifyUnit(const std::string& unit) const {
-    if (unit.empty()) return "";
+namespace {
 
-    // First, normalize numeric suffixes and expand composite units
-    std::string normalizedUnit = unit;
+// Small recursive-descent parser for unit expression strings: handles a
+// product/quotient chain of unit tokens (each optionally raised to an
+// integer power), with '*'/'-' as multiplication separators (the codebase's
+// existing convention is that '-' means '*' in an already-simplified unit
+// string, e.g. "kip-in") and parenthesized groups. This replaces simplifyUnit's
+// flat single-pass tokenizer with something that actually respects nesting,
+// which the dimension-vector rewrite needs since parsed units now compose by
+// vector arithmetic rather than by re-stringifying and re-scanning.
+struct UnitStringParser {
+    const std::string& s;
+    size_t pos = 0;
+    const std::unordered_map<std::string, UnitDefinition>& defs;
 
-    // Expand composite units (e.g., ksi -> kip/in^2)
-    for (const auto& pair : unitDefinitions) {
-        const std::string& symbol = pair.first;
-        const UnitDefinition& def = pair.second;
+    UnitStringParser(const std::string& str, const std::unordered_map<std::string, UnitDefinition>& d)
+        : s(str), defs(d) {}
 
-        if (!def.compositeForm.empty()) {
-            // Replace all occurrences of this unit with its composite form
-            size_t pos = 0;
-            while ((pos = normalizedUnit.find(symbol, pos)) != std::string::npos) {
-                // Check if this is a complete unit (not part of a larger word)
-                bool isComplete = true;
-                if (pos > 0 && std::isalnum(normalizedUnit[pos - 1])) {
-                    isComplete = false;
+    void skipSpaces() {
+        while (pos < s.size() && std::isspace(static_cast<unsigned char>(s[pos]))) pos++;
+    }
+
+    // term := ('(' expr ')' | identifier) ('^' ['-'] digits)?
+    ParsedUnit parseTerm() {
+        skipSpaces();
+        ParsedUnit result;
+        if (pos < s.size() && s[pos] == '(') {
+            pos++; // consume '('
+            result = parseExpr();
+            skipSpaces();
+            if (pos < s.size() && s[pos] == ')') pos++; // consume ')'
+        } else if (pos < s.size() && std::isdigit(static_cast<unsigned char>(s[pos]))) {
+            // Bare numeral term, e.g. the "1" in "1/in" (dimensionless numerator
+            // convention used throughout for an inverse-unit display string).
+            size_t start = pos;
+            while (pos < s.size() && std::isdigit(static_cast<unsigned char>(s[pos]))) pos++;
+            result.display = s.substr(start, pos - start);
+        } else {
+            size_t start = pos;
+            while (pos < s.size() && (std::isalpha(static_cast<unsigned char>(s[pos])))) pos++;
+            size_t letterEnd = pos;
+            std::string letters = s.substr(start, letterEnd - start);
+
+            // A trailing digit run directly after the letters may be either a
+            // registry key with a baked-in exponent (e.g. "in2", "m3" - no
+            // caret) or the start of an outer "^n" already handled below; the
+            // registry key form takes priority whenever it actually resolves
+            // (matches simplifyUnit's historical "in3 -> in^3" normalization).
+            size_t digitEnd = letterEnd;
+            while (digitEnd < s.size() && std::isdigit(static_cast<unsigned char>(s[digitEnd]))) digitEnd++;
+            std::string withDigits = s.substr(start, digitEnd - start);
+
+            auto itWithDigits = (digitEnd > letterEnd) ? defs.find(withDigits) : defs.end();
+            if (itWithDigits != defs.end()) {
+                pos = digitEnd;
+                result.dims = itWithDigits->second.dims;
+                result.factor = itWithDigits->second.conversionFactor;
+                result.display = withDigits;
+            } else {
+                auto it = defs.find(letters);
+                if (it != defs.end()) {
+                    result.dims = it->second.dims;
+                    result.factor = it->second.conversionFactor;
                 }
-                if (pos + symbol.length() < normalizedUnit.length()) {
-                    char nextChar = normalizedUnit[pos + symbol.length()];
-                    if (std::isalnum(nextChar) && nextChar != '^' && nextChar != '*' && nextChar != '/') {
-                        isComplete = false;
-                    }
-                }
-
-                if (isComplete) {
-                    normalizedUnit.replace(pos, symbol.length(), "(" + def.compositeForm + ")");
-                    pos += def.compositeForm.length() + 2; // +2 for parentheses
+                if (digitEnd > letterEnd) {
+                    // No registry entry for the whole run (e.g. "in4", "ft5" -
+                    // the registry only special-cases ^2/^3): treat the digit
+                    // suffix as an implicit exponent on the base unit rather
+                    // than silently dropping it, matching the grammar's own
+                    // "value + unit + exponentDigits" concatenation for any
+                    // power (ast_builder_expressions.cpp::buildUnitExpression).
+                    pos = digitEnd;
+                    int impliedExp = std::stoi(s.substr(letterEnd, digitEnd - letterEnd));
+                    result.dims = scaleDim(result.dims, impliedExp);
+                    result.factor = std::pow(result.factor, impliedExp);
+                    result.display = letters + "^" + std::to_string(impliedExp);
                 } else {
-                    pos += symbol.length();
+                    pos = letterEnd;
+                    result.display = letters;
                 }
             }
         }
+
+        skipSpaces();
+        if (pos < s.size() && s[pos] == '^') {
+            pos++; // consume '^'
+            skipSpaces();
+            bool neg = false;
+            if (pos < s.size() && s[pos] == '-') { neg = true; pos++; }
+            size_t numStart = pos;
+            while (pos < s.size() && std::isdigit(static_cast<unsigned char>(s[pos]))) pos++;
+            int exp = numStart < pos ? std::stoi(s.substr(numStart, pos - numStart)) : 1;
+            if (neg) exp = -exp;
+            result.dims = scaleDim(result.dims, exp);
+            result.factor = std::pow(result.factor, exp);
+            result.display += "^" + std::to_string(exp);
+        }
+        return result;
     }
 
-    // Normalize numeric suffixes (in3 -> in^3, mm2 -> mm^2, etc.)
-    std::string expanded = "";
-    size_t i = 0;
-    while (i < normalizedUnit.length()) {
-        char ch = normalizedUnit[i];
-
-        // Check if we're starting a unit name (sequence of letters)
-        if (std::isalpha(ch)) {
-            // Collect all consecutive letters
-            std::string letters = "";
-            size_t letterEnd = i;
-            while (letterEnd < normalizedUnit.length() && std::isalpha(normalizedUnit[letterEnd])) {
-                letters += normalizedUnit[letterEnd];
-                letterEnd++;
+    // expr := term (('*' | '-') term | '/' term)*
+    ParsedUnit parseExpr() {
+        ParsedUnit acc = parseTerm();
+        for (;;) {
+            skipSpaces();
+            if (pos >= s.size()) break;
+            char op = s[pos];
+            if (op != '*' && op != '/' && op != '-') break;
+            pos++;
+            ParsedUnit rhs = parseTerm();
+            if (op == '/') {
+                acc.dims = subDim(acc.dims, rhs.dims);
+                acc.factor = rhs.factor != 0.0 ? acc.factor / rhs.factor : acc.factor;
+                acc.display += "/" + rhs.display;
+            } else {
+                acc.dims = addDim(acc.dims, rhs.dims);
+                acc.factor *= rhs.factor;
+                acc.display += "*" + rhs.display;
             }
+        }
+        return acc;
+    }
+};
 
-            expanded += letters;
+} // namespace
 
-            // Check if followed by digits (numeric suffix)
-            if (letterEnd < normalizedUnit.length() && std::isdigit(normalizedUnit[letterEnd])) {
-                std::string digitSeq = "";
-                while (letterEnd < normalizedUnit.length() && std::isdigit(normalizedUnit[letterEnd])) {
-                    digitSeq += normalizedUnit[letterEnd];
-                    letterEnd++;
-                }
-                expanded += "^" + digitSeq;
-            }
+ParsedUnit UnitSystem::parseUnitString(const std::string& unitStr) const {
+    if (unitStr.empty()) return ParsedUnit{};
+    UnitStringParser parser(unitStr, unitDefinitions);
+    ParsedUnit result = parser.parseExpr();
+    result.display = unitStr;
+    return result;
+}
 
-            i = letterEnd;
+namespace {
+
+// Canonical base-unit name (SI) for a dimension vector, used only when no
+// display hint is usable. Only the combinations the registry can produce are
+// covered; anything else falls back to a generic "u1^e1*u2^e2" rendering.
+std::string canonicalNameForDims(const DimVector& dims) {
+    static const std::vector<std::pair<DimVector, std::string>> kKnown = {
+        {dimOf(DimIndex::LENGTH), "m"},
+        {dimOf(DimIndex::MASS), "kg"},
+        {dimOf(DimIndex::TIME), "s"},
+        {dimOf(DimIndex::TEMPERATURE), "K"},
+        {dimOf(DimIndex::FORCE), "N"},
+        {kPressureDim, "Pa"},
+        {kAreaDim, "m^2"},
+        {kVolumeDim, "m^3"},
+    };
+    for (const auto& pair : kKnown) {
+        if (pair.first == dims) return pair.second;
+    }
+
+    static const char* kAxisNames[] = {"m", "kg", "s", "K", "N"};
+    std::string num, den;
+    for (size_t i = 0; i < dims.size(); ++i) {
+        int e = dims[i];
+        if (e == 0) continue;
+        std::string term = kAxisNames[i];
+        if (std::abs(e) != 1) term += "^" + std::to_string(std::abs(e));
+        if (e > 0) {
+            if (!num.empty()) num += "*";
+            num += term;
         } else {
-            expanded += ch;
+            if (!den.empty()) den += "*";
+            den += term;
+        }
+    }
+    if (num.empty()) num = "1";
+    return den.empty() ? num : num + "/" + den;
+}
+
+}
+
+namespace {
+
+// Extract each top-level unit token from a hint string as a (base-name,
+// exponent) pair. A unit's exponent may be written either with an explicit
+// caret ("in^2") or as a registry key with a baked-in digit suffix ("in2",
+// "m3") - the latter takes priority whenever the whole run resolves in the
+// registry, matching the grammar's own encoding of e.g. "3 in^2" as unit
+// string "in2" (ast_builder_expressions.cpp::buildUnitExpression). Ignores
+// grouping symbols - good enough since hints here are always single-term or
+// simple product/quotient chains produced by this same code, never
+// arbitrarily deep nested expressions.
+std::vector<std::pair<std::string, int>> tokenizeHint(const std::string& hint,
+                                                        const std::unordered_map<std::string, UnitDefinition>& defs) {
+    std::vector<std::pair<std::string, int>> tokens;
+    size_t i = 0;
+    bool inDenominator = false;
+    while (i < hint.size()) {
+        char c = hint[i];
+        if (c == '/') { inDenominator = true; i++; continue; }
+        if (c == '*' || c == '-' || c == '(' || c == ')') { i++; continue; }
+        if (std::isalpha(static_cast<unsigned char>(c))) {
+            size_t start = i;
+            while (i < hint.size() && std::isalpha(static_cast<unsigned char>(hint[i]))) i++;
+            size_t letterEnd = i;
+            std::string letters = hint.substr(start, letterEnd - start);
+
+            size_t digitEnd = letterEnd;
+            while (digitEnd < hint.size() && std::isdigit(static_cast<unsigned char>(hint[digitEnd]))) digitEnd++;
+            std::string withDigits = hint.substr(start, digitEnd - start);
+
+            std::string name = letters;
+            int bakedExp = 1;
+            if (digitEnd > letterEnd && defs.find(withDigits) != defs.end()) {
+                i = digitEnd;
+                name = letters; // base symbol without the digit suffix
+                bakedExp = std::stoi(hint.substr(letterEnd, digitEnd - letterEnd));
+            } else if (digitEnd > letterEnd) {
+                // No registry entry for the whole run (e.g. "in4" beyond the
+                // registry's ^2/^3 special cases): the digit suffix is still
+                // an implicit exponent on the base unit, not noise to skip.
+                i = digitEnd;
+                bakedExp = std::stoi(hint.substr(letterEnd, digitEnd - letterEnd));
+            } else {
+                i = letterEnd;
+            }
+
+            int exp = bakedExp;
+            if (i < hint.size() && hint[i] == '^') {
+                i++;
+                size_t numStart = i;
+                bool neg = false;
+                if (i < hint.size() && hint[i] == '-') { neg = true; i++; numStart = i; }
+                while (i < hint.size() && std::isdigit(static_cast<unsigned char>(hint[i]))) i++;
+                if (i > numStart) exp = bakedExp * std::stoi(hint.substr(numStart, i - numStart));
+                if (neg) exp = -exp;
+            }
+            int signedExp = inDenominator ? -exp : exp;
+
+            // If this unit is a named composite (e.g. ksi = kip/in^2), expand
+            // it into its constituent tokens scaled by signedExp rather than
+            // keeping it opaque - otherwise "ksi * in^3" can't cancel down to
+            // "kip-in" the way "kip/in^2 * in^3" obviously would.
+            auto it = defs.find(name);
+            if (it != defs.end() && !it->second.compositeForm.empty()) {
+                for (auto sub : tokenizeHint(it->second.compositeForm, defs)) {
+                    tokens.emplace_back(sub.first, sub.second * signedExp);
+                }
+            } else {
+                tokens.emplace_back(name, signedExp);
+            }
+        } else {
             i++;
         }
     }
-
-    normalizedUnit = expanded;
-
-    // Parse the unit expression and count each base unit
-    std::unordered_map<std::string, int> unitCounts;
-
-    // Split by * and / to get terms
-    std::string currentUnit = normalizedUnit;
-    std::stringstream ss(currentUnit);
-    std::string term;
-    bool inNumerator = true;
-
-    // Simple parser for units like "kg*m/s^2" or "(kip/in^2)*in^3"
-    size_t pos = 0;
-    int parenDepth = 0;
-    while (pos < currentUnit.length()) {
-        if (currentUnit[pos] == '(') {
-            parenDepth++;
-            pos++;
-            continue;
-        } else if (currentUnit[pos] == ')') {
-            parenDepth--;
-            // When exiting parentheses that were in denominator, reset to numerator for next term
-            if (parenDepth == 0) {
-                inNumerator = true;
-            }
-            pos++;
-            continue;
-        } else if (currentUnit[pos] == '*' || currentUnit[pos] == '-') {
-            // '-' is the engineering-notation multiplication separator emitted by this
-            // same function (e.g. "kip-in"), so it must round-trip as '*' would.
-            // When we hit a separator at depth 0 and we were in denominator, don't reset
-            // but when at depth > 0, keep the current state
-            if (parenDepth == 0 && !inNumerator) {
-                inNumerator = true; // Reset after finishing denominator terms
-            }
-            pos++;
-            continue;
-        } else if (currentUnit[pos] == '/') {
-            inNumerator = false;
-            pos++;
-            continue;
-        }
-
-        // Parse unit term (could have ^power)
-        size_t termStart = pos;
-        while (pos < currentUnit.length() &&
-               currentUnit[pos] != '*' &&
-               currentUnit[pos] != '-' &&
-               currentUnit[pos] != '/' &&
-               currentUnit[pos] != '(' &&
-               currentUnit[pos] != ')') {
-            pos++;
-        }
-
-        std::string unitTerm = currentUnit.substr(termStart, pos - termStart);
-
-        // Skip empty terms
-        if (unitTerm.empty()) {
-            continue;
-        }
-
-        // Check for power (e.g., "m^2")
-        int power = 1;
-        size_t caretPos = unitTerm.find('^');
-        if (caretPos != std::string::npos) {
-            std::string baseUnit = unitTerm.substr(0, caretPos);
-            std::string powerStr = unitTerm.substr(caretPos + 1);
-            power = std::stoi(powerStr);
-            unitTerm = baseUnit;
-        }
-
-        if (!inNumerator) power = -power;
-
-        unitCounts[unitTerm] += power;
-    }
-
-    // Build simplified unit string with proper ordering
-    // Sort units: force units (kip, lbf, N) before length units (in, ft, m)
-    auto getUnitOrder = [](const std::string& unit) -> int {
-        // Force units come first
-        if (unit == "kip" || unit == "lbf" || unit == "N" || unit == "kN") return 0;
-        // Length units
-        if (unit == "in" || unit == "ft" || unit == "m" || unit == "mm" || unit == "cm") return 1;
-        // Everything else
-        return 2;
-    };
-
-    // Collect units into vectors for sorting
-    std::vector<std::pair<std::string, int>> numeratorUnits, denominatorUnits;
-
-    for (const auto& pair : unitCounts) {
-        const std::string& baseUnit = pair.first;
-        int count = pair.second;
-
-        if (count > 0) {
-            numeratorUnits.push_back({baseUnit, count});
-        } else if (count < 0) {
-            denominatorUnits.push_back({baseUnit, -count});
-        }
-    }
-
-    // Sort by unit order
-    std::sort(numeratorUnits.begin(), numeratorUnits.end(),
-              [&getUnitOrder](const auto& a, const auto& b) {
-                  return getUnitOrder(a.first) < getUnitOrder(b.first);
-              });
-    std::sort(denominatorUnits.begin(), denominatorUnits.end(),
-              [&getUnitOrder](const auto& a, const auto& b) {
-                  return getUnitOrder(a.first) < getUnitOrder(b.first);
-              });
-
-    // Build strings
-    std::stringstream numerator, denominator;
-    bool hasNumerator = false, hasDenominator = false;
-
-    for (const auto& pair : numeratorUnits) {
-        if (hasNumerator) numerator << "*";
-        if (pair.second == 1) {
-            numerator << pair.first;
-        } else {
-            numerator << pair.first << "^" << pair.second;
-        }
-        hasNumerator = true;
-    }
-
-    for (const auto& pair : denominatorUnits) {
-        if (hasDenominator) denominator << "*";
-        if (pair.second == 1) {
-            denominator << pair.first;
-        } else {
-            denominator << pair.first << "^" << pair.second;
-        }
-        hasDenominator = true;
-    }
-
-    std::string result;
-    if (hasNumerator) {
-        result = numerator.str();
-    }
-    if (hasDenominator) {
-        if (hasNumerator) {
-            result += "/" + denominator.str();
-        } else {
-            result = "1/" + denominator.str();
-        }
-    }
-
-    // Convert * to - for engineering convention (e.g., kip*in -> kip-in for moment units)
-    // This is the standard notation in structural engineering
-    size_t starPos = 0;
-    while ((starPos = result.find('*', starPos)) != std::string::npos) {
-        result[starPos] = '-';
-        starPos++;
-    }
-
-    return result.empty() ? "" : result;
+    return tokens;
 }
 
-bool UnitSystem::areUnitsCompatible(const std::string& unit1, const std::string& unit2) const {
-    if (unit1.empty() && unit2.empty()) return true;
-    if (unit1.empty() || unit2.empty()) return false;
-
-    return getUnitDimension(unit1) == getUnitDimension(unit2);
 }
+
+std::string UnitSystem::formatDims(const DimVector& dims, double /*factor*/,
+                                    const std::vector<std::string>& displayHints) const {
+    if (isZeroDim(dims)) return "";
+
+    // Prefer a display hint whose own dimension matches the result exactly -
+    // this is what lets "5 kip * 2 in^2 -> 10 kip" collapse to a plain unit
+    // name via the registry, and "10 kip / 2 in -> 5 kip/in" keep the
+    // operand's own compound spelling instead of a re-derived one.
+    for (const auto& hint : displayHints) {
+        if (hint.empty()) continue;
+        ParsedUnit parsed = parseUnitString(hint);
+        if (parsed.dims == dims) return hint;
+    }
+
+    // Try to name the result from a single registered unit with this exact
+    // dimension (prefers units appearing in the hints' vocabulary first, then
+    // any known unit, so e.g. a pressure result prefers ksi/psi over Pa if
+    // the source expression used US units).
+    for (const auto& hint : displayHints) {
+        for (const auto& tok : tokenizeHint(hint, unitDefinitions)) {
+            auto it = unitDefinitions.find(tok.first);
+            if (it != unitDefinitions.end() && it->second.dims == dims) return tok.first;
+        }
+    }
+    for (const auto& pair : unitDefinitions) {
+        if (pair.second.dims == dims) return pair.first;
+    }
+
+    // No single registered unit has this exact dimension - synthesize a
+    // compound name from the operands' own unit tokens (not generic SI axis
+    // names), mirroring the pre-existing "kip-in" / "kip/in^2" style: multiply
+    // together every token contributed by every hint, then re-derive
+    // numerator/denominator groupings from the combined exponents.
+    std::unordered_map<std::string, int> tokenExponents;
+    std::vector<std::string> order;
+    for (const auto& hint : displayHints) {
+        for (const auto& tok : tokenizeHint(hint, unitDefinitions)) {
+            if (tokenExponents.find(tok.first) == tokenExponents.end()) order.push_back(tok.first);
+            tokenExponents[tok.first] += tok.second;
+        }
+    }
+
+    std::string numerator, denominator;
+    for (const auto& name : order) {
+        int exp = tokenExponents[name];
+        if (exp == 0) continue;
+        std::string term = name;
+        if (std::abs(exp) != 1) term += "^" + std::to_string(std::abs(exp));
+        if (exp > 0) {
+            if (!numerator.empty()) numerator += "-";
+            numerator += term;
+        } else {
+            if (!denominator.empty()) denominator += "-";
+            denominator += term;
+        }
+    }
+    if (!numerator.empty() && !denominator.empty()) return numerator + "/" + denominator;
+    if (!numerator.empty()) return numerator;
+    if (!denominator.empty()) return "1/" + denominator;
+
+    return canonicalNameForDims(dims);
+}
+
+// simplifyUnit()/areUnitsCompatible() (the string-regex-based unit
+// simplifier and its per-unit dimension-enum compatibility check) were
+// removed here: no caller remained once operator*/operator//operator^/+/-
+// moved to dimension-vector arithmetic via parseUnitString()/formatDims().
 
 } // namespace madola

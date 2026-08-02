@@ -89,8 +89,18 @@ Value Evaluator::evaluateUnaryExpression(const UnaryExpression& expr) {
         } else {
             throw std::runtime_error("Unknown unary operator for arrays: " + expr.operator_str);
         }
+    } else if (std::holds_alternative<UnitValue>(operand)) {
+        const UnitValue& uv = std::get<UnitValue>(operand);
+
+        if (expr.operator_str == "-") {
+            return -uv;
+        } else if (expr.operator_str == "+") {
+            return uv;
+        } else {
+            throw std::runtime_error("Unknown unary operator for unit values: " + expr.operator_str);
+        }
     } else {
-        throw std::runtime_error("Unary operations only supported on numbers and arrays");
+        throw std::runtime_error("Unary operations only supported on numbers, arrays, and unit values");
     }
 }
 

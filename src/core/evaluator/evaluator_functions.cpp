@@ -918,16 +918,14 @@ Value Evaluator::evaluateMethodCall(const MethodCall& expr) {
                 }
 
                 Value argVal = evaluateExpression(*expr.arguments[0]);
-                double val;
                 if (std::holds_alternative<double>(argVal)) {
-                    val = std::get<double>(argVal);
+                    return std::abs(std::get<double>(argVal));
                 } else if (std::holds_alternative<UnitValue>(argVal)) {
-                    val = std::get<UnitValue>(argVal).value;
+                    const UnitValue& uv = std::get<UnitValue>(argVal);
+                    return UnitValue(std::abs(uv.value), uv.unit, uv.displayStyle);
                 } else {
                     throw std::runtime_error("Function math.abs only supports numeric arguments");
                 }
-
-                return std::abs(val);
             }
             // math.mod
             else if (expr.method_name == "mod") {

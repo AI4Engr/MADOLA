@@ -1,0 +1,36 @@
+<div class="container madola-output">
+<h1>Unit Dimension Math Regression</h1>
+<p style="white-space: pre-wrap">Cross-unit-family beam deflection (ft span, in/ksi/in^4 section) - must
+match the all-consistent-inches control value of 0.983 in, not silently
+collapse to 0 the way the pre-dimension-vector unit engine did.</p>
+<div class="math-expression align-expression">
+$$L = 20\text{ ft} = 20 \text{ ft}$$
+</div>
+<div class="math-expression align-expression">
+$$w = 0.5 \frac{\text{kip}}{\text{in}} = 0.5 \dfrac{\text{kip}}{\text{in}}$$
+</div>
+<div class="math-expression align-expression">
+$$E = 29000\text{ ksi} = 29000 \text{ ksi}$$
+</div>
+<div class="math-expression align-expression">
+$$I = 758\text{ in}^{4} = 758 \text{ in}^{4}$$
+</div>
+<div class="math-expression align-expression">
+$$delta = \frac{5 \cdot w \cdot L^{4}}{384 \cdot E \cdot I} = 0.082 \text{ ft}$$
+</div>
+<p style="white-space: pre-wrap">The 0 - f(x) negation idiom (madola has no unary-minus-before-call syntax)
+must work on a unit-bearing expression rather than throwing &quot;Cannot subtract
+dimensionless value from value with units&quot;.</p>
+<div class="math-expression align-expression">
+$$0 - \frac{w \cdot x \cdot \left(L^{3} - 2 \cdot L \cdot x^{2} + x^{3}\right)}{24 \cdot E \cdot I}$$
+</div>
+<div class="math-expression align-expression">
+$$mid = v(w, 120\text{ in}) = -0.082 \text{ ft}$$
+</div>
+<p style="white-space: pre-wrap">math.abs() must preserve the operand's unit rather than silently
+returning a bare number (which previously made a same-unit ratio display as
+&quot;1/in&quot; instead of cancelling to dimensionless).</p>
+<div class="math-expression align-expression">
+$$ratio = \frac{\left|delta\right|}{\frac{L}{360}} = 1.474$$
+</div>
+</div>
