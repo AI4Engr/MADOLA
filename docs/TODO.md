@@ -163,6 +163,26 @@
   - **Impact:** blocks correct engineering formulas that mix base units with derived/exponent
     units (very common in real calcs — beam deflection, stress, moment of inertia). Low risk
     today only if usage stays within same-unit-family expressions without exponents.
+  - **Re-verified 2026-08 with a minimal three-way repro** (same beam, correct answer 0.983 in):
+    | source | result | |
+    |---|---|---|
+    | plain numbers, all inches | `0.983` | ✅ |
+    | units, **all consistently `in`** | `0.983 in` | ✅ |
+    | units, **`L` in `ft`**, rest `in`/`ksi`/`in^4` | `0 ft^4/in^3` | ❌ |
+    ```
+    L := 20 ft;  w := 0.5 kip/in;  E := 29000 ksi;  I := 758 in^4;
+    d := 5*w*L^4/(384*E*I);        // -> 0 ft^4/in^3
+    ```
+    Two distinct failures visible in that one output: (a) `ft` never cancels against `in` across
+    the fraction (string units, no dimension algebra), and (b) `L^4` keeps the raw `20^4` without
+    raising the ft→in factor to the 4th power (a hidden 20736× error). Returning exactly `0` is
+    luck — a subtly-wrong nonzero number would be far more dangerous.
+  - ⚠️ **Severity note:** the trigger is *the most natural way a US structural engineer writes it*
+    — span in ft, stress in ksi, inertia in in⁴. This is an everyday case, not a corner case, and
+    it produces a wrong answer rather than an error.
+  - 📌 **Known workaround in the wild:** `app/examples/simple_beam_deflection_check.mda` strips the
+    unit (`Ix := s.Ix / (1 * in^4)`) and computes in bare numbers specifically to dodge this. That
+    file carries a comment pointing back here; **delete the workaround when this lands.**
   - **Additional confirmed gaps (found 2026-07-22, building the `beam_deflection.mda` web
     example):**
     1. A `UnitValue` variable (e.g. `P := 12 kip;`) cannot be passed into a user-defined
