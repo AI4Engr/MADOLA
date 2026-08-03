@@ -97,6 +97,27 @@ std::string HtmlFormatter::generateTypstPayload(const Program& program) {
             if (dynamic_cast<const CommentStatement*>(stmt)) continue;
             if (dynamic_cast<const VersionStatement*>(stmt)) continue;
 
+            // @page/@header/@footer - report layout metadata, not report content (the
+            // HTML preview ignores these entirely; only the typst payload consumes
+            // them). Emitted as a "layout" record carrying the already-parsed
+            // key:value fields, so the field vocabulary isn't locked into the
+            // grammar or this C++ code - app/js/typst/mda-to-typ.js decides which
+            // keys it understands.
+            if (const auto* layoutStmt = dynamic_cast<const LayoutStatement*>(stmt)) {
+                if (!first) json << ",";
+                first = false;
+                json << "{\"type\":\"layout\",\"kind\":\"" << LayoutStatement::kindName(layoutStmt->kind)
+                     << "\",\"fields\":{";
+                bool firstField = true;
+                for (const auto& [key, value] : layoutStmt->fields) {
+                    if (!firstField) json << ",";
+                    firstField = false;
+                    json << "\"" << escapeJsonForPayload(key) << "\":\"" << escapeJsonForPayload(value) << "\"";
+                }
+                json << "}}";
+                continue;
+            }
+
             if (const auto* headingStmt = dynamic_cast<const HeadingStatement*>(stmt)) {
                 for (const auto& para : headingStmt->textParagraphs) {
                     if (!first) json << ",";

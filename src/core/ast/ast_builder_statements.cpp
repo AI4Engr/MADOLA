@@ -36,6 +36,43 @@ std::string trimSurroundingLineBreaks(const std::string& text) {
     return text.substr(start, end - start);
 }
 
+// Parse a @page/@header/@footer body into a key->value map. One "key: value" pair per
+// line; blank lines and lines without a ':' are skipped rather than treated as errors,
+// so stray whitespace or a trailing blank line (common with the brace-block source
+// style) doesn't fail the whole statement. Keys and values are trimmed of surrounding
+// whitespace; the value is taken verbatim after the first ':' (so a value containing
+// its own ':', e.g. a URL, is not truncated).
+std::map<std::string, std::string> parseLayoutFields(const std::string& content) {
+    std::map<std::string, std::string> fields;
+    size_t lineStart = 0;
+    while (lineStart <= content.size()) {
+        size_t lineEnd = content.find('\n', lineStart);
+        if (lineEnd == std::string::npos) lineEnd = content.size();
+        std::string line = content.substr(lineStart, lineEnd - lineStart);
+
+        size_t colon = line.find(':');
+        if (colon != std::string::npos) {
+            std::string key = line.substr(0, colon);
+            std::string value = line.substr(colon + 1);
+
+            auto trim = [](std::string& s) {
+                size_t start = s.find_first_not_of(" \t\r");
+                size_t end = s.find_last_not_of(" \t\r");
+                s = (start == std::string::npos) ? "" : s.substr(start, end - start + 1);
+            };
+            trim(key);
+            trim(value);
+
+            if (!key.empty()) {
+                fields[key] = value;
+            }
+        }
+
+        lineStart = lineEnd + 1;
+    }
+    return fields;
+}
+
 } // namespace
 
 ASTBuilder::ASTBuilder() {
@@ -229,6 +266,12 @@ StatementPtr ASTBuilder::buildStatement(TSNode node, const std::string& source) 
         return buildParagraphStatement(node, source);
     } else if (strcmp(node_type, "image_statement") == 0) {
         return buildImageStatement(node, source);
+    } else if (strcmp(node_type, "page_statement") == 0) {
+        return buildLayoutStatement(node, source, LayoutStatement::Page);
+    } else if (strcmp(node_type, "header_statement") == 0) {
+        return buildLayoutStatement(node, source, LayoutStatement::Header);
+    } else if (strcmp(node_type, "footer_statement") == 0) {
+        return buildLayoutStatement(node, source, LayoutStatement::Footer);
     } else if (strcmp(node_type, "statement") == 0) {
         // If we get a generic "statement" node, look at its first child
         if (ts_node_child_count(node) > 0) {
@@ -1064,6 +1107,22 @@ StatementPtr ASTBuilder::buildImageStatement(TSNode node, const std::string& sou
     }
 
     return std::make_unique<ImageStatement>(std::move(imageSource), style);
+}
+
+StatementPtr ASTBuilder::buildLayoutStatement(TSNode node, const std::string& source, LayoutStatement::Kind kind) {
+    // page_statement/header_statement/footer_statement: '@page'/'@header'/'@footer'
+    // '{' layout_content '}'
+    uint32_t childCount = ts_node_child_count(node);
+
+    std::string content;
+    for (uint32_t i = 0; i < childCount; i++) {
+        TSNode child = ts_node_child(node, i);
+        if (strcmp(ts_node_type(child), "layout_content") == 0) {
+            content = trimSurroundingLineBreaks(getNodeText(child, source));
+        }
+    }
+
+    return std::make_unique<LayoutStatement>(kind, parseLayoutFields(content));
 }
 
 } // namespace madola

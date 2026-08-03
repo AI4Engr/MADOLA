@@ -325,6 +325,21 @@
     }
   },
   {
+    "type": "footer_statement",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "layout_content",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "for_statement",
     "named": true,
     "fields": {},
@@ -399,6 +414,21 @@
       "types": [
         {
           "type": "subscript",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "header_statement",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "layout_content",
           "named": true
         }
       ]
@@ -575,6 +605,11 @@
     }
   },
   {
+    "type": "layout_content",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "logical_and_expression",
     "named": true,
     "fields": {},
@@ -702,6 +737,21 @@
         },
         {
           "type": "unit_expression",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "page_statement",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "layout_content",
           "named": true
         }
       ]
@@ -1022,11 +1072,19 @@
           "named": true
         },
         {
+          "type": "footer_statement",
+          "named": true
+        },
+        {
           "type": "for_statement",
           "named": true
         },
         {
           "type": "function_declaration",
+          "named": true
+        },
+        {
+          "type": "header_statement",
           "named": true
         },
         {
@@ -1043,6 +1101,10 @@
         },
         {
           "type": "import_statement",
+          "named": true
+        },
+        {
+          "type": "page_statement",
           "named": true
         },
         {
@@ -1298,6 +1360,10 @@
     "named": false
   },
   {
+    "type": "@footer",
+    "named": false
+  },
+  {
     "type": "@h1",
     "named": false
   },
@@ -1314,11 +1380,19 @@
     "named": false
   },
   {
+    "type": "@header",
+    "named": false
+  },
+  {
     "type": "@image",
     "named": false
   },
   {
     "type": "@p",
+    "named": false
+  },
+  {
+    "type": "@page",
     "named": false
   },
   {

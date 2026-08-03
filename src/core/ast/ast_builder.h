@@ -47,6 +47,7 @@ private:
     StatementPtr buildVersionStatement(TSNode node, const std::string& source);
     StatementPtr buildParagraphStatement(TSNode node, const std::string& source);
     StatementPtr buildImageStatement(TSNode node, const std::string& source);
+    StatementPtr buildLayoutStatement(TSNode node, const std::string& source, LayoutStatement::Kind kind);
     ExpressionPtr buildExpression(TSNode node, const std::string& source);
     ExpressionPtr buildIdentifier(TSNode node, const std::string& source);
     ExpressionPtr buildStringLiteral(TSNode node, const std::string& source);

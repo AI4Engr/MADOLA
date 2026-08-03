@@ -286,6 +286,13 @@ std::string HtmlFormatter::generateOrderedContent(const Program& program, Evalua
             continue;
         }
 
+        // Skip @page/@header/@footer - report layout metadata only, not report
+        // content. The HTML preview shows the calculation body regardless of what
+        // the PDF export's page/header/footer will look like.
+        if (dynamic_cast<const LayoutStatement*>(stmt.get())) {
+            continue;
+        }
+
         // Handle heading statements - output as HTML headings
         if (const auto* headingStmt = dynamic_cast<const HeadingStatement*>(stmt.get())) {
             std::string tag = "h" + std::to_string(headingStmt->level);

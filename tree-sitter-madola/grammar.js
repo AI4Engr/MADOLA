@@ -32,7 +32,10 @@ module.exports = grammar({
       $.heading_statement,
       $.version_statement,
       $.paragraph_statement,
-      $.image_statement
+      $.image_statement,
+      $.page_statement,
+      $.header_statement,
+      $.footer_statement
     ),
 
     decorated_statement: $ => seq(
@@ -149,6 +152,35 @@ module.exports = grammar({
     paragraph_style: $ => /[a-zA-Z][a-zA-Z0-9_-]*/,
 
     paragraph_content: $ => token(prec(-1, /[^}]+/)),
+
+    // Report layout metadata: @page{...} / @header{...} / @footer{...}. Content is a
+    // block of "key: value" lines (parsed at the AST-builder level, not here — mirrors
+    // @page's own plan of not locking the field vocabulary into the grammar). Content
+    // uses the same "everything up to the first }" token as paragraph_content; a `{{ }}`
+    // interpolation syntax inside these blocks is a known future incompatibility with
+    // this pattern (tracked separately, not needed until interpolation is added).
+    page_statement: $ => seq(
+      '@page',
+      '{',
+      $.layout_content,
+      '}'
+    ),
+
+    header_statement: $ => seq(
+      '@header',
+      '{',
+      $.layout_content,
+      '}'
+    ),
+
+    footer_statement: $ => seq(
+      '@footer',
+      '{',
+      $.layout_content,
+      '}'
+    ),
+
+    layout_content: $ => token(prec(-1, /[^}]+/)),
 
     // Inline image: @image{<base64 or data URI>} with optional @image[style]{...}.
     // Mirrors paragraph_statement — a declarative document-content statement, not a

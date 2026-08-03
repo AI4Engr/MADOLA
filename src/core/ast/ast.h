@@ -1,4 +1,5 @@
 #pragma once
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -916,6 +917,40 @@ public:
             result += "[" + style + "]";
         }
         result += "{" + source + "}";
+        return result;
+    }
+};
+
+// Report layout metadata: @page{...} / @header{...} / @footer{...}. Purely declarative
+// (like ParagraphStatement/ImageStatement) - the evaluator and HTML formatter both
+// ignore it entirely; only the typst payload path (app/js/typst/mda-to-typ.js's
+// consumer) reads it. `fields` is the "key: value" block already parsed into a map at
+// AST-build time (not left as raw text) so the field vocabulary isn't locked into the
+// grammar - a new key just needs the payload/converter to recognize it, no grammar or
+// parser regeneration.
+class LayoutStatement : public Statement {
+public:
+    enum Kind { Page, Header, Footer };
+    Kind kind;
+    std::map<std::string, std::string> fields;
+
+    LayoutStatement(Kind layoutKind, std::map<std::string, std::string> layoutFields)
+        : kind(layoutKind), fields(std::move(layoutFields)) {}
+
+    static const char* kindName(Kind k) {
+        switch (k) {
+            case Page: return "page";
+            case Header: return "header";
+            case Footer: return "footer";
+        }
+        return "page";
+    }
+
+    std::string toString() const override {
+        std::string result = std::string("@") + kindName(kind) + "\n";
+        for (const auto& [key, value] : fields) {
+            result += key + ": " + value + "\n";
+        }
         return result;
     }
 };
