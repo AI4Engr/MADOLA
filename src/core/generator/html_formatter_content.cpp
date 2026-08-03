@@ -168,7 +168,11 @@ std::string HtmlFormatter::generateSvgHtml(const SvgData& svg, size_t index) {
     if (!svg.title.empty()) {
         html << "<div class=\"svg-title\">" << escapeHtml(svg.title) << "</div>\n";
     }
-    html << "<svg width=\"" << svg.width << "\" height=\"" << svg.height
+    // xmlns is required for standalone SVG consumers (typst's image.decode, a browser's
+    // data-URI <image> decoder) even though inline HTML tolerates its absence - without
+    // it those consumers silently render nothing instead of erroring, which is exactly
+    // how the PDF export's beam diagram went missing.
+    html << "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" << svg.width << "\" height=\"" << svg.height
          << "\" viewBox=\"0 0 " << svg.width << " " << svg.height << "\">\n";
 
     for (const auto& shape : svg.shapes) {

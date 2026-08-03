@@ -124,6 +124,52 @@ std::string HtmlFormatter::generateTypstPayload(const Program& program) {
             // emit each as its own formula record, tagged with group metadata so the
             // private typst converter can still lay them out as a table/grid.
             if (const auto* decoratedStmt = dynamic_cast<const DecoratedStatement*>(stmt)) {
+                // @check[limit] - mirror html_formatter_helpers.cpp's verdict-box logic
+                // (same actual/limit/passed computation) but emit a "check" record instead
+                // of HTML, so the typst converter can render its own colored RESULT box.
+                if (decoratedStmt->hasDecorator("check")) {
+                    const auto* checkAssignment = dynamic_cast<const AssignmentStatement*>(decoratedStmt->statement.get());
+                    if (checkAssignment != nullptr) {
+                        double limit = 1.0;
+                        for (const auto& dec : decoratedStmt->decorators) {
+                            if (dec.name == "check" && !dec.style.empty()) {
+                                try {
+                                    limit = std::stod(dec.style);
+                                } catch (const std::exception&) {
+                                    limit = 1.0;
+                                }
+                            }
+                        }
+
+                        double actual = 0.0;
+                        bool haveActual = false;
+                        try {
+                            Value v = evaluator.getVariableValue(checkAssignment->variable);
+                            if (std::holds_alternative<double>(v)) {
+                                actual = std::get<double>(v);
+                                haveActual = true;
+                            } else if (std::holds_alternative<UnitValue>(v)) {
+                                actual = std::get<UnitValue>(v).value;
+                                haveActual = true;
+                            }
+                        } catch (const std::exception&) {
+                            haveActual = false;
+                        }
+
+                        bool passed = haveActual && actual <= limit;
+
+                        if (!first) json << ",";
+                        first = false;
+                        json << "{\"type\":\"check\",\"label\":\""
+                             << escapeJsonForPayload(convertToMathJax(checkAssignment->variable))
+                             << "\",\"value\":" << (haveActual ? actual : 0.0)
+                             << ",\"haveValue\":" << (haveActual ? "true" : "false")
+                             << ",\"limit\":" << limit
+                             << ",\"passed\":" << (passed ? "true" : "false") << "}";
+                        continue;
+                    }
+                }
+
                 const Decorator* paramDec = nullptr;
                 for (const auto& dec : decoratedStmt->decorators) {
                     if (dec.isParameterized()) { paramDec = &dec; break; }
