@@ -21,6 +21,58 @@ static std::string escapeJsonForPayload(const std::string& input) {
     return result;
 }
 
+// {{page}}/{{total}}/{{date}} are built-in placeholders the typst converter itself
+// resolves (counter(page).display() / .final().first() / datetime.today(), see
+// app/js/typst/mda-to-typ.js) - they depend on the rendered page layout or export
+// time, neither of which the evaluator knows about, so they're left untouched here
+// rather than substituted.
+static bool isBuiltinInterpolationName(const std::string& name) {
+    return name == "page" || name == "total" || name == "date";
+}
+
+// Resolve "{{ }}" interpolation in a @page/@header/@footer field value: {{varName}}
+// is replaced with the evaluated variable's value (via Evaluator::valueToString,
+// the same formatting the evaluator itself uses for displaying computed values) -
+// this is the "insert an already-evaluated variable" half of Stage 4 (app/TODO.md).
+// {{page}}/{{total}}/{{date}} are left as literal text for the typst converter to
+// handle instead (see isBuiltinInterpolationName above). An undefined variable name
+// or one that doesn't resolve to a plain scalar/string is also left untouched -
+// silently dropping or erroring on a typo'd field would be worse than showing the
+// literal "{{typo}}" in the exported report, which at least is visibly wrong.
+static std::string resolveLayoutInterpolation(const std::string& text, Evaluator& evaluator) {
+    std::string result;
+    result.reserve(text.size());
+    size_t i = 0;
+    while (i < text.size()) {
+        if (text[i] == '{' && i + 1 < text.size() && text[i + 1] == '{') {
+            size_t close = text.find("}}", i + 2);
+            if (close != std::string::npos) {
+                std::string name = text.substr(i + 2, close - (i + 2));
+                // Trim surrounding whitespace so "{{ page }}" works the same as "{{page}}".
+                size_t start = name.find_first_not_of(" \t");
+                size_t end = name.find_last_not_of(" \t");
+                name = (start == std::string::npos) ? "" : name.substr(start, end - start + 1);
+
+                if (isBuiltinInterpolationName(name)) {
+                    result += text.substr(i, close + 2 - i);
+                } else {
+                    try {
+                        Value v = evaluator.getVariableValue(name);
+                        result += evaluator.valueToString(v);
+                    } catch (const std::exception&) {
+                        result += text.substr(i, close + 2 - i);
+                    }
+                }
+                i = close + 2;
+                continue;
+            }
+        }
+        result += text[i];
+        i++;
+    }
+    return result;
+}
+
 // Render a Value's numeric magnitude and unit as separate fields, matching the
 // {value, unit} shape formula records expose in the payload. Dimensionless doubles
 // get an empty unit string. Arrays/matrices/records are not broken into value+unit
@@ -112,7 +164,8 @@ std::string HtmlFormatter::generateTypstPayload(const Program& program) {
                 for (const auto& [key, value] : layoutStmt->fields) {
                     if (!firstField) json << ",";
                     firstField = false;
-                    json << "\"" << escapeJsonForPayload(key) << "\":\"" << escapeJsonForPayload(value) << "\"";
+                    std::string resolved = resolveLayoutInterpolation(value, evaluator);
+                    json << "\"" << escapeJsonForPayload(key) << "\":\"" << escapeJsonForPayload(resolved) << "\"";
                 }
                 json << "}}";
                 continue;

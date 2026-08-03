@@ -155,10 +155,7 @@ module.exports = grammar({
 
     // Report layout metadata: @page{...} / @header{...} / @footer{...}. Content is a
     // block of "key: value" lines (parsed at the AST-builder level, not here — mirrors
-    // @page's own plan of not locking the field vocabulary into the grammar). Content
-    // uses the same "everything up to the first }" token as paragraph_content; a `{{ }}`
-    // interpolation syntax inside these blocks is a known future incompatibility with
-    // this pattern (tracked separately, not needed until interpolation is added).
+    // @page's own plan of not locking the field vocabulary into the grammar).
     page_statement: $ => seq(
       '@page',
       '{',
@@ -180,7 +177,12 @@ module.exports = grammar({
       '}'
     ),
 
-    layout_content: $ => token(prec(-1, /[^}]+/)),
+    // Everything up to the first UNPAIRED '}' - a plain '}' closes the block, but a
+    // '{{...}}' interpolation span (e.g. "date: {{date}}") is matched whole so its
+    // inner '}}' doesn't get read as the block's own closing brace. This is the same
+    // token paragraph_content uses, minus interpolation support - paragraphs don't
+    // need {{ }}, only @page/@header/@footer do (see app/TODO.md Stage 4).
+    layout_content: $ => token(prec(-1, /(?:[^{}]|\{\{[^}]*\}\})+/)),
 
     // Inline image: @image{<base64 or data URI>} with optional @image[style]{...}.
     // Mirrors paragraph_statement — a declarative document-content statement, not a

@@ -605,11 +605,6 @@
     }
   },
   {
-    "type": "layout_content",
-    "named": true,
-    "fields": {}
-  },
-  {
     "type": "logical_and_expression",
     "named": true,
     "fields": {},
@@ -1890,6 +1885,10 @@
   {
     "type": "lambda",
     "named": false
+  },
+  {
+    "type": "layout_content",
+    "named": true
   },
   {
     "type": "lb",
