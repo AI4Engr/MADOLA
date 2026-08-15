@@ -1252,6 +1252,47 @@ std::string HtmlFormatter::formatValueAsMath(const Value& value) {
 std::string HtmlFormatter::formatValueAsMathPublic(const Value& value) {
     if (std::holds_alternative<double>(value)) {
         return formatDouble(std::get<double>(value));
+    } else if (std::holds_alternative<ComplexValue>(value)) {
+        // Mirrors MarkdownFormatter::formatExpressionWithValues's complex-number
+        // branch — this variant has no shared helper, so each formatter keeps
+        // its own copy, same as the ArrayValue/matrix formatting below.
+        const ComplexValue& complex = std::get<ComplexValue>(value);
+        if (complex.real == 0 && complex.imaginary == 0) return "0";
+
+        std::stringstream ss;
+        bool needsReal = (complex.real != 0);
+        bool needsImag = (complex.imaginary != 0);
+
+        if (needsReal) {
+            if (complex.real == static_cast<int>(complex.real)) {
+                ss << static_cast<int>(complex.real);
+            } else {
+                ss << complex.real;
+            }
+        }
+
+        if (needsImag) {
+            double imag = complex.imaginary;
+            if (needsReal) {
+                if (imag > 0) {
+                    ss << " + ";
+                } else {
+                    ss << " - ";
+                    imag = -imag;
+                }
+            }
+            if (imag == 1.0) {
+                ss << "i";
+            } else if (imag == -1.0 && !needsReal) {
+                ss << "-i";
+            } else if (imag == static_cast<int>(imag)) {
+                ss << static_cast<int>(imag) << "i";
+            } else {
+                ss << imag << "i";
+            }
+        }
+
+        return ss.str();
     } else if (std::holds_alternative<UnitValue>(value)) {
         UnitValue unitVal = std::get<UnitValue>(value);
         return unitVal.toLatex();
