@@ -436,6 +436,38 @@ if(EMSCRIPTEN)
         OUTPUT_NAME "madola"
         SUFFIX ".js"
     )
+
+    # App-only WASM build (runtime 2): identical source, but _format_madola_typst_payload
+    # is left out of EXPORTED_FUNCTIONS, so this binary cannot produce a report payload at
+    # all - not a convention, a missing symbol. Runtime 3 (the CLI, private repo) keeps
+    # using the full madola_wasm build above, since only it needs to reach mda-to-typ.js's
+    # typst conversion.
+    add_executable(madola_wasm_app src/wasm_interface.cpp)
+    target_link_libraries(madola_wasm_app madola_core)
+    target_compile_options(madola_wasm_app PRIVATE -fwasm-exceptions)
+    target_compile_definitions(madola_wasm_app PRIVATE MADOLA_OMIT_REPORT_PAYLOAD)
+
+    set_target_properties(madola_wasm_app PROPERTIES
+        LINK_FLAGS "\
+            -O2 \
+            -s WASM=1 \
+            -s NO_EXIT_RUNTIME=0 \
+            -s NODEJS_CATCH_EXIT=0 \
+            -s NODEJS_CATCH_REJECTION=0 \
+            -s MODULARIZE=1 \
+            -s EXPORT_NAME=MADOLA \
+            -s EXPORTED_FUNCTIONS=[_parse_madola,_evaluate_madola,_format_madola,_format_madola_html,_svg_eval_curve,_eval_named_value,_register_lookup_table,_free_result] \
+            -s EXPORTED_RUNTIME_METHODS=[ccall,UTF8ToString] \
+            -s ALLOW_MEMORY_GROWTH=1 \
+            -s INITIAL_MEMORY=67108864 \
+            -s STACK_SIZE=8388608 \
+            -s ENVIRONMENT=web,node \
+            -fwasm-exceptions \
+            -s EXIT_RUNTIME=1"
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build_wasm_app"
+        OUTPUT_NAME "madola"
+        SUFFIX ".js"
+    )
 endif()
 
 # Configure Tree-sitter libraries and linking after executables are defined

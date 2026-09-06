@@ -17,6 +17,7 @@ dist/
 build/
 build-wasm/
 build_wasm/
+build_wasm_app/
 gen_cpp/
 target/
 

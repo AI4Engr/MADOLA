@@ -29,6 +29,10 @@ Object.assign(MadolaApp.prototype, {
             console.warn('Could not inline madola-output.css into export:', e);
         }
 
+        // @page{ equ_align }'s alignment is entirely CSS-driven (data-equ-align on the
+        // .madola-output container - see HtmlFormatter::generateHtmlHeader and the
+        // mjx-container[display="true"] rules in madola-output.css, inlined into this
+        // export via `css` above) - no MathJax config needed to reproduce it here.
         const completeHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -44,8 +48,7 @@ Object.assign(MadolaApp.prototype, {
                 processEnvironments: true
             },
             chtml: {
-                scale: 0.9,
-                displayAlign: 'left'
+                scale: 0.9
             }
         };
     </script>

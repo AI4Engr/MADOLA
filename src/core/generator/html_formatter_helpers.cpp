@@ -82,8 +82,19 @@ HtmlFormatter::HtmlFormatter() = default;
 // own document shell around this fragment (see web/js/app-ui.js downloadHtml).
 //
 // `title` is unused now that there's no <head>; kept for signature stability.
-std::string HtmlFormatter::generateHtmlHeader(const std::string& /*title*/) {
-    return "<div class=\"container madola-output\">\n";
+//
+// `equAlign` ("left"/"middle"/"right", or "" for unset) is @page{ equ_align }'s value -
+// see formatProgramWithExecution, the only caller that has a real one. It's rendered
+// as a data-equ-align attribute rather than a CSS class: display-math alignment is
+// controlled by MathJax's own displayAlign output option, which does not reliably
+// respect an outer element's CSS text-align (documented MathJax limitation - see the
+// browser-side code that reads this attribute before calling typesetPromise, in
+// web/js/app-execution.js's renderMathJax and app/js/editor/html-preview.js's render).
+std::string HtmlFormatter::generateHtmlHeader(const std::string& /*title*/, const std::string& equAlign) {
+    if (equAlign.empty()) {
+        return "<div class=\"container madola-output\">\n";
+    }
+    return "<div class=\"container madola-output\" data-equ-align=\"" + equAlign + "\">\n";
 }
 
 std::string HtmlFormatter::generateHtmlFooter() {
@@ -174,8 +185,24 @@ HtmlFormatter::FormatResult HtmlFormatter::formatProgramWithExecution(const Prog
         Evaluator evaluator;
         auto evalResult = evaluator.evaluate(program, "html_output");
 
+        // @page{ equ_align: left|middle|right } is a document-wide default for formula
+        // alignment, independent of text's own per-statement [center]/[left] style
+        // brackets on @h1/@p. Unrecognized/missing values leave this empty, so old
+        // documents get no data-equ-align attribute at all (byte-identical output).
+        std::string equAlign;
+        for (const auto& stmt : program.statements) {
+            const auto* layoutStmt = dynamic_cast<const LayoutStatement*>(stmt.get());
+            if (!layoutStmt || layoutStmt->kind != LayoutStatement::Page) continue;
+            auto it = layoutStmt->fields.find("equ_align");
+            if (it == layoutStmt->fields.end()) continue;
+            if (it->second == "left" || it->second == "middle" || it->second == "right") {
+                equAlign = it->second;
+            }
+            break;
+        }
+
         std::stringstream html;
-        html << generateHtmlHeader("MADOLA Output");
+        html << generateHtmlHeader("MADOLA Output", equAlign);
 
         if (evalResult.success) {
             // Process statements in order, interleaving math content and graphs

@@ -501,6 +501,13 @@ char* format_madola_html(const char* source, int with_execution) {
 // Export a neutral structured JSON payload (heading/paragraph/formula/svg records) for
 // the private app-side Typst report generator to consume. Contains no page/report
 // layout decisions - see HtmlFormatter::generateTypstPayload for the exact contract.
+//
+// Guarded by MADOLA_OMIT_REPORT_PAYLOAD so a build can omit this export entirely: with
+// EMSCRIPTEN_KEEPALIVE, Emscripten exports a function regardless of the EXPORTED_FUNCTIONS
+// link list (confirmed against the Emscripten FAQ and by testing - removing the symbol
+// from EXPORTED_FUNCTIONS alone has no effect), so link flags cannot omit it. Compiling
+// this out is the only way. See CMakeLists.txt's madola_wasm_app target.
+#ifndef MADOLA_OMIT_REPORT_PAYLOAD
 EMSCRIPTEN_KEEPALIVE
 char* format_madola_typst_payload(const char* source) {
     try {
@@ -528,6 +535,7 @@ char* format_madola_typst_payload(const char* source) {
         return nullptr;
     }
 }
+#endif // MADOLA_OMIT_REPORT_PAYLOAD
 
 // Recompute a single interactive svg() curve after rebinding one variable (e.g. a
 // dragged @input value), without re-running/re-rendering the whole program. Re-parses

@@ -36,7 +36,7 @@ public:
     static std::string formatValueAsMathPublic(const Value& value);
 
 private:
-    std::string generateHtmlHeader(const std::string& title = "MADOLA Output");
+    std::string generateHtmlHeader(const std::string& title = "MADOLA Output", const std::string& equAlign = "");
     std::string generateHtmlFooter();
     std::string formatStatement(const Statement& stmt);
     std::string formatStatementWithDepth(const Statement& stmt, int depth = 0);

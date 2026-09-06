@@ -627,6 +627,11 @@ Object.assign(MadolaApp.prototype, {
                 });
             }
 
+            // Note: formula alignment (@page{ equ_align }) is CSS-only - see
+            // madola-output.css's data-equ-align-scoped mjx-container rules. MathJax's
+            // own displayAlign config is deliberately left unset so there's exactly one
+            // place controlling this, not two.
+
             // Re-render MathJax
             if (window.MathJax.typesetPromise) {
                 console.log('Rendering MathJax for container', container);

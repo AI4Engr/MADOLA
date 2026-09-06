@@ -143,13 +143,20 @@
     font-size: 1em;
 }
 
-.madola-output .math-expression.align-expression {
+/* Engineering-report convention: indent the formula "column" 0.25in from the page's
+   left edge. This is a report-layout choice, separate from equ_align (which controls
+   where TEXT sits within that column, not where the column itself starts) - it only
+   makes sense while formulas hug the left edge, so it's scoped to the default/left
+   case and dropped for middle/right (nothing to indent from once text moves away
+   from that edge). */
+.madola-output:not([data-equ-align="middle"]):not([data-equ-align="right"]) .math-expression.align-expression {
     margin-left: 0.25in;
 }
 
-/* Indent two-column tables to line up with aligned equations */
-.madola-output .madola-pair-table {
-    /* Align with .math-expression.align-expression (0.25in) minus 10px cell padding */
+/* .madola-pair-table mirrors the same left-edge indent (minus 10px cell padding) so
+   two-column tables line up with the formula column above/below them - same
+   left-edge-only scoping as .align-expression, for the same reason. */
+.madola-output:not([data-equ-align="middle"]):not([data-equ-align="right"]) .madola-pair-table {
     margin-left: calc(0.25in - 10px);
 }
 
@@ -257,12 +264,25 @@
     font-size: 95% !important;
 }
 
+/* @page{ equ_align: left|middle|right } - data-equ-align on .madola-output (set by
+   HtmlFormatter::generateHtmlHeader) is the SOLE source of truth for formula
+   horizontal alignment. Nothing else sets it: MathJax's own displayAlign config
+   option is deliberately left unset (its default, 'center', is irrelevant here
+   because these rules always win via !important - the two mechanisms are not both
+   "managing" alignment, only this one is), and MathJax's own justify="..." attribute
+   on mjx-container is not read by anything. No data-equ-align (old documents, or
+   equ_align unset) falls through to the plain mjx-container[display="true"] rule
+   below, which matches the pre-existing hardcoded left default. */
 .madola-output mjx-container[display="true"] {
     text-align: left !important;
 }
 
-.madola-output .MathJax_Display {
-    text-align: left !important;
+.madola-output[data-equ-align="middle"] mjx-container[display="true"] {
+    text-align: center !important;
+}
+
+.madola-output[data-equ-align="right"] mjx-container[display="true"] {
+    text-align: right !important;
 }
 
 /*
@@ -321,6 +341,11 @@
     min-width: 300px;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     font-size: 14px;
+}
+
+/* Same left-edge report indent as .align-expression/.madola-pair-table, same
+   left-only scoping - see the comment there. */
+.madola-output:not([data-equ-align="middle"]):not([data-equ-align="right"]) .data-table {
     margin-left: 0.25in;
 }
 
